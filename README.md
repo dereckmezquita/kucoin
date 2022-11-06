@@ -1,21 +1,21 @@
 
-# rucoin
+# kucoin
 
 <!-- badges: start -->
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Travis build
-status](https://travis-ci.org/bagasbgy/rucoin.svg?branch=master)](https://travis-ci.org/bagasbgy/rucoin)
+status](https://travis-ci.org/bagasbgy/kucoin.svg?branch=master)](https://travis-ci.org/dereckdemezquita/kucoin)
 <!-- badges: end -->
 
 ## Installation
 
-You can install the development version of `rucoin` using:
+You can install the development version of `kucoin` using:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("bagasbgy/rucoin")
+remotes::install_github("dereckdemezquita/kucoin")
 ```
 
 ## Getting Started
@@ -24,7 +24,7 @@ First of all, let’s start by importing the library:
 
 ``` r
 # import library
-library(rucoin)
+library("kucoin")
 ```
 
 ### API Authorization
