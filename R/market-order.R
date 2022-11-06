@@ -153,7 +153,7 @@ post_market_order <- function(symbol, side, size = NULL, funds = NULL) {
     results <- results$orderId
 
     # return the result
-    return(results)
+    return(results[])
 }
 
 # get order details -------------------------------------------------------
@@ -162,7 +162,7 @@ post_market_order <- function(symbol, side, size = NULL, funds = NULL) {
 #'
 #' @param order_ids A `character` vector of one or more which contain the order id(s).
 #'
-#' @return A `tibble` containing order details
+#' @return A `data.table` containing order details
 #'
 #' @examples
 #'
@@ -209,7 +209,7 @@ get_kucoin_order <- function(order_ids) {
     }
 
     # return the results
-    return(results)
+    return(results[])
 }
 
 get_an_order <- function(orderId) { # TODO: remove old code

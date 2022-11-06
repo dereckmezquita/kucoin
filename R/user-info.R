@@ -5,7 +5,7 @@
 #' @param currency A `character` vector of one currency symbol (optional).
 #' @param type A `character` vector of one indicating the `"main"` or `"trade"` account type (optional).
 #'
-#' @return A `tibble` containing balance details
+#' @return A `data.table` containing balance details
 #'
 #' @examples
 #'
@@ -98,5 +98,5 @@ get_kucoin_balances <- function(currency = NULL, type = NULL) {
     data.table::setorder(results, type, currency)
 
     # return the result
-    return(results)
+    return(results[])
 }

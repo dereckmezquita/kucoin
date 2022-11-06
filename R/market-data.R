@@ -25,7 +25,7 @@
 #'  * `"1 day"`
 #'  * `"1 week"`
 #'
-#' @return A `tibble` containing prices data
+#' @return A `data.table` containing prices data
 #'
 #' @examples
 #'
@@ -106,7 +106,7 @@ get_kucoin_prices <- function(symbols, from, to, frequency) {
     }
 
     # return the result
-    return(results)
+    return(results[])
 }
 
 # query klines (prices) data
@@ -154,14 +154,14 @@ get_klines <- function(symbol, startAt, endAt, type) {
     }
 
     # return the result
-    return(results)
+    return(results[])
 }
 
 # market metadata ---------------------------------------------------------
 
 #' @title Get all symbols' most recent metadata
 #'
-#' @return A `tibble` containing some metadata
+#' @return A `data.table` containing some metadata
 #'
 #' @examples
 #' # import library
@@ -220,5 +220,5 @@ get_kucoin_symbols <- function() { # TODO: remove old code
     data.table::setorder(results, base_currency, quote_currency)
 
     # return the result
-    return(results)
+    return(results[])
 }
