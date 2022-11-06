@@ -239,7 +239,7 @@ get_an_order <- function(orderId) { # TODO: remove old code
     response <- analyze_response(response)
 
     # parse json result
-    parsed <- jsonlite::fromJSON(content(response, "text"))
+    parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
     # results <- as_tibble(parsed$data, .name_repair = "minimal")

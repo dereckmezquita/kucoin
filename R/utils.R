@@ -27,7 +27,7 @@ get_kucoin_time <- function(raw = FALSE) {
     response <- analyze_response(response)
 
     # parse json result
-    parsed <- jsonlite::fromJSON(content(response, "text"))
+    parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # get timestamp
     results <- as.numeric(parsed$data)
