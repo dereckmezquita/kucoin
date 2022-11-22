@@ -4,17 +4,20 @@
 \alias{get_kucoin_symbols}
 \title{Get all symbols' most recent metadata}
 \usage{
-get_kucoin_symbols()
+get_kucoin_symbols(retries = 3)
+}
+\arguments{
+\item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
 }
 \value{
-A \code{tibble} containing some metadata
+A \code{data.table} containing some metadata
 }
 \description{
 Get all symbols' most recent metadata
 }
 \examples{
 # import library
-library(kucoin)
+library("kucoin")
 
 # get all symbols' most recent metadata
 metadata <- get_kucoin_symbols()

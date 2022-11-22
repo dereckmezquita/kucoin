@@ -7,8 +7,7 @@
 get_kucoin_time(raw = FALSE)
 }
 \arguments{
-\item{raw}{A \code{logical} vector to specify whether
-to return a raw results or not. The default is \code{FALSE}.}
+\item{raw}{A \code{logical} vector to specify whether to return a raw results or not. The default is \code{FALSE}.}
 }
 \value{
 A \code{datetime} object
@@ -18,7 +17,7 @@ Get current KuCoin API server time
 }
 \examples{
 # import library
-library(kucoin)
+library("kucoin")
 
 # get current server time
 get_kucoin_time()
