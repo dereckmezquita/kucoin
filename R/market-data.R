@@ -6,7 +6,9 @@
 #' @param from A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range.
 #' @param to A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range.
 #' @param frequency A `character` vector of one which specify the frequency option, see details for further information.
-#'
+#' @param delay A `numeric` value to delay data request in milliseconds.
+#' @param retries A `numeric` value to specify the number of retries in case of failure.
+#' 
 #' @details
 #'
 #'  There are several supported frequencies:
@@ -56,7 +58,7 @@
 #'
 #' @export
 
-get_kucoin_prices <- function(symbols, from, to, frequency) {
+get_kucoin_prices <- function(symbols, from, to, frequency, delay = 0.5, retries = 3) {
     # get datetime ranges
     times <- prep_datetime_range(
         from = lubridate::as_datetime(from),
@@ -78,7 +80,8 @@ get_kucoin_prices <- function(symbols, from, to, frequency) {
                 symbol = prep_symbols(symbol),
                 startAt = prep_datetime(times$from[i]),
                 endAt = prep_datetime(times$to[i]),
-                type = prep_frequency(frequency)
+                type = prep_frequency(frequency),
+                retries = retries
             )
 
             if (nrow(queried) == 0) {
@@ -86,6 +89,8 @@ get_kucoin_prices <- function(symbols, from, to, frequency) {
             } else {
                 result <- rbind(result, queried)
             }
+
+            Sys.sleep(delay)
         }
 
         if (nrow(result) == 0) {
@@ -110,7 +115,7 @@ get_kucoin_prices <- function(symbols, from, to, frequency) {
 }
 
 # query klines (prices) data
-get_klines <- function(symbol, startAt, endAt, type) {
+get_klines <- function(symbol, startAt, endAt, type, retries) {
     # prepare query params
     query_params <- list(
         symbol = symbol,
@@ -120,10 +125,12 @@ get_klines <- function(symbol, startAt, endAt, type) {
     )
 
     # get server response
-    response <- httr::GET(
+    response <- httr::RETRY(
+        verb = "GET",
         url = get_base_url(),
         path = get_paths("klines"),
-        query = query_params
+        query = query_params,
+        times = retries
     )
 
     # analyze response
@@ -160,6 +167,8 @@ get_klines <- function(symbol, startAt, endAt, type) {
 # market metadata ---------------------------------------------------------
 
 #' @title Get all symbols' most recent metadata
+#' 
+#' @param retries A `numeric` value to specify the number of retries in case of failure.
 #'
 #' @return A `data.table` containing some metadata
 #'
@@ -175,49 +184,71 @@ get_klines <- function(symbol, startAt, endAt, type) {
 #'
 #' @export
 
-get_kucoin_symbols <- function() { # TODO: remove old code
+get_kucoin_symbols <- function(retries = 3) {
     # get server response
-    response <- httr::GET(
-        url = get_base_url(),
-        path = get_paths("symbols")
+    response <- httr::RETRY(
+        verb = "GET",
+        url = kucoin:::get_base_url(),
+        path = kucoin:::get_paths("symbols"),
+        times = retries
     )
 
     # analyze response
-    response <- analyze_response(response)
+    response <- kucoin:::analyze_response(response)
 
     # parse json result
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
-    # results <- as_tibble(parsed$data, .name_repair = "minimal")
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
-    colnames(results) <- c(
-        "symbol", "quote_max_size", "enable_trading", "price_increment",
-        "fee_currency", "base_max_size", "base_currency", "quote_currency",
-        "market", "quote_increment", "base_min_size", "quote_min_size",
-        "name", "base_increment"
+    # seems that the only thing that changes in colnames is they are made to snake_case
+    # https://github.com/dereckdemezquita/kucoin/issues/1
+    # Error in setnames(x, value) : 
+    # Can't assign 14 names to a 17 column data.table
+    # colnames(results) <- c(
+    #     "symbol", "quote_max_size", "enable_trading", "price_increment",
+    #     "fee_currency", "base_max_size", "base_currency", "quote_currency",
+    #     "market", "quote_increment", "base_min_size", "quote_min_size",
+    #     "name", "base_increment"
+    # )
+
+    # https://stackoverflow.com/questions/73203811/how-to-convert-any-string-to-snake-case-using-only-base-r
+    colnames(results) <- gsub(" ", "_", tolower(gsub("(.)([A-Z])", "\\1 \\2", colnames(results))))
+
+    # since we are not sure to get the same data from the api forever
+    # I will programmatically modify what we receive rather than set colnames manually
+
+    # will no longer re-order the table
+    # common_cols <- c(
+    #     "symbol", "name", "enable_trading",
+    #     "base_currency", "quote_currency",
+    #     "market", # TOOD: added market column; might remove later
+    #     "base_min_size", "quote_min_size",
+    #     "base_max_size", "quote_max_size",
+    #     "base_increment", "quote_increment",
+    #     "price_increment", "fee_currency"
+    # )
+    # data.table::setcolorder(results, c(common_cols, setdiff(colnames(results), common_cols)))
+
+    numeric_cols <- c(
+        "base_min_size", "quote_min_size", "base_max_size",
+        "quote_max_size", "base_increment", "quote_increment",
+        "price_increment", "price_limit_rate", "min_funds"
     )
 
-    data.table::setcolorder(results, c(
-        "symbol", "name", "enable_trading",
-        "base_currency", "quote_currency",
-        "market", # TOOD: added market column; might remove later
-        "base_min_size", "quote_min_size",
-        "base_max_size", "quote_max_size",
-        "base_increment", "quote_increment",
-        "price_increment", "fee_currency"
-    ))
+    logical_cols <- c("is_margin_enabled", "enable_trading")
 
+    results[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+    # results[, colnames(results)[6:12] := lapply(.SD, as.numeric), .SDcols = 6:12]
 
-    # results[, 6:12] <- lapply(results[, 6:12], as.numeric)
-    results[, colnames(results)[6:12] := lapply(.SD, as.numeric), .SDcols = 6:12]
+    results[, c("symbol", "name") := lapply(.SD, prep_symbols, revert = TRUE), .SDcols = c("symbol", "name")]
+    # results[, colnames(results)[1:2] := lapply(.SD, prep_symbols, revert = TRUE), .SDcols = 1:2]
 
-    # results[, 1:2] <- lapply(results[, 1:2], prep_symbols, revert = TRUE)
-    results[, colnames(results)[1:2] := lapply(.SD, prep_symbols, revert = TRUE), .SDcols = 1:2]
+    results[, (logical_cols) := lapply(.SD, as.logical), .SDcols = logical_cols]
 
-    # results <- results[order(results$base_currency, results$quote_currency), ]
-    data.table::setorder(results, base_currency, quote_currency)
+    # data.table::setorder(results, base_currency, quote_currency)
+    data.table::setorder(results, symbol, fee_currency)
 
     # return the result
     return(results[])
