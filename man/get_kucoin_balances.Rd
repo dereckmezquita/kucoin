@@ -9,11 +9,10 @@ get_kucoin_balances(currency = NULL, type = NULL)
 \arguments{
 \item{currency}{A \code{character} vector of one currency symbol (optional).}
 
-\item{type}{A \code{character} vector of one indicating
-the \code{"main"} or \code{"trade"} account type (optional).}
+\item{type}{A \code{character} vector of one indicating the \code{"main"} or \code{"trade"} account type (optional).}
 }
 \value{
-A \code{tibble} containing balance details
+A \code{data.table} containing balance details
 }
 \description{
 Get user's balance(s) list
@@ -27,7 +26,7 @@ Get user's balance(s) list
 # in a proper .Renviron file
 
 # import library
-library(kucoin)
+library("kucoin")
 
 # get user's balance details
 balances <- get_kucoin_balances()

@@ -1,6 +1,6 @@
 Package: kucoin
 Title: R API to KuCoin Crytocurrency Exchange Market
-Version: 0.0.1
+Version: 0.0.11
 Authors@R: person(given = "Dereck", family = "de Mezquita", email = "dereck@demezquita.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9307-6762"))
 License: All rights reserved.
 Description: An R API to KuCoin crytocurrency exchange market.
@@ -17,6 +17,7 @@ Imports:
     httr,
     jsonlite,
     lubridate,
+    rlang,
     stringr
 Suggests:
     testthat (>= 2.1.0)

@@ -7,11 +7,10 @@
 get_kucoin_order(order_ids)
 }
 \arguments{
-\item{order_ids}{A \code{character} vector of one or more which
-contain the order id(s).}
+\item{order_ids}{A \code{character} vector of one or more which contain the order id(s).}
 }
 \value{
-A \code{tibble} containing order details
+A \code{data.table} containing order details
 }
 \description{
 Get an order details
@@ -25,7 +24,7 @@ Get an order details
 # in a proper .Renviron file
 
 # import library
-library(kucoin)
+library("kucoin")
 
 # get order details
 order_details <- get_kucoin_order(

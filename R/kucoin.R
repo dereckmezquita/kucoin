@@ -4,6 +4,8 @@
 #'
 #' @docType package
 #' 
+#' @import data.table
+#' 
 #' @importFrom data.table data.table
 #' @importFrom data.table fread
 #' @importFrom data.table setcolorder

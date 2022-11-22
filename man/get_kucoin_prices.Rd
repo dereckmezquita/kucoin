@@ -4,7 +4,7 @@
 \alias{get_kucoin_prices}
 \title{Get historical data from specified symbols}
 \usage{
-get_kucoin_prices(symbols, from, to, frequency)
+get_kucoin_prices(symbols, from, to, frequency, delay = 0.5, retries = 3)
 }
 \arguments{
 \item{symbols}{A \code{character} vector of one or more pair symbol.}
@@ -14,9 +14,13 @@ get_kucoin_prices(symbols, from, to, frequency)
 \item{to}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as an end of datetime range.}
 
 \item{frequency}{A \code{character} vector of one which specify the frequency option, see details for further information.}
+
+\item{delay}{A \code{numeric} value to delay data request in milliseconds.}
+
+\item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
 }
 \value{
-A \code{tibble} containing prices data
+A \code{data.table} containing prices data
 }
 \description{
 Get historical data from specified symbols
@@ -42,13 +46,13 @@ There are several supported frequencies:
 \examples{
 
 # import library
-library(kucoin)
+library("kucoin")
 
 # get one pair of symbol prices
 prices <- get_kucoin_prices(
   symbols = "KCS/USDT",
-  from = "2019-06-01 00:00:00",
-  to = "2019-06-02 00:00:00",
+  from = "2022-11-05 00:00:00",
+  to = "2022-11-06 00:00:00",
   frequency = "1 hour"
 )
 
@@ -58,8 +62,8 @@ prices
 # get multiple pair of symbols prices
 prices <- get_kucoin_prices(
   symbols = c("KCS/USDT", "BTC/USDT", "KCS/BTC"),
-  from = "2019-06-01 00:00:00",
-  to = "2019-06-02 00:00:00",
+  from = "2022-11-05 00:00:00",
+  to = "2022-11-06 00:00:00",
   frequency = "1 hour"
 )
 

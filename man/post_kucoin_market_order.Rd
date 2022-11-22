@@ -9,15 +9,12 @@ post_kucoin_market_order(symbol, side, base_size = NULL, quote_size = NULL)
 \arguments{
 \item{symbol}{A \code{character} vector of one or more pair symbol.}
 
-\item{side}{A \code{character} vector of one which specify
-the order side: \code{"buy"} or \code{"sell"}.}
+\item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"}.}
 
-\item{base_size, quote_size}{A \code{numeric} vector which specify
-the base or quote currency size.}
+\item{base_size, quote_size}{A \code{numeric} vector which specify the base or quote currency size.}
 }
 \value{
-If the transaction success, it will return
-a \code{character} vector which showing the order id
+If the transaction success, it will return a \code{character} vector which showing the order id
 }
 \description{
 Post a market order
@@ -31,7 +28,7 @@ Post a market order
 # in a proper .Renviron file
 
 # import library
-library(kucoin)
+library("kucoin")
 
 # post a market order: buy 1 KCS
 order_id <- post_kucoin_market_order(
