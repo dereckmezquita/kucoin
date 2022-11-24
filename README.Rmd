@@ -4,13 +4,13 @@ output: github_document
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  warning = FALSE,
-  message = FALSE,
-  fig.path = "man/figures/README-",
-  fig.align = "center",
-  out.width = "100%",
-  collapse = TRUE,
-  comment = "#>"
+    warning = FALSE,
+    message = FALSE,
+    fig.path = "man/figures/README-",
+    fig.align = "center",
+    out.width = "100%",
+    collapse = TRUE,
+    comment = "#>"
 )
 ```
 
@@ -75,10 +75,10 @@ For getting historical data, you can use `get_kucoin_prices()`:
 ```{r}
 # get one pair of symbol prices
 prices <- get_kucoin_prices(
-  symbols = "KCS/USDT",
-  from = "2019-06-01 00:00:00",
-  to = "2019-06-02 00:00:00",
-  frequency = "1 hour"
+    symbols = "KCS/USDT",
+    from = "2022-10-05 00:00:00",
+    to = "2022-11-06 00:00:00",
+    frequency = "1 hour"
 )
 
 # quick check
@@ -90,10 +90,10 @@ The `get_kucoin_prices()` function also support for querying multiple symbols:
 ```{r}
 # get one pair of symbol prices
 prices <- get_kucoin_prices(
-  symbols = c("KCS/USDT", "BTC/USDT", "KCS/BTC"),
-  from = "2019-06-01 00:00:00",
-  to = "2019-06-02 00:00:00",
-  frequency = "1 hour"
+    symbols = c("KCS/USDT", "BTC/USDT", "KCS/BTC"),
+    from = "2022-10-05 00:00:00",
+    to = "2022-11-06 00:00:00",
+    frequency = "1 hour"
 )
 
 # quick check
@@ -135,9 +135,9 @@ Here is an example of posting a market order:
 ```{r, eval=FALSE}
 # post a market order: buy 1 KCS
 order_detail <- post_kucoin_market_order(
-  symbol = "KCS/BTC",
-  side = "buy",
-  base_size = 1
+    symbol = "KCS/BTC",
+    side = "buy",
+    base_size = 1
 )
 
 # quick check
