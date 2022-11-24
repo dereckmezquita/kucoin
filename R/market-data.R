@@ -211,9 +211,8 @@ get_kucoin_symbols <- function(retries = 3) {
     #     "market", "quote_increment", "base_min_size", "quote_min_size",
     #     "name", "base_increment"
     # )
-
-    # https://stackoverflow.com/questions/73203811/how-to-convert-any-string-to-snake-case-using-only-base-r
-    colnames(results) <- gsub(" ", "_", tolower(gsub("(.)([A-Z])", "\\1 \\2", colnames(results))))
+    
+    colnames(results) <- to_snake_case(colnames(results))
 
     # since we are not sure to get the same data from the api forever
     # I will programmatically modify what we receive rather than set colnames manually
