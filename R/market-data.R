@@ -140,7 +140,6 @@ get_klines <- function(symbol, startAt, endAt, type, retries) {
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
-    # results <- as_tibble(parsed$data, .name_repair = "minimal")
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
     if (nrow(results) == 0) {

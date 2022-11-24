@@ -148,7 +148,6 @@ post_market_order <- function(symbol, side, size = NULL, funds = NULL) {
     }
 
     # tidy the parsed data
-    # results <- as_tibble(parsed$data, .name_repair = "minimal") # TODO: requires testing
     results <- data.table::data.table(parsed$data, check.names = FALSE)
     results <- results$orderId
 
@@ -193,7 +192,6 @@ get_kucoin_order <- function(order_ids) {
 
     # get queried results
     if (length(order_ids) > 1) {
-        # results <- tibble()
         results <- data.table::data.table()
 
         for (id in order_ids) {
@@ -242,7 +240,6 @@ get_an_order <- function(orderId) { # TODO: remove old code
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
-    # results <- as_tibble(parsed$data, .name_repair = "minimal")
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
     colnames(results) <- c(
