@@ -60,11 +60,18 @@ usethis::edit_r_environ(scope = "user")
 
 In the `.Renviron` file, insert your API key details as follow:
 
-```
+```bash
+KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
+
 KC-API-KEY = XXXXXXXXXX
 KC-API-SECRET = XXXXXXXXXX
 KC-API-PASSPHRASE = XXXXXXXXXX
 ```
+
+The `KC-API-ENDPOINT` variable is optional. This is used to allow the user to use KuCoin's sandbox `api` for paper trading. If not set then the real `api` is used by default:
+
+1. https://openapi-sandbox.kucoin.com
+1. https://api.kucoin.com/
 
 ### Market Data
 

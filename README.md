@@ -56,9 +56,20 @@ usethis::edit_r_environ(scope = "user")
 
 In the `.Renviron` file, insert your API key details as follow:
 
-    KC-API-KEY = XXXXXXXXXX
-    KC-API-SECRET = XXXXXXXXXX
-    KC-API-PASSPHRASE = XXXXXXXXXX
+``` bash
+KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
+
+KC-API-KEY = XXXXXXXXXX
+KC-API-SECRET = XXXXXXXXXX
+KC-API-PASSPHRASE = XXXXXXXXXX
+```
+
+The `KC-API-ENDPOINT` variable is optional. This is used to allow the
+user to use KuCoin’s sandbox `api` for paper trading. If not set then
+the real `api` is used by default:
+
+1.  <https://openapi-sandbox.kucoin.com>
+2.  <https://api.kucoin.com/>
 
 ### Market Data
 
@@ -148,11 +159,11 @@ metadata
 #>    4:    AAVE/BTC    AAVE/BTC          AAVE            BTC          BTC   DeFi
 #>    5:    AAVE/KCS    AAVE/KCS          AAVE            KCS          KCS    KCS
 #>   ---                                                                         
-#> 1280:    ZIL/USDC    ZIL/USDC           ZIL           USDC         USDC   USDS
-#> 1281:    ZIL/USDT    ZIL/USDT           ZIL           USDT         USDT   USDS
-#> 1282:    ZKT/USDT    ZKT/USDT           ZKT           USDT         USDT   USDS
-#> 1283:     ZRX/BTC     ZRX/BTC           ZRX            BTC          BTC   DeFi
-#> 1284:     ZRX/ETH     ZRX/ETH           ZRX            ETH          ETH   DeFi
+#> 1281:    ZIL/USDC    ZIL/USDC           ZIL           USDC         USDC   USDS
+#> 1282:    ZIL/USDT    ZIL/USDT           ZIL           USDT         USDT   USDS
+#> 1283:    ZKT/USDT    ZKT/USDT           ZKT           USDT         USDT   USDS
+#> 1284:     ZRX/BTC     ZRX/BTC           ZRX            BTC          BTC   DeFi
+#> 1285:     ZRX/ETH     ZRX/ETH           ZRX            ETH          ETH   DeFi
 #>       base_min_size quote_min_size base_max_size quote_max_size base_increment
 #>    1:         1e+00          1e-03         1e+10          1e+08          1e-04
 #>    2:         1e-02          1e-02         1e+10          1e+08          1e-04
@@ -160,11 +171,11 @@ metadata
 #>    4:         1e-03          1e-06         1e+10          1e+08          1e-04
 #>    5:         1e-02          1e-02         1e+10          1e+08          1e-04
 #>   ---                                                                         
-#> 1280:         1e+01          1e-01         1e+10          1e+08          1e-04
-#> 1281:         1e+00          1e-01         1e+10          1e+08          1e-04
-#> 1282:         1e-01          1e-01         1e+10          1e+08          1e-04
-#> 1283:         1e-01          1e-05         1e+10          1e+08          1e-04
-#> 1284:         1e-01          1e-04         1e+10          1e+08          1e-04
+#> 1281:         1e+01          1e-01         1e+10          1e+08          1e-04
+#> 1282:         1e+00          1e-01         1e+10          1e+08          1e-04
+#> 1283:         1e-01          1e-01         1e+10          1e+08          1e-04
+#> 1284:         1e-01          1e-05         1e+10          1e+08          1e-04
+#> 1285:         1e-01          1e-04         1e+10          1e+08          1e-04
 #>       quote_increment price_increment price_limit_rate min_funds
 #>    1:           1e-08           1e-08              0.1     1e-01
 #>    2:           1e-05           1e-05              0.1     1e-01
@@ -172,11 +183,11 @@ metadata
 #>    4:           1e-06           1e-06              0.1     1e-06
 #>    5:           1e-04           1e-04              0.1     1e-03
 #>   ---                                                           
-#> 1280:           1e-05           1e-05              0.1     1e-01
 #> 1281:           1e-05           1e-05              0.1     1e-01
-#> 1282:           1e-03           1e-03              0.1     1e-01
-#> 1283:           1e-08           1e-08              0.1     1e-06
-#> 1284:           1e-07           1e-07              0.1     1e-05
+#> 1282:           1e-05           1e-05              0.1     1e-01
+#> 1283:           1e-03           1e-03              0.1     1e-01
+#> 1284:           1e-08           1e-08              0.1     1e-06
+#> 1285:           1e-07           1e-07              0.1     1e-05
 #>       is_margin_enabled enable_trading
 #>    1:             FALSE           TRUE
 #>    2:              TRUE           TRUE
@@ -184,11 +195,11 @@ metadata
 #>    4:             FALSE           TRUE
 #>    5:             FALSE           TRUE
 #>   ---                                 
-#> 1280:             FALSE           TRUE
-#> 1281:              TRUE           TRUE
-#> 1282:             FALSE          FALSE
-#> 1283:             FALSE           TRUE
+#> 1281:             FALSE           TRUE
+#> 1282:              TRUE           TRUE
+#> 1283:             FALSE          FALSE
 #> 1284:             FALSE           TRUE
+#> 1285:             FALSE           TRUE
 ```
 
 ### Get User Information
