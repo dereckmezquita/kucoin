@@ -3,6 +3,8 @@
 .DS_Store
 deprecated/
 dev/
+# sensitive files and tokens
+*.sensitive.*
 
 # History files
 .Rhistory
