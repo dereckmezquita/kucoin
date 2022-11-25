@@ -13,6 +13,13 @@
 #' @return A `data.table` containing deposit address information
 #' 
 #' @examples
+#' 
+#' \dontrun{
+#' 
+#' # to run this example, make sure
+#' # you already setup the API key
+#' # in a proper .Renviron file
+#' 
 #' # import library
 #' library("kucoin")
 #' 
@@ -21,6 +28,8 @@
 #' 
 #' # quick check
 #' deposit_address
+#' 
+#' }
 #' 
 #' @export
 
