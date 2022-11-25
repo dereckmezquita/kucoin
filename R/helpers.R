@@ -1,5 +1,4 @@
 # response processor ------------------------------------------------------
-
 # response analyzer
 analyze_response <- function(x) {
     # stop if not return json
@@ -17,7 +16,6 @@ analyze_response <- function(x) {
 }
 
 # input processor ---------------------------------------------------------
-
 # convert conventional pair symbol to KuCoin's API standard
 prep_symbols <- function(x, revert = FALSE) {
     if (revert) {
@@ -147,10 +145,16 @@ prep_query_strings <- function(queries) {
 }
 
 # api base data -----------------------------------------------------------
-
 # paths/endpoints urls lookup
-get_base_url <- function() {
-    return("https://api.kucoin.com/")
+get_base_url <- function(endpoint = "https://api.kucoin.com") {
+    # https://openapi-sandbox.kucoin.com
+    # https://api.kucoin.com/
+
+    if (nchar(Sys.getenv("KC-API-ENDPOINT")) != 0) {
+        return(Sys.getenv("KC-API-ENDPOINT"))
+    }
+
+    return(endpoint)
 }
 
 # paths/endpoints urls lookup
@@ -164,7 +168,9 @@ get_paths <- function(x, type = "path", append = NULL) {
         "klines", "/api/v1/market/candles", "api/v1/market/candles"
         "orders", "/api/v1/orders", "api/v1/orders"
         "symbols", "/api/v1/symbols", "api/v1/symbols"
-        "time", "/api/v1/timestamp", "api/v1/timestamp"'
+        "time", "/api/v1/timestamp", "api/v1/timestamp"
+        "currencies", "/api/v2/currencies", "api/v2/currencies"
+        "deposit-addresses", "/api/v2/deposit-addresses", "api/v2/deposit-addresses"'
     )
 
     # convert to data frame
@@ -180,4 +186,11 @@ get_paths <- function(x, type = "path", append = NULL) {
 
     # return the result
     return(results)
+}
+
+# miscellaneous -----------------------------------------------------------
+# convert names to snake case
+# https://stackoverflow.com/questions/73203811/how-to-convert-any-string-to-snake-case-using-only-base-r
+to_snake_case <- function(vector) {
+    return(gsub(" ", "_", tolower(gsub("(.)([A-Z])", "\\1 \\2", vector))))
 }

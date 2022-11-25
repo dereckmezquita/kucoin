@@ -86,7 +86,6 @@ get_kucoin_balances <- function(currency = NULL, type = NULL) {
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
-    # results <- as_tibble(parsed$data)
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
     results <- results[, c("type", "id", "currency", "balance", "available", "holds")]

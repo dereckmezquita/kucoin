@@ -1,3 +1,9 @@
+
+*html
+.DS_Store
+deprecated/
+dev/
+
 # History files
 .Rhistory
 .Rapp.history
