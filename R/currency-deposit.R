@@ -77,9 +77,11 @@ get_kucoin_deposit_address <- function(currency, chain = NULL) {
     
     results <- data.table::as.data.table(parsed$data, check.names = FALSE)
 
+    colnames(results) <- to_snake_case(colnames(results))
+
     results[, currency := currency]
 
-    data.table::setcolorder(results, c("currency", "address", "memo", "chain"))
+    data.table::setcolorder(results, c("currency", "address", "memo", "chain", "contract_address"))
 
     return(results[])
 }
