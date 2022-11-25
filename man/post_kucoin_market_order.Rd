@@ -11,13 +11,18 @@ post_kucoin_market_order(symbol, side, base_size = NULL, quote_size = NULL)
 
 \item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"}.}
 
-\item{base_size, quote_size}{A \code{numeric} vector which specify the base or quote currency size.}
+\item{base_size}{A \code{numeric} vector of one determining the base size of the order.}
+
+\item{quote_size}{A \code{numeric} vector which specify the base or quote currency size.}
 }
 \value{
 If the transaction success, it will return a \code{character} vector which showing the order id
 }
 \description{
 Post a market order
+}
+\details{
+This API is restricted for each account, the request rate limit is 45 times/3s.
 }
 \examples{
 
