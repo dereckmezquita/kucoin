@@ -168,7 +168,9 @@ get_paths <- function(x, type = "path", append = NULL) {
         "klines", "/api/v1/market/candles", "api/v1/market/candles"
         "orders", "/api/v1/orders", "api/v1/orders"
         "symbols", "/api/v1/symbols", "api/v1/symbols"
-        "time", "/api/v1/timestamp", "api/v1/timestamp"'
+        "time", "/api/v1/timestamp", "api/v1/timestamp"
+        "currencies", "/api/v2/currencies", "api/v2/currencies"
+        "deposit-addresses", "/api/v2/deposit-addresses", "api/v2/deposit-addresses"'
     )
 
     # convert to data frame
