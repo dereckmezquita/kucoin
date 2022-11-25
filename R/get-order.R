@@ -53,7 +53,7 @@ get_kucoin_order <- function(order_ids) {
     return(results[])
 }
 
-get_an_order <- function(orderId) { # TODO: remove old code
+get_an_order <- function(orderId) {
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
@@ -83,36 +83,54 @@ get_an_order <- function(orderId) { # TODO: remove old code
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
     # tidy the parsed data
-    results <- data.table::data.table(parsed$data, check.names = FALSE)
+    results <- data.table::as.data.table(parsed$data, check.names = FALSE)
 
-    colnames(results) <- c(
-        "symbol", "hidden", "op_type", "fee", "channel",
-        "fee_currency", "type", "is_active", "created_at",
-        "visible_size", "price", "iceberg", "stop_triggered",
-        "funds", "order_id", "time_in_force", "side",
-        "deal_size", "cancel_after", "deal_funds", "stp",
-        "post_only", "stop_price", "size", "stop",
-        "cancel_exist", "client_oid"
+    # 2022-11-25 columns returned by the API:
+    # c("id", "symbol", "opType", "type", "side", "price", "size", "funds", "dealFunds", "dealSize", "fee", "feeCurrency", "stp", "stop", "stopTriggered", "stopPrice", "timeInForce", "postOnly", "hidden", "iceberg", "visibleSize", "cancelAfter", "channel", "clientOid", "isActive", "cancelExist", "createdAt", "tradeType")
+
+    colnames(results) <- to_snake_case(colnames(results))
+
+    ## ----------------------------------------
+    # cast columns types
+    ## ----------------------------------------
+
+    # cast numeric columns
+    numeric_cols <- c(
+        "price", "size", "funds", "deal_funds",
+        "deal_size", "fee", "stop_price",
+        "visible_size", "cancel_after"
     )
 
-    data.table::setcolorder(results, c(
-        "order_id", "client_oid", "created_at", "is_active",
-        "symbol", "side", "type", "price", "size", "funds",
-        "deal_size", "deal_funds", "visible_size",
-        "fee", "fee_currency", "stop", "stop_price",
-        "stop_triggered", "cancel_exist", "cancel_after",
-        "channel", "time_in_force", "op_type", "hidden",
-        "iceberg", "stp", "post_only"
-    ))
+    numeric_missing_cols <- setdiff(numeric_cols, colnames(results))
 
-    # results[, c(8:14, 17)] <- lapply(results[, c(8:14, 17)], as.numeric)
-    results[, colnames(results)[c(8:14, 17)] := lapply(.SD, as.numeric), .SDcols = c(8:14, 17)]
+    if (length(numeric_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp('The following columns are not in the data: ${numeric_missing_cols}'))
 
-    # results$symbol <- prep_symbols(results$symbol, revert = TRUE)
+        # keep only columns in the data
+        numeric_cols <- setdiff(numeric_cols, numeric_missing_cols)
+    }
+
+    logical_cols <- c(
+        "stop_triggered", "post_only", "hidden",
+        "iceberg", "is_active", "cancel_exist"
+    )
+
+    logical_missing_cols <- setdiff(logical_cols, colnames(results))
+
+    if (length(logical_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp('The following columns are not in the data: ${logical_missing_cols}'))
+
+        # keep only columns in the data
+        logical_cols <- setdiff(logical_cols, logical_missing_cols)
+    }
+
+    results[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+
+    results[, (logical_cols) := lapply(.SD, as.logical), .SDcols = logical_cols]
+
     results[, symbol := prep_symbols(symbol, revert = TRUE)]
 
-    # results$created_at <- lubridate::as_datetime(floor(results$created_at / 1000))
-    results[, created_at := lubridate::as_datetime(floor(created_at / 1000))]
+    results[, created_at := kucoin_time_to_datetime(created_at)]
 
     # return the result
     return(results)
