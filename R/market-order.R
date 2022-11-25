@@ -4,11 +4,13 @@
 #'
 #' @param symbol A `character` vector of one or more pair symbol.
 #' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"`.
-#' @param base_size A `numeric` vector of one determining the base size of the order.
-#' @param quote_size A `numeric` vector which specify the base or quote currency size.
+#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair.
+#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair.
 #' 
 #' @details
 #' This API is restricted for each account, the request rate limit is 45 times/3s.
+#' 
+#' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 #'
 #' @return If the transaction success, it will return a `character` vector which showing the order id
 #'
@@ -25,9 +27,9 @@
 #'
 #' # post a market order: buy 1 KCS
 #' order_id <- post_kucoin_market_order(
-#'   symbol = "KCS/BTC",
-#'   side = "buy",
-#'   base_size = 1
+#'     symbol = "KCS/BTC",
+#'     side = "buy",
+#'     base_size = 1
 #' )
 #'
 #' # quick check
@@ -35,9 +37,9 @@
 #'
 #' # post a market order: sell 1 KCS
 #' order_id <- post_kucoin_market_order(
-#'   symbol = "KCS/BTC",
-#'   side = "sell",
-#'   base_size = 1
+#'     symbol = "KCS/BTC",
+#'     side = "sell",
+#'     base_size = 1
 #' )
 #'
 #' # quick check
@@ -45,9 +47,9 @@
 #'
 #' # post a market order: buy KCS worth 0.0001 BTC
 #' order_id <- post_kucoin_market_order(
-#'   symbol = "KCS/BTC",
-#'   side = "buy",
-#'   quote_size = 0.0001
+#'     symbol = "KCS/BTC",
+#'     side = "buy",
+#'     quote_size = 0.0001
 #' )
 #'
 #' # quick check
@@ -55,9 +57,9 @@
 #'
 #' # post a market order: sell KCS worth 0.0001 BTC
 #' order_id <- post_kucoin_market_order(
-#'   symbol = "KCS/BTC",
-#'   side = "sell",
-#'   base_size = 0.0001
+#'     symbol = "KCS/BTC",
+#'     side = "sell",
+#'     quote_size = 0.0001
 #' )
 #'
 #' # quick check
@@ -149,11 +151,6 @@ post_market_order <- function(symbol, side, size = NULL, funds = NULL) {
         rlang::abort(stringr::str_interp('Got error/warning with message: ${parsed$msg}'))
     }
 
-    # tidy the parsed data
-    results <- data.table::data.table(parsed$data, check.names = FALSE)
-    results <- results$orderId
-
-    # return the result
-    return(results[])
+    return(parsed$data$orderId)
 }
 
