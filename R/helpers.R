@@ -194,3 +194,11 @@ get_paths <- function(x, type = "path", append = NULL) {
 to_snake_case <- function(vector) {
     return(gsub(" ", "_", tolower(gsub("(.)([A-Z])", "\\1 \\2", vector))))
 }
+
+collapse <- function(vector) {
+    if (length(vector) == 0) {
+        return(vector)
+    }
+
+    return(paste0(vector, collapse = ","))
+}
