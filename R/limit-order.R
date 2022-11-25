@@ -1,4 +1,26 @@
 
+## time in force
+# Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
+
+# GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
+
+# GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
+
+# IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
+
+# FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
+
+# Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.
+
+## post only
+# The post-only flag ensures that the trader always pays the maker fee and provides liquidity to the order book. If any part of the order is going to pay taker fee, the order will be fully rejected.
+
+# If a post only order will get executed immediately against the existing orders (except iceberg and hidden orders) in the market, the order will be cancelled.
+
+# For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
+
+
+#' @export
 post_kucoin_limit_order <- function(
     symbol, # accepts format "KCS/BTC"
     side, # buy or sell
@@ -73,12 +95,6 @@ post_limit_order <- function(
     iceberg = NULL, # only part of order displayed in order book
     visibleSize = NULL # max visible size of iceberg order
 ) {
-    # get current timestamp
-    current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
-
-    # create unique identifier for our order
-    clientOid <- jsonlite::base64_enc(as.character(current_timestamp))
-
     if (!is.null(cancelAfter) && timeInForce != "GTT") {
         rlang::abort(stringr::str_interp('Argument "cancelAfter" requires "timeInForce" to be GTT; received ${timeInForce}!'))
     }
@@ -86,6 +102,12 @@ post_limit_order <- function(
     if (!is.null(postOnly) && timeInForce %in% c("IOC", "FOK")) {
         rlang::abort(stringr::str_interp('Argument "postOnly" is invalid when "timeInForce" is ${timeInForce}!'))
     }
+
+    # get current timestamp
+    current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
+
+    # create unique identifier for our order
+    clientOid <- jsonlite::base64_enc(as.character(current_timestamp))
 
     # prepare post body
     post_body <- list(
@@ -99,9 +121,9 @@ post_limit_order <- function(
         hidden = hidden,
         iceberg = iceberg,
         visibleSize = visibleSize,
-        price = format(price, scientific = FALSE),
-        size = format(size, scientific = FALSE),
-        funds = format(funds, scientific = FALSE)
+        price = price,
+        size = size,
+        funds = funds
     )
 
     # remove NULL values
@@ -140,9 +162,5 @@ post_limit_order <- function(
         rlang::abort(stringr::str_interp('Got error/warning with message: ${parsed$msg}'))
     }
 
-    results <- data.table::data.table(parsed$data, check.names = FALSE)
-    results[, orderId := results$orderId]
-
-    # return results
-    return(results[])
+    return(parsed$data$orderId)
 }
