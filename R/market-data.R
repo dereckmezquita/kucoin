@@ -235,8 +235,29 @@ get_kucoin_symbols <- function(retries = 3) {
         "price_increment", "price_limit_rate", "min_funds"
     )
 
+    # sandbox api does not have "min_funds" column
+    # filter out columns that are not in the data; warn user that they are not in the data
+    numeric_missing_cols <- setdiff(numeric_cols, colnames(results))
+
+    if (length(numeric_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp("The following columns are not in the data: ${collapse(numeric_missing_cols)}"))
+
+        # keep only columns that are in the data
+        numeric_cols <- numeric_cols[!numeric_cols %in% numeric_missing_cols]
+    }
+
     logical_cols <- c("is_margin_enabled", "enable_trading")
 
+    logical_missing_cols <- setdiff(logical_cols, colnames(results))
+
+    if (length(logical_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp("The following columns are not in the data: ${collapse(logical_missing_cols)}"))
+
+        # keep only columns that are in the data
+        logical_cols <- logical_cols[!logical_cols %in% logical_missing_cols]
+    }
+
+    ## -----------------
     results[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
     # results[, colnames(results)[6:12] := lapply(.SD, as.numeric), .SDcols = 6:12]
 
