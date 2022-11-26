@@ -58,7 +58,7 @@
 #'
 #' @export
 
-get_kucoin_prices <- function(symbols, from, to, frequency, delay = 0.5, retries = 3) {
+get_kucoin_prices <- function(symbols, from, to, frequency, delay = 0, retries = 3) {
     # get datetime ranges
     times <- prep_datetime_range(
         from = lubridate::as_datetime(from),
