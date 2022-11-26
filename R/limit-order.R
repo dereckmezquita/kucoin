@@ -1,25 +1,99 @@
 
-## time in force
-# Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
-
-# GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
-
-# GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
-
-# IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
-
-# FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
-
-# Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.
-
-## post only
-# The post-only flag ensures that the trader always pays the maker fee and provides liquidity to the order book. If any part of the order is going to pay taker fee, the order will be fully rejected.
-
-# If a post only order will get executed immediately against the existing orders (except iceberg and hidden orders) in the market, the order will be cancelled.
-
-# For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
-
-
+#' @title Post a limit order
+#'
+#' @param symbol A `character` vector of one or more pair symbol.
+#' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"`.
+#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair.
+#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair.
+#' @param price A `numeric` vector of one which specify the price of the order.
+#' @param timeInForce A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill).
+#' @param cancelAfter A `numeric` vector of one specifying the number of seconds to wait before cancelling the order.
+#' @param postOnly A `logical` vector of one specifying whether the order is post only; invalid when `timeInForce` is `"IOC"` or `"FOK"`.
+#' @param hidden A `logical` vector of one specifying whether the order is hidden.
+#' @param iceberg A `logical` vector of one specifying whether the order is iceberg.
+#' @param visibleSize A `numeric` vector of one specifying the visible size of the iceberg order.
+#' 
+#' @details
+#' For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
+#' 
+#' This API is restricted for each account, the request rate limit is 45 times/3s.
+#' 
+#' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
+#' 
+#' ---------------
+#' Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
+#'
+#' GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
+#'
+#' GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
+#'
+#' IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
+#'
+#' FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
+#'
+#' Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.
+#'
+#' The post-only flag ensures that the trader always pays the maker fee and provides liquidity to the order book. If any part of the order is going to pay taker fee, the order will be fully rejected.
+#'
+#' If a post only order will get executed immediately against the existing orders (except iceberg and hidden orders) in the market, the order will be cancelled.
+#'
+#' For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
+#'
+#' @return If success returns a `character` vector of one; order id
+#'
+#' @examples
+#' 
+#' \dontrun{
+#'
+#' # to run this example, make sure
+#' # you already setup the API key
+#' # in a proper .Renviron file
+#'
+#' # import library
+#' library("kucoin")
+#'
+#' # post a market order: buy 1 KCS
+#' order_id <- post_kucoin_limit_order(
+#'     symbol = "KCS/BTC",
+#'     side = "buy",
+#'     base_size = 1
+#' )
+#'
+#' # quick check
+#' order_id
+#'
+#' # post a market order: sell 1 KCS
+#' order_id <- post_kucoin_limit_order(
+#'     symbol = "KCS/BTC",
+#'     side = "sell",
+#'     base_size = 1
+#' )
+#'
+#' # quick check
+#' order_id
+#'
+#' # post a market order: buy KCS worth 0.0001 BTC
+#' order_id <- post_kucoin_limit_order(
+#'     symbol = "KCS/BTC",
+#'     side = "buy",
+#'     quote_size = 0.0001
+#' )
+#'
+#' # quick check
+#' order_id
+#'
+#' # post a market order: sell KCS worth 0.0001 BTC
+#' order_id <- post_kucoin_limit_order(
+#'     symbol = "KCS/BTC",
+#'     side = "sell",
+#'     quote_size = 0.0001
+#' )
+#'
+#' # quick check
+#' order_id
+#'
+#' }
+#' 
 #' @export
 post_kucoin_limit_order <- function(
     symbol, # accepts format "KCS/BTC"

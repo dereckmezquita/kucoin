@@ -8,11 +8,13 @@
 #' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair.
 #' 
 #' @details
+#' For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
+#' 
 #' This API is restricted for each account, the request rate limit is 45 times/3s.
 #' 
 #' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 #'
-#' @return If the transaction success, it will return a `character` vector which showing the order id
+#' @return If success returns a `character` vector of one; order id
 #'
 #' @examples
 #'

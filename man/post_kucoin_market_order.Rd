@@ -16,12 +16,14 @@ post_kucoin_market_order(symbol, side, base_size = NULL, quote_size = NULL)
 \item{quote_size}{A \code{numeric} vector which specify the base or quote currency size; n units of the second currency in the pair.}
 }
 \value{
-If the transaction success, it will return a \code{character} vector which showing the order id
+If success returns a \code{character} vector of one; order id
 }
 \description{
 Post a market order
 }
 \details{
+For more information see the \href{https://docs.kucoin.com/#place-a-new-order}{KuCoin API documentation - new order}.
+
 This API is restricted for each account, the request rate limit is 45 times/3s.
 
 Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
