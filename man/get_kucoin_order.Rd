@@ -4,10 +4,14 @@
 \alias{get_kucoin_order}
 \title{Get an order details}
 \usage{
-get_kucoin_order(order_ids)
+get_kucoin_order(order_ids, delay = 0, retries = 3)
 }
 \arguments{
-\item{order_ids}{A \code{character} vector of one or more which contain the order id(s).}
+\item{order_ids}{A \code{character} vector of one or more which contain the order id(s) designated by KuCoin.}
+
+\item{delay}{A \code{numeric} value to delay data request in milliseconds.}
+
+\item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
 }
 \value{
 A \code{data.table} containing order details
