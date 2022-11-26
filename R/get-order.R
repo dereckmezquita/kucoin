@@ -2,7 +2,9 @@
 
 #' @title Get an order details
 #'
-#' @param order_ids A `character` vector of one or more which contain the order id(s).
+#' @param order_ids A `character` vector of one or more which contain the order id(s) designated by KuCoin.
+#' @param delay A `numeric` value to delay data request in milliseconds.
+#' @param retries A `numeric` value to specify the number of retries in case of failure.
 #'
 #' @return A `data.table` containing order details
 #'
@@ -29,7 +31,7 @@
 #'
 #' @export
 
-get_kucoin_order <- function(order_ids) {
+get_kucoin_order <- function(order_ids, delay = 0, retries = 3) {
     # force order id to unique
     order_ids <- unique(order_ids)
 
@@ -38,9 +40,11 @@ get_kucoin_order <- function(order_ids) {
         results <- data.table::data.table()
 
         for (id in order_ids) {
-            result <- get_an_order(orderId = id)
+            result <- get_an_order(orderId = id, retries = retries)
 
             results <- rbind(results, result)
+
+            Sys.sleep(delay)
         }
 
         # results <- results[order(results$created_at), ]
@@ -53,7 +57,7 @@ get_kucoin_order <- function(order_ids) {
     return(results[])
 }
 
-get_an_order <- function(orderId) {
+get_an_order <- function(orderId, retries = 3) {
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
@@ -70,10 +74,12 @@ get_an_order <- function(orderId) {
     )
 
     # get from server
-    response <- httr::GET(
+    response <- httr::RETRY(
+        verb = "GET",
         url = get_base_url(),
         path = get_paths("orders", append = orderId),
-        config = httr::add_headers(.headers = get_header)
+        config = httr::add_headers(.headers = get_header),
+        times = retries
     )
 
     # analyze response
