@@ -20,6 +20,8 @@
 #' 
 #' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 #' 
+#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_an_order()].
+#' 
 #' ---------------
 #' Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
 #'
@@ -39,7 +41,7 @@
 #'
 #' For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
 #'
-#' @return If success returns a `character` vector of one; order id
+#' @return If success returns `character` vector of one; order id designated by KuCoin.
 #'
 #' @examples
 #' 
