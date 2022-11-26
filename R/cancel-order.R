@@ -5,7 +5,13 @@
 #' @param delay A `numeric` value to delay data request in milliseconds.
 #' @param retries A `numeric` value to specify the number of retries in case of failure.
 #'
-#' @return If success returns `character` vector of one; order id designated by KuCoin.
+#' @return If success returns `character` vector of n order id(s); designated by KuCoin.
+#' 
+#' @details
+#' 
+#' This API is restricted for each account, the request rate limit is 60 times/3s.
+#' 
+#' For more information see documentation: [KuCoin - cancel-order](https://docs.kucoin.com/#cancel-an-order)
 #'
 #' @examples
 #'
