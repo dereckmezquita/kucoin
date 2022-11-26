@@ -13,8 +13,10 @@
 #' This API is restricted for each account, the request rate limit is 45 times/3s.
 #' 
 #' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
+#' 
+#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_an_order()].
 #'
-#' @return If success returns a `character` vector of one; order id
+#' @return If success returns `character` vector of one; order id designated by KuCoin.
 #'
 #' @examples
 #'
