@@ -11,13 +11,24 @@ post_kucoin_market_order(symbol, side, base_size = NULL, quote_size = NULL)
 
 \item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"}.}
 
-\item{base_size, quote_size}{A \code{numeric} vector which specify the base or quote currency size.}
+\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair.}
+
+\item{quote_size}{A \code{numeric} vector which specify the base or quote currency size; n units of the second currency in the pair.}
 }
 \value{
-If the transaction success, it will return a \code{character} vector which showing the order id
+If success returns \code{character} vector of one; order id designated by KuCoin.
 }
 \description{
 Post a market order
+}
+\details{
+For more information see the \href{https://docs.kucoin.com/#place-a-new-order}{KuCoin API documentation - new order}.
+
+This API is restricted for each account, the request rate limit is 45 times/3s.
+
+Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
+
+This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function \code{\link[=get_an_order]{get_an_order()}}.
 }
 \examples{
 
@@ -32,9 +43,9 @@ library("kucoin")
 
 # post a market order: buy 1 KCS
 order_id <- post_kucoin_market_order(
-  symbol = "KCS/BTC",
-  side = "buy",
-  base_size = 1
+    symbol = "KCS/BTC",
+    side = "buy",
+    base_size = 1
 )
 
 # quick check
@@ -42,9 +53,9 @@ order_id
 
 # post a market order: sell 1 KCS
 order_id <- post_kucoin_market_order(
-  symbol = "KCS/BTC",
-  side = "sell",
-  base_size = 1
+    symbol = "KCS/BTC",
+    side = "sell",
+    base_size = 1
 )
 
 # quick check
@@ -52,9 +63,9 @@ order_id
 
 # post a market order: buy KCS worth 0.0001 BTC
 order_id <- post_kucoin_market_order(
-  symbol = "KCS/BTC",
-  side = "buy",
-  quote_size = 0.0001
+    symbol = "KCS/BTC",
+    side = "buy",
+    quote_size = 0.0001
 )
 
 # quick check
@@ -62,9 +73,9 @@ order_id
 
 # post a market order: sell KCS worth 0.0001 BTC
 order_id <- post_kucoin_market_order(
-  symbol = "KCS/BTC",
-  side = "sell",
-  base_size = 0.0001
+    symbol = "KCS/BTC",
+    side = "sell",
+    quote_size = 0.0001
 )
 
 # quick check

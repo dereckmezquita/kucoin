@@ -4,7 +4,7 @@
 \alias{get_kucoin_prices}
 \title{Get historical data from specified symbols}
 \usage{
-get_kucoin_prices(symbols, from, to, frequency, delay = 0.5, retries = 3)
+get_kucoin_prices(symbols, from, to, frequency, delay = 0, retries = 3)
 }
 \arguments{
 \item{symbols}{A \code{character} vector of one or more pair symbol.}

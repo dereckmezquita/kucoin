@@ -44,3 +44,31 @@ get_kucoin_time <- function(raw = FALSE) {
     # return the results
     return(results)
 }
+
+#' @title Convert raw Kucoin time to a `datetime` object
+#'
+#' @param time A `numeric` vector of time returned from KuCoin API (milliseconds) to be converted to a `datetime` object.
+#'
+#' @return A `datetime` object
+#'
+#' @examples
+#' # import library
+#' library("kucoin")
+#'
+#' # get current server time
+#' kucoin_time_to_datetime(1.669401e+12)
+#'
+#' @export
+#' 
+# https://docs.kucoin.com/#server-time
+
+kucoin_time_to_datetime <- function(time) {
+    # readjust result
+    results <- floor(time / 1000)
+
+    # convert to proper datetime
+    results <- lubridate::as_datetime(results)
+
+    # return the results
+    return(results)
+}

@@ -18,6 +18,13 @@ A \code{data.table} containing deposit address information
 Get a deposit address for a currency. This function is useful for generating a deposit address for a currency. Note you must provide the chain (network) to use for the deposit address. This can be obtained by use of \code{kucoin::get_kucoin_currencies_details()}.
 }
 \examples{
+
+\dontrun{
+
+# to run this example, make sure
+# you already setup the API key
+# in a proper .Renviron file
+
 # import library
 library("kucoin")
 
@@ -26,6 +33,8 @@ deposit_address <- get_kucoin_deposit_address("BTC", "btc")
 
 # quick check
 deposit_address
+
+}
 
 }
 \seealso{
