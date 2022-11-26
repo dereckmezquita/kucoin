@@ -14,10 +14,15 @@ cancel_kucoin_order(orderId, delay = 0, retries = 3)
 \item{order_ids}{A \code{character} vector of one or more which contain the order id(s) designated by KuCoin.}
 }
 \value{
-If success returns \code{character} vector of one; order id designated by KuCoin.
+If success returns \code{character} vector of n order id(s); designated by KuCoin.
 }
 \description{
 Cancel order(s)
+}
+\details{
+This API is restricted for each account, the request rate limit is 60 times/3s.
+
+For more information see documentation: \href{https://docs.kucoin.com/#cancel-an-order}{KuCoin - cancel-order}
 }
 \examples{
 
