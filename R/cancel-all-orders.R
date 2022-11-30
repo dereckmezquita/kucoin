@@ -1,7 +1,7 @@
 
 #' @title Cancel all order(s) for a symbol
 #'
-#' @param symbol A `character` vector of one or more symbols; format "KCS/BTC".
+#' @param symbols A `character` vector of one or more symbols; format "BTC/USDT".
 #' @param tradeType A `character` vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE".
 #' @param delay A `numeric` value to delay data request in milliseconds.
 #' @param retries A `numeric` value to specify the number of retries in case of failure.
@@ -75,11 +75,12 @@ cancel_kucoin_all_pairs_order <- function(symbols, tradeType = "TRADE", delay = 
 }
 
 cancel_all_pair_order <- function(symbol, tradeType = "TRADE", retries = 3) {
-    current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
     if (!tradeType %in% c("TRADE", "MARGIN_ISOLATED_TRADE")) {
         rlang::abort(stringr::str_interp('Argument "tradeType" must be one of "TRADE" or "MARGIN_ISOLATED_TRADE"; received ${tradeType}.'))
     }
+
+    current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
     # example
     # DELETE /api/v1/orders?symbol=ETH-BTC&tradeType=TRADE
