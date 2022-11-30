@@ -2,6 +2,7 @@
 
 export(cancel_kucoin_all_pairs_order)
 export(cancel_kucoin_order)
+export(get_kucoin_all_orders)
 export(get_kucoin_balances)
 export(get_kucoin_currencies_details)
 export(get_kucoin_deposit_address)

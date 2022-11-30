@@ -12,13 +12,13 @@ cancel_kucoin_all_pairs_order(
 )
 }
 \arguments{
+\item{symbols}{A \code{character} vector of one or more symbols; format "BTC/USDT".}
+
 \item{tradeType}{A \code{character} vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE".}
 
 \item{delay}{A \code{numeric} value to delay data request in milliseconds.}
 
 \item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
-
-\item{symbol}{A \code{character} vector of one or more symbols; format "KCS/BTC".}
 }
 \value{
 If success returns \code{character} vector of n order id(s); designated by KuCoin.
