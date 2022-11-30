@@ -139,7 +139,7 @@ get_klines <- function(symbol, startAt, endAt, type, retries) {
     # parse json result
     parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
 
-    # tidy the parsed data
+    # parsed$data is a matrix array no colnames
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
     if (nrow(results) == 0) {
