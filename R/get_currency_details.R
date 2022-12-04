@@ -14,11 +14,11 @@
 #' 
 #' @seealso `kucoin::get_deposit_address()`
 #' 
-#' @return A `data.table` containing currency information
+#' @return A `data.table` with currency information
 #' 
 #' @details
 #' 
-#' For more information see documentation: [KuCoin - get-currency-detail](https://docs.kucoin.com/#get-currency-detail)
+#' For more information see documentation: [KuCoin - get-currency-detail](https://docs.kucoin.com/#get-currency-detail-recommend)
 #' 
 #' @examples
 #' # import library
@@ -46,7 +46,7 @@ get_currency_details <- function(currencies = NULL) {
 }
 
 
-# https://docs.kucoin.com/#get-currency-detail
+# https://docs.kucoin.com/#get-currency-detail-recommend
 .get_currency_details <- function(currency = NULL) {
     if (is.null(currency)) {
         rlang::abort('Argument "currency" must be provided.')

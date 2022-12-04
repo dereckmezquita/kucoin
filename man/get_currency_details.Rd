@@ -10,7 +10,7 @@ get_currency_details(currencies = NULL)
 \item{currencies}{A \code{character} vector to specify the currencies to get details for (required - default \code{NULL}).}
 }
 \value{
-A \code{data.table} containing currency information
+A \code{data.table} with currency information
 }
 \description{
 Get a currencies' details. This includes what chains are available for depositing; this function is useful for then generating a deposit address by use of \code{\link[=get_deposit_address]{get_deposit_address()}}.\tabular{lllllllllllll}{
@@ -21,7 +21,7 @@ Get a currencies' details. This includes what chains are available for depositin
 }
 }
 \details{
-For more information see documentation: \href{https://docs.kucoin.com/#get-currency-detail}{KuCoin - get-currency-detail}
+For more information see documentation: \href{https://docs.kucoin.com/#get-currency-detail-recommend}{KuCoin - get-currency-detail}
 }
 \examples{
 # import library
