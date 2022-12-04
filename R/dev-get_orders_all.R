@@ -1,7 +1,8 @@
 
 #' @export
 # https://docs.kucoin.com/#list-orders
-get_kucoin_all_orders <- function( # all NULL are optional
+.get_orders_all <- function(
+    # all NULL are optional
     symbol = NULL, # expects format "KCS-BTC"
     status = NULL, # expects "active" or "done"
     side = NULL,

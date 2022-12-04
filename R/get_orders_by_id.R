@@ -1,12 +1,14 @@
-# get order details -------------------------------------------------------
-
-#' @title Get an order details
+#' @title Get order(s) details by order id
 #'
-#' @param order_ids A `character` vector of one or more which contain the order id(s) designated by KuCoin.
-#' @param delay A `numeric` value to delay data request in milliseconds.
-#' @param retries A `numeric` value to specify the number of retries in case of failure.
+#' @param orderIds A `character` vector of one or more which contain the order id(s) designated by KuCoin (required - default `NULL`).
+#' @param delay A `numeric` value to delay data request in milliseconds (optional - default `0`).
+#' @param retries A `numeric` value to specify the number of retries in case of failure (optional - default `3`).
 #'
 #' @return A `data.table` containing order details
+#' 
+#' @details
+#' 
+#' For more information see documentation: [KuCoin - get-order](https://docs.kucoin.com/#get-an-order)
 #'
 #' @examples
 #'
@@ -20,9 +22,7 @@
 #' library("kucoin")
 #'
 #' # get order details
-#' order_details <- get_kucoin_order(
-#'   order_ids = "insertorderid"
-#' )
+#' order_details <- kucoin::get_orders_by_id(order_ids = "insertorderid")
 #'
 #' # quick check
 #' order_details
@@ -31,16 +31,20 @@
 #'
 #' @export
 
-get_kucoin_order <- function(order_ids, delay = 0, retries = 3) {
+get_orders_by_id <- function(orderIds = NULL, delay = 0, retries = 3) {
+    if (is.null(orderIds)) {
+        rlang::abort('Argument "orderIds" must be provided.')
+    }
+
     # force order id to unique
-    order_ids <- unique(order_ids)
+    order_ids <- unique(orderIds)
 
     # get queried results
     if (length(order_ids) > 1) {
         results <- data.table::data.table()
 
         for (id in order_ids) {
-            result <- get_an_order(orderId = id, retries = retries)
+            result <- .get_order_by_id(orderId = id, retries = retries)
 
             results <- rbind(results, result)
 
@@ -50,14 +54,18 @@ get_kucoin_order <- function(order_ids, delay = 0, retries = 3) {
         # results <- results[order(results$created_at), ]
         data.table::setorder(results, created_at)
     } else {
-        results <- get_an_order(orderId = order_ids)
+        results <- .get_order_by_id(orderId = orderIds)
     }
 
     # return the results
     return(results[])
 }
 
-get_an_order <- function(orderId, retries = 3) {
+.get_order_by_id <- function(orderId = NULL, retries = 3) {
+    if (is.null(orderId)) {
+        rlang::abort('Argument "orderId" must be provided.')
+    }
+
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 

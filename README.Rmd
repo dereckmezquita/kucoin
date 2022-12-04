@@ -32,8 +32,6 @@ remotes::install_github("dereckdemezquita/kucoin")
 
 ## Getting Started
 
-First of all, let's start by importing the library:
-
 ```{r}
 # import library
 library("kucoin")
@@ -41,7 +39,7 @@ library("kucoin")
 
 ### API Authorization
 
-Some function in this package requires private access and need a proper API key, secret, and passphrase. If you don't have any, or need more information, please visit the [Generating an API Key](https://docs.kucoin.com/#generating-an-api-key){target="_blank} section in the official API documentation.
+Some functions in this package require permissioned access and need a proper API key, secret, and passphrase. If you don't have a key, or need more information, visit the [Generating an API Key](https://docs.kucoin.com/#generating-an-api-key){target="_blank}.
 
 Current functions that need API authorization are:
 

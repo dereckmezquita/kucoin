@@ -2,10 +2,10 @@
 
 #' @title Post a market order
 #'
-#' @param symbol A `character` vector of one or more pair symbol.
-#' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"`.
-#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair.
-#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair.
+#' @param symbol A `character` vector of one or more pair symbol (required - default `NULL`).
+#' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).
+#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required or `quote_size` - default `NULL`).
+#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair (required or `base_size` - default `NULL`).
 #' 
 #' @details
 #' For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
@@ -14,7 +14,7 @@
 #' 
 #' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 #' 
-#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_an_order()].
+#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_orders_by_id()].
 #'
 #' @return If success returns `character` vector of one; order id designated by KuCoin.
 #'
@@ -30,7 +30,7 @@
 #' library("kucoin")
 #'
 #' # post a market order: buy 1 KCS
-#' order_id <- post_kucoin_market_order(
+#' order_id <- kucoin::submit_market_order(
 #'     symbol = "KCS/BTC",
 #'     side = "buy",
 #'     base_size = 1
@@ -40,7 +40,7 @@
 #' order_id
 #'
 #' # post a market order: sell 1 KCS
-#' order_id <- post_kucoin_market_order(
+#' order_id <- kucoin::submit_market_order(
 #'     symbol = "KCS/BTC",
 #'     side = "sell",
 #'     base_size = 1
@@ -50,7 +50,7 @@
 #' order_id
 #'
 #' # post a market order: buy KCS worth 0.0001 BTC
-#' order_id <- post_kucoin_market_order(
+#' order_id <- kucoin::submit_market_order(
 #'     symbol = "KCS/BTC",
 #'     side = "buy",
 #'     quote_size = 0.0001
@@ -60,7 +60,7 @@
 #' order_id
 #'
 #' # post a market order: sell KCS worth 0.0001 BTC
-#' order_id <- post_kucoin_market_order(
+#' order_id <- kucoin::submit_market_order(
 #'     symbol = "KCS/BTC",
 #'     side = "sell",
 #'     quote_size = 0.0001
@@ -73,22 +73,31 @@
 #'
 #' @export
 
-post_kucoin_market_order <- function(symbol, side, base_size = NULL, quote_size = NULL) {
+submit_market_order <- function(symbol = NULL, side = NULL, base_size = NULL, quote_size = NULL) {
+    if (is.null(symbol)) {
+        rlang::abort('Argument "symbol" must be provided.')
+    }
+
+    if (is.null(side)) {
+        rlang::abort('Argument "side" must be provided.')
+    }
+
+    # either base_size or quote_size must be provided but not both
     if (!is.null(base_size) & !is.null(quote_size)) {
-        rlang::abort('Choose either "base_size" or "quote_size" arguments!')
+        rlang::abort('Either "base_size" or "quote_size" must be provided.')
     } else if (is.null(base_size) & is.null(quote_size)) {
         rlang::abort('There is no specified size argument!')
     }
 
     # post market order
     if (!is.null(base_size)) {
-        results <- post_market_order(
+        results <- .submit_market_order(
             symbol = prep_symbols(symbol),
             side = side,
             size = format(base_size, scientific = FALSE)
         )
     } else {
-        results <- post_market_order(
+        results <- .submit_market_order(
             symbol = prep_symbols(symbol),
             side = side,
             funds = format(quote_size, scientific = FALSE)
@@ -99,7 +108,22 @@ post_kucoin_market_order <- function(symbol, side, base_size = NULL, quote_size 
     return(results)
 }
 
-post_market_order <- function(symbol, side, size = NULL, funds = NULL) {
+.submit_market_order <- function(symbol = NULL, side = NULL, size = NULL, funds = NULL) {
+    if (is.null(symbol)) {
+        rlang::abort('Argument "symbol" must be provided.')
+    }
+
+    if (is.null(side)) {
+        rlang::abort('Argument "side" must be provided.')
+    }
+
+    # either size or funds must be provided but not both
+    if (!is.null(size) & !is.null(funds)) {
+        rlang::abort('Either "size" or "funds" must be provided.')
+    } else if (is.null(size) & is.null(funds)) {
+        rlang::abort('There is no specified size argument!')
+    }
+
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 

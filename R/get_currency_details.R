@@ -1,0 +1,78 @@
+#' @title Get currencies' details
+#' 
+#' @description
+#' 
+#' Get a currencies' details. This includes what chains are available for depositing; this function is useful for then generating a deposit address by use of [kucoin::get_deposit_address()].
+#' 
+#' currency | name | full_name | precision | is_margin_enabled | is_debit_enabled | chain_name | withdrawal_min_size | withdrawal_min_fee | is_withdraw_enabled | is_deposit_enabled | confirms | contract_address
+#' -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
+#' BTC | BTC | BTC | 8 | TRUE | TRUE | BTC | 0.001 | 0.001 | TRUE | TRUE | 3 |  
+#' BTC | BTC | BTC | 8 | TRUE | TRUE | TRC20 | 0.001 | 0.003 | TRUE | TRUE | 19 |  
+#' BTC | BTC | BTC | 8 | TRUE | TRUE | BTC-Segwit | 0.001 | 0.001 | TRUE | TRUE | 3 |  
+#' 
+#' @param currencies A `character` vector to specify the currencies to get details for (required - default `NULL`).
+#' 
+#' @seealso `kucoin::get_deposit_address()`
+#' 
+#' @return A `data.table` containing currency information
+#' 
+#' @details
+#' 
+#' For more information see documentation: [KuCoin - get-currency-detail](https://docs.kucoin.com/#get-currency-detail)
+#' 
+#' @examples
+#' # import library
+#' library("kucoin")
+#' 
+#' # get a currencies' details
+#' currencies_details <- kucoin::get_currency_details(c("BTC", "XMR"))
+#' 
+#' currencies_details
+#' 
+#' @export
+
+get_currency_details <- function(currencies = NULL) {
+    if (is.null(currencies)) {
+        rlang::abort('Argument "currencies" must be provided.')
+    }
+
+    # get currencies details
+    results <- lapply(currencies, .get_currency_details)
+
+    # combine results
+    results <- data.table::rbindlist(results)
+
+    return(results[])
+}
+
+
+# https://docs.kucoin.com/#get-currency-detail
+.get_currency_details <- function(currency = NULL) {
+    if (is.null(currency)) {
+        rlang::abort('Argument "currency" must be provided.')
+    }
+
+    # GET /api/v2/currencies/{currency}
+    # GET /api/v2/currencies/BTC
+
+    response <- httr::GET(
+        url = get_base_url(),
+        path = get_paths("currencies", append = currency)
+    )
+
+    # analyze response
+    response <- analyze_response(response)
+
+    # parse json result
+    parsed <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
+
+    results <- data.table::as.data.table(parsed$data, check.names = FALSE)
+
+    # clean up column names
+    colnames(results) <- gsub("chains\\.", "", colnames(results))
+
+    # to snake case
+    colnames(results) <- to_snake_case(colnames(results))
+
+    return(results[])
+}

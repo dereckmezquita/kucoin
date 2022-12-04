@@ -1,5 +1,3 @@
-# user information --------------------------------------------------------
-
 #' @title Get user's balance(s) list
 #'
 #' @param currency A `character` vector of one currency symbol (optional).
@@ -19,13 +17,13 @@
 #' library("kucoin")
 #'
 #' # get user's balance details
-#' balances <- get_kucoin_balances()
+#' balances <- kucoin::get_account_balances()
 #'
 #' # quick check
 #' balances
 #'
 #' # get user's balance details for BTC only
-#' balances <- get_kucoin_balances(
+#' balances <- kucoin::get_account_balances(
 #'   currency = "BTC"
 #' )
 #'
@@ -33,7 +31,7 @@
 #' balances
 #'
 #' # get user's balance details for trade account only
-#' balances <- get_kucoin_balances(
+#' balances <- kucoin::get_account_balances(
 #'   type = "trade"
 #' )
 #'
@@ -44,7 +42,7 @@
 #'
 #' @export
 
-get_kucoin_balances <- function(currency = NULL, type = NULL) {
+get_account_balances <- function(currency = NULL, type = NULL) {
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
