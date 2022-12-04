@@ -2,19 +2,26 @@
 % Please edit documentation in R/get_market_metadata.R
 \name{get_market_metadata}
 \alias{get_market_metadata}
-\title{Get all symbols' most recent metadata}
+\title{Get all market symbols' metadata}
 \usage{
 get_market_metadata(retries = 3)
 }
 \arguments{
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
+\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
 }
 \value{
-A \code{data.table} containing some metadata
+A \code{data.table} with metadata
 }
 \description{
-Get all symbols' most recent metadata
+Get all market symbols' metadata
 }
+\details{
+TODO: this function needs to be updated to v2 of the API.
+}
+\section{---------------}{
+For more information see documentation: \href{https://docs.kucoin.com/#get-symbols-list-deprecated}{KuCoin - get-symbols-list-deprecated}
+}
+
 \examples{
 # import library
 library("kucoin")

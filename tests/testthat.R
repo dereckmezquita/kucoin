@@ -1,4 +1,4 @@
 library("testthat")
 library("kucoin")
 
-test_check("kucoin")
+testthat::test_check("kucoin")

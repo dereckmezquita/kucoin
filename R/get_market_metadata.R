@@ -1,8 +1,15 @@
-#' @title Get all symbols' most recent metadata
+#' @title Get all market symbols' metadata
 #' 
-#' @param retries A `numeric` value to specify the number of retries in case of failure.
+#' @param retries A `numeric` value to specify the number of retries in case of failure (optional - default `3`).
 #'
-#' @return A `data.table` containing some metadata
+#' @return A `data.table` with metadata
+#' 
+#' @details
+#' 
+#' TODO: this function needs to be updated to v2 of the API.
+#' 
+#' # ---------------
+#' For more information see documentation: [KuCoin - get-symbols-list-deprecated](https://docs.kucoin.com/#get-symbols-list-deprecated)
 #'
 #' @examples
 #' # import library

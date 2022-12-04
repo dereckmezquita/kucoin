@@ -2,28 +2,35 @@
 % Please edit documentation in R/get_market_data.R
 \name{get_market_data}
 \alias{get_market_data}
-\title{Get historical data from specified symbols}
+\title{Get historical market data for symbols}
 \usage{
-get_market_data(symbols, from, to, frequency, delay = 0, retries = 3)
+get_market_data(
+  symbols = NULL,
+  from = NULL,
+  to = NULL,
+  frequency = NULL,
+  delay = 0,
+  retries = 3
+)
 }
 \arguments{
-\item{symbols}{A \code{character} vector of one or more pair symbol.}
+\item{symbols}{A \code{character} vector of one or more pair symbol (required - default \code{NULL}).}
 
-\item{from}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as a start of datetime range.}
+\item{from}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as a start of datetime range (required - default \code{NULL}).}
 
-\item{to}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as an end of datetime range.}
+\item{to}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as an end of datetime range (required - default \code{NULL}).}
 
-\item{frequency}{A \code{character} vector of one which specify the frequency option, see details for further information.}
+\item{frequency}{A \code{character} vector of one which specify the frequency option, see details for further information (required - default \code{NULL}).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds.}
+\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0}).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure.}
+\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
 }
 \value{
-A \code{data.table} containing prices data
+A \code{data.table} with price data
 }
 \description{
-Get historical data from specified symbols
+Get historical market data for symbols
 }
 \details{
 There are several supported frequencies:
@@ -43,6 +50,10 @@ There are several supported frequencies:
 \item \code{"1 week"}
 }
 }
+\section{---------------}{
+For more information see documentation: \href{https://docs.kucoin.com/#get-klines}{KuCoin - get-klines}
+}
+
 \examples{
 
 # import library

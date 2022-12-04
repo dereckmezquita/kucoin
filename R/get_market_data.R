@@ -1,11 +1,11 @@
-#' @title Get historical data from specified symbols
+#' @title Get historical market data for symbols
 #'
-#' @param symbols A `character` vector of one or more pair symbol.
-#' @param from A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range.
-#' @param to A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range.
-#' @param frequency A `character` vector of one which specify the frequency option, see details for further information.
-#' @param delay A `numeric` value to delay data request in milliseconds.
-#' @param retries A `numeric` value to specify the number of retries in case of failure.
+#' @param symbols A `character` vector of one or more pair symbol (required - default `NULL`).
+#' @param from A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range (required - default `NULL`).
+#' @param to A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range (required - default `NULL`).
+#' @param frequency A `character` vector of one which specify the frequency option, see details for further information (required - default `NULL`).
+#' @param delay A `numeric` value to delay data request in milliseconds (optional - default `0`).
+#' @param retries A `numeric` value to specify the number of retries in case of failure (optional - default `3`).
 #' 
 #' @details
 #'
@@ -25,7 +25,10 @@
 #'  * `"1 day"`
 #'  * `"1 week"`
 #'
-#' @return A `data.table` containing prices data
+#' # ---------------
+#' For more information see documentation: [KuCoin - get-klines](https://docs.kucoin.com/#get-klines)
+#' 
+#' @return A `data.table` with price data
 #'
 #' @examples
 #'
@@ -56,7 +59,23 @@
 #'
 #' @export
 
-get_market_data <- function(symbols, from, to, frequency, delay = 0, retries = 3) {
+get_market_data <- function(symbols = NULL, from = NULL, to = NULL, frequency = NULL, delay = 0, retries = 3) {
+    if (is.null(symbols)) {
+        rlang::abort('Argument "symbols" must be an n length character vector of symbols in the format "BASE/QUOTE".')
+    }
+
+    if (is.null(from)) {
+        rlang::abort('Argument "from" must be a datetime object or character coercible to datetime.')
+    }
+
+    if (is.null(to)) {
+        rlang::abort('Argument "to" must be a datetime object or character coercible to datetime.')
+    }
+
+    if (is.null(frequency)) {
+        rlang::abort('Argument "frequency" must be a character vector of one; specifying the frequency option - see ?get_market_data for details.')
+    }
+
     # get datetime ranges
     times <- prep_datetime_range(
         from = lubridate::as_datetime(from),
@@ -114,7 +133,23 @@ get_market_data <- function(symbols, from, to, frequency, delay = 0, retries = 3
 
 # query klines (prices) data
 # https://docs.kucoin.com/#get-klines
-get_klines <- function(symbol, startAt, endAt, type, retries = 3) {
+get_klines <- function(symbol = NULL, startAt = NULL, endAt = NULL, type = NULL, retries = 3) {
+    if (is.null(symbol)) {
+        rlang::abort('Argument "symbol" must be provided.')
+    }
+
+    if (is.null(startAt)) {
+        rlang::abort('Argument "startAt" must be provided.')
+    }
+
+    if (is.null(endAt)) {
+        rlang::abort('Argument "endAt" must be provided.')
+    }
+
+    if (is.null(type)) {
+        rlang::abort('Argument "type" must be provided.')
+    }
+
     
     # TODO: api allows for startAt/endAt to be set to 0; test this
     
