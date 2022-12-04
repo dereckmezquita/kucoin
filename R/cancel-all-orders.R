@@ -57,7 +57,7 @@
 #'
 #' @export
 
-cancel_kucoin_all_pairs_order <- function(symbols, tradeType = "TRADE", delay = 0, retries = 3) {
+cancel_all_orders <- function(symbols = NULL, tradeType = NULL, delay = 0, retries = 3) {
     order_symbols <- unique(symbols)
 
     # cancel_all_pair_order returns a vector of length n
