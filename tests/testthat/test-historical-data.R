@@ -1,5 +1,5 @@
 # get one pair of symbol prices
-prices <- get_kucoin_prices(
+prices <- kucoin::get_market_data(
     symbols = "BTC/USDT",
     from = "2022-11-05 00:00:00",
     to = "2022-11-06 00:00:00",
@@ -12,7 +12,7 @@ test_that("all columns from historical data completed", {
 })
 
 # get multiple pair of symbol prices
-prices <- get_kucoin_prices(
+prices <- kucoin::get_market_data(
     symbols = c("BTC/USDT", "XMR/BTC", "KCS/BTC"),
     from = "2022-11-05 00:00:00",
     to = "2022-11-06 00:00:00",
