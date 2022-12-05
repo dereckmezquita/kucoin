@@ -18,12 +18,16 @@ analyze_response <- function(x) {
 # input processor ---------------------------------------------------------
 # convert conventional pair symbol to KuCoin's API standard
 prep_symbols <- function(x, revert = FALSE) {
+    if (!is.character(x) || length(x) == 0) {
+        rlang::warn('Argument "x" must be a character vector of length 1 or greater.')
+    }
+
     if (revert) {
         x <- gsub("\\-", "\\/", x)
     } else {
         x <- gsub("\\/", "\\-", x)
     }
-  
+
     return(x)
 }
 

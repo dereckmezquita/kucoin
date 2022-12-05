@@ -22,15 +22,13 @@ Get a currencies' details. This includes what chains are available for depositin
 }
 \details{
 For more information see documentation: \href{https://docs.kucoin.com/#get-currency-detail-recommend}{KuCoin - get-currency-detail}
+
+Using v2 of the api.
 }
 \examples{
-# import library
-library("kucoin")
 
 # get a currencies' details
-currencies_details <- kucoin::get_currency_details(c("BTC", "XMR"))
-
-currencies_details
+kucoin::get_currency_details(c("BTC", "XMR"))
 
 }
 \seealso{
