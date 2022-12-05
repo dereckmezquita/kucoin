@@ -34,6 +34,8 @@ remotes::install_github("dereckdemezquita/kucoin")
 
 ## Getting Started
 
+For more details and tutorials see the documentation at [TUTORIALS](TUTORIALS.md).
+
 ```{r}
 # import library
 library("kucoin")

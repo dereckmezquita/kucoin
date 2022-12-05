@@ -18,12 +18,16 @@ analyze_response <- function(x) {
 # input processor ---------------------------------------------------------
 # convert conventional pair symbol to KuCoin's API standard
 prep_symbols <- function(x, revert = FALSE) {
+    if (!is.character(x) || length(x) == 0) {
+        rlang::warn('Argument "x" must be a character vector of length 1 or greater.')
+    }
+
     if (revert) {
         x <- gsub("\\-", "\\/", x)
     } else {
         x <- gsub("\\/", "\\-", x)
     }
-  
+
     return(x)
 }
 
@@ -172,7 +176,8 @@ get_paths <- function(x, type = "path", append = NULL) {
         "accounts", "/api/v1/accounts", "api/v1/accounts"
         "klines", "/api/v1/market/candles", "api/v1/market/candles"
         "orders", "/api/v1/orders", "api/v1/orders"
-        "symbols", "/api/v1/symbols", "api/v1/symbols"
+        "symbols", "/api/v2/symbols", "api/v2/symbols"
+        "symbols-deprecated", "/api/v1/symbols", "api/v1/symbols"
         "time", "/api/v1/timestamp", "api/v1/timestamp"
         "currencies", "/api/v2/currencies", "api/v2/currencies"
         "deposit-addresses", "/api/v2/deposit-addresses", "api/v2/deposit-addresses"'
@@ -182,7 +187,7 @@ get_paths <- function(x, type = "path", append = NULL) {
     # lkp <- as.data.frame(lkp)
 
     # get specified endpoint
-    results <- lkp[x == this.x, ..type]
+    results <- lkp[x == this.x, ][[type]]
 
     # append if not null
     if (!is.null(append)) {

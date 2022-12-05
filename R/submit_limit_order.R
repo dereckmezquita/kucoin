@@ -3,8 +3,7 @@
 #'
 #' @param symbol A `character` vector of one or more pair symbol (required - default `NULL`).
 #' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).
-#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required if `quote_size` NULL - default `NULL`).
-#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair (required if `base_size` NULL - default `NULL`).
+#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required - default `NULL`).
 #' @param price A `numeric` vector of one which specify the price of the order (required - default `NULL`).
 #' @param timeInForce A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill) (optional - default `"GTC"`).
 #' @param cancelAfter A `numeric` vector of one specifying the number of seconds to wait before cancelling the order (optional - default `NULL`).
@@ -49,49 +48,57 @@
 #' # to run this example, make sure
 #' # you already setup the API key
 #' # in a proper .Renviron file
-#'
-#' # import library
-#' library("kucoin")
-#'
-#' # post a market order: buy 1 KCS
-#' order_id <- submit_limit_order(
-#'     symbol = "KCS/BTC",
-#'     side = "buy",
-#'     base_size = 1
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: sell 1 KCS
-#' order_id <- submit_limit_order(
-#'     symbol = "KCS/BTC",
+#' 
+#' # check our balances
+#' kucoin::get_account_balances()
+#' 
+#' ## -------
+#' # to avoid errors we will calculate our price and order size
+#' # kucoin accepts these values in specific increments per ticker symbol
+#' 
+#' # get the market metadata
+#' ticker <- "BTC/USDT"
+#' price_per_coin <- 10000
+#' amount_to_spend <- 300
+#' 
+#' metadata <- kucoin::get_market_metadata.deprecated()[symbol == ticker, ]
+#' price_increment <- metadata[symbol == ticker, ]$price_increment
+#' size_increment <- metadata[symbol == ticker, ]$base_increment
+#' 
+#' # calculate size and price
+#' size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+#' price <- floor(price_per_coin / price_increment) * price_increment
+#' 
+#' ## ----
+#' # submit order
+#' message(stringr::str_interp('${ticker}: selling ${size} ${gsub("\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\/", "", ticker)}.'))
+#' order_id <- kucoin::submit_limit_order(
+#'     symbol = ticker,
 #'     side = "sell",
-#'     base_size = 1
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: buy KCS worth 0.0001 BTC
-#' order_id <- submit_limit_order(
-#'     symbol = "KCS/BTC",
+#'     base_size = size,
+#'     price = price
+#' ); order_id
+#' 
+#' 
+#' ## ----
+#' # buying asset so recalculate
+#' price_per_coin <- 0.0005
+#' amount_to_spend <- 300
+#' 
+#' # calculate size and price
+#' size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+#' price <- floor(price_per_coin / price_increment) * price_increment
+#' 
+#' message(stringr::str_interp('${ticker}: buying ${size} ${gsub("\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\/", "", ticker)}.'))
+#' order_id2 <- kucoin::submit_limit_order(
+#'     symbol = ticker,
 #'     side = "buy",
-#'     quote_size = 0.0001
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: sell KCS worth 0.0001 BTC
-#' order_id <- submit_limit_order(
-#'     symbol = "KCS/BTC",
-#'     side = "sell",
-#'     quote_size = 0.0001
-#' )
-#'
-#' # quick check
-#' order_id
+#'     base_size = size,
+#'     price = price
+#' ); order_id2
+#' 
+#' kucoin::get_orders_by_id(c(order_id, order_id2))
+#' 
 #'
 #' }
 #' 
@@ -100,7 +107,6 @@ submit_limit_order <- function(
     symbol = NULL, # accepts format "KCS/BTC"
     side = NULL, # buy or sell
     base_size = NULL, # base size
-    quote_size = NULL, # quote size
     price = NULL, # price per base currency
     timeInForce = "GTC", # default is GTC
     cancelAfter = NULL, # in seconds; requires timeInForce to be GTT
@@ -117,10 +123,8 @@ submit_limit_order <- function(
         rlang::abort(stringr::str_interp('Argument "side" must be either "buy" or "sell"; received ${side}.'))
     }
 
-    if (!is.null(base_size) & !is.null(quote_size)) {
-        rlang::abort('Choose either "base_size" or "quote_size" arguments.')
-    } else if (is.null(base_size) & is.null(quote_size)) {
-        rlang::abort('There is no specified size argument.')
+    if (is.null(base_size)) {
+        rlang::abort('Argument "base_size" must be provided.')
     }
 
     if (is.null(price)) {
@@ -143,33 +147,18 @@ submit_limit_order <- function(
     
 
     # post limit order
-    if (!is.null(base_size)) {
-        results <- .submit_limit_order(
-            symbol = prep_symbols(symbol),
-            side = side,
-            size = format(base_size, scientific = FALSE),
-            price = format(price, scientific = FALSE),
-            timeInForce = timeInForce,
-            cancelAfter = cancelAfter,
-            postOnly = postOnly,
-            hidden = hidden,
-            iceberg = iceberg,
-            visibleSize = visibleSize
-        )
-    } else {
-        results <- .submit_limit_order(
-            symbol = prep_symbols(symbol),
-            side = side,
-            funds = format(quote_size, scientific = FALSE),
-            price = format(price, scientific = FALSE),
-            timeInForce = timeInForce,
-            cancelAfter = cancelAfter,
-            postOnly = postOnly,
-            hidden = hidden,
-            iceberg = iceberg,
-            visibleSize = visibleSize
-        )
-    }
+    results <- .submit_limit_order(
+        symbol = prep_symbols(symbol),
+        side = side,
+        size = format(base_size, scientific = FALSE),
+        price = format(price, scientific = FALSE),
+        timeInForce = timeInForce,
+        cancelAfter = cancelAfter,
+        postOnly = postOnly,
+        hidden = hidden,
+        iceberg = iceberg,
+        visibleSize = visibleSize
+    )
 
     # return result
     return(results)
@@ -180,7 +169,6 @@ submit_limit_order <- function(
     symbol, # requires prep_symbols() format; "BTC-USDT"
     side, # buy or sell
     size = NULL, # amount of base currency to buy or sell
-    funds = NULL, # amount of quote currency to spend
     price = NULL, # price per base currency
     timeInForce = "GTC", # default is GTC
     cancelAfter = NULL, # in seconds; requires timeInForce to be GTT
@@ -216,8 +204,7 @@ submit_limit_order <- function(
         iceberg = iceberg,
         visibleSize = visibleSize,
         price = price,
-        size = size,
-        funds = funds
+        size = size
     )
 
     # remove NULL values

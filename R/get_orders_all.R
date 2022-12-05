@@ -1,7 +1,41 @@
 
+#' @title Get all order(s)
+#' 
+#' @description 
+#' 
+#' TODO: experimental.
+#' 
+#' @param symbol A `character` vector of one or more which contain symbol(s) of format "BTC/USDT" (optional - default `NULL`).
+#' @param status A `character` vector of one either "done" or "active" (optional - default `NULL`).
+#' @param side A `character` vector of one either "buy" or "sell" (optional - default `NULL`).
+#' @param type A `character` vector of one either "limit", "market", "limit_stop", "market_stop" (optional - default `NULL`).
+#' @param tradeType A `character` vector of one either "TRADE" (spot trading), "MARGIN_TRADE" (cross margin trading), "MARGIN_ISOLATED_TRADE" (isolated margin trading) (required - default `TRADE`).
+#' @param from A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range (optional - default `NULL`).
+#' @param to A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range (optional - default `NULL`).
+#' @param delay A `numeric` value to delay data request in milliseconds (optional - default `0.1`).
+#' @param retries A `numeric` value to specify the number of retries in case of failure (optional - default `3`).
+#'
+#' @return A `data.table` containing order details
+#' 
+#' @details
+#' 
+#' For more information see documentation: [KuCoin - list-orders](https://docs.kucoin.com/#list-orders)
+#'
+#' @examples
+#'
+#' \dontrun{
+#'
+#' # to run this example, make sure
+#' # you already setup the API key
+#' # in a proper .Renviron file
+#'
+#' kucoin::get_orders_all()
+#'
+#' }
+#'
 #' @export
-# https://docs.kucoin.com/#list-orders
-.get_orders_all <- function(
+
+get_orders_all <- function(
     # all NULL are optional
     symbol = NULL, # expects format "KCS-BTC"
     status = NULL, # expects "active" or "done"
@@ -10,7 +44,8 @@
     tradeType = "TRADE", # TRADE (Spot Trading), MARGIN_TRADE (Cross Margin Trading), MARGIN_ISOLATED_TRADE (Isolated Margin Trading)
     from = NULL, # expects format "2021-01-01 00:00:00 UTC"
     to = NULL,
-    retries = 3
+    retries = 3,
+    delay = 0.1
 ) {
 
     if (!is.null(status) && !status %in% c("active", "done")) {
@@ -31,15 +66,24 @@
     # GET /api/v1/orders?status=active
     # GET /api/v1/orders?status=active?tradeType=MARGIN_ISOLATED_TRADE
 
-    # prepare query params
+    # prepare query params; need to return NULL if no params
     query_params <- list(
-        symbol = prep_symbols(symbol),
+        symbol = (\() {
+            if (!is.null(symbol)) return(prep_symbols(symbol))
+            return(NULL)
+        })(),
         status = status,
         side = side,
         type = type,
         tradeType = tradeType,
-        startAt = lubridate::as_datetime(from),
-        endAt = lubridate::as_datetime(to),
+        startAt = (\() {
+            if (!is.null(from)) return(lubridate::as_datetime(from))
+            return(NULL)
+        })(),
+        endAt = (\() {
+            if (!is.null(to)) return(lubridate::as_datetime(to))
+            return(NULL)
+        })(),
         currentPage = 1,
         pageSize = 10 # min 10 max 500
     )
@@ -126,7 +170,7 @@
 
             # get server response: This API is restricted for each account, the request rate limit is 30 times/3s.
             # sleep to meet rate limit of 10 requests per second
-            Sys.sleep(0.1)
+            Sys.sleep(delay)
 
             response <- httr::RETRY(
                 verb = "GET",
@@ -147,5 +191,39 @@
         }
     }
 
-    return(results)
+    if (nrow(results) == 0) {
+        message("No orders found.")
+        return(results)
+    }
+
+    colnames(results) <- to_snake_case(colnames(results))
+
+    numeric_cols <- c("price", "size", "funds", "deal_funds", "deal_size", "fee", "stop_price", "visible_size", "cancel_after", "created_at")
+
+    numeric_missing_cols <- setdiff(numeric_cols, colnames(results))
+
+    if (length(numeric_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp('The following columns are missing: ${collapse(numeric_missing_cols)}'))
+
+        # keep only columns that are in results
+        numeric_cols <- numeric_cols[!numeric_cols %in% numeric_missing_cols]
+    }
+
+    logical_cols <- c("stop_triggered", "post_only", "hidden", "iceberg", "is_active", "cancel_exist")
+
+    logical_missing_cols <- setdiff(logical_cols, colnames(results))
+
+    if (length(logical_missing_cols) > 0) {
+        rlang::warn(stringr::str_interp('The following columns are missing: ${collapse(logical_missing_cols)}'))
+
+        # keep only columns that are in results
+        logical_cols <- logical_cols[!logical_cols %in% logical_missing_cols]
+    }
+
+    ## -----------------
+    results[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+
+    results[, (logical_cols) := lapply(.SD, as.logical), .SDcols = logical_cols]
+
+    return(results[])
 }

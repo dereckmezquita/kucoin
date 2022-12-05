@@ -30,9 +30,6 @@ For more information see documentation: \href{https://docs.kucoin.com/#get-an-or
 # you already setup the API key
 # in a proper .Renviron file
 
-# import library
-library("kucoin")
-
 # get order details
 order_details <- kucoin::get_orders_by_id(order_ids = "insertorderid")
 

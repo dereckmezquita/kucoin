@@ -20,14 +20,12 @@
 #' 
 #' For more information see documentation: [KuCoin - get-currency-detail](https://docs.kucoin.com/#get-currency-detail-recommend)
 #' 
+#' Using v2 of the api.
+#' 
 #' @examples
-#' # import library
-#' library("kucoin")
 #' 
 #' # get a currencies' details
-#' currencies_details <- kucoin::get_currency_details(c("BTC", "XMR"))
-#' 
-#' currencies_details
+#' kucoin::get_currency_details(c("BTC", "XMR"))
 #' 
 #' @export
 

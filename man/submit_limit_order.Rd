@@ -8,7 +8,6 @@ submit_limit_order(
   symbol = NULL,
   side = NULL,
   base_size = NULL,
-  quote_size = NULL,
   price = NULL,
   timeInForce = "GTC",
   cancelAfter = NULL,
@@ -23,9 +22,7 @@ submit_limit_order(
 
 \item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"} (required - default \code{NULL}).}
 
-\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair (required if \code{quote_size} NULL - default \code{NULL}).}
-
-\item{quote_size}{A \code{numeric} vector which specify the base or quote currency size; n units of the second currency in the pair (required if \code{base_size} NULL - default \code{NULL}).}
+\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair (required - default \code{NULL}).}
 
 \item{price}{A \code{numeric} vector of one which specify the price of the order (required - default \code{NULL}).}
 
@@ -82,48 +79,56 @@ For more information see the \href{https://docs.kucoin.com/#place-a-new-order}{K
 # you already setup the API key
 # in a proper .Renviron file
 
-# import library
-library("kucoin")
+# check our balances
+kucoin::get_account_balances()
 
-# post a market order: buy 1 KCS
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
-    side = "buy",
-    base_size = 1
-)
+## -------
+# to avoid errors we will calculate our price and order size
+# kucoin accepts these values in specific increments per ticker symbol
 
-# quick check
-order_id
+# get the market metadata
+ticker <- "BTC/USDT"
+price_per_coin <- 10000
+amount_to_spend <- 300
 
-# post a market order: sell 1 KCS
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
+metadata <- kucoin::get_market_metadata.deprecated()[symbol == ticker, ]
+price_increment <- metadata[symbol == ticker, ]$price_increment
+size_increment <- metadata[symbol == ticker, ]$base_increment
+
+# calculate size and price
+size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+price <- floor(price_per_coin / price_increment) * price_increment
+
+## ----
+# submit order
+message(stringr::str_interp('${ticker}: selling ${size} ${gsub("\\\\\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\\\\\/", "", ticker)}.'))
+order_id <- kucoin::submit_limit_order(
+    symbol = ticker,
     side = "sell",
-    base_size = 1
-)
+    base_size = size,
+    price = price
+); order_id
 
-# quick check
-order_id
 
-# post a market order: buy KCS worth 0.0001 BTC
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
+## ----
+# buying asset so recalculate
+price_per_coin <- 0.0005
+amount_to_spend <- 300
+
+# calculate size and price
+size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+price <- floor(price_per_coin / price_increment) * price_increment
+
+message(stringr::str_interp('${ticker}: buying ${size} ${gsub("\\\\\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\\\\\/", "", ticker)}.'))
+order_id2 <- kucoin::submit_limit_order(
+    symbol = ticker,
     side = "buy",
-    quote_size = 0.0001
-)
+    base_size = size,
+    price = price
+); order_id2
 
-# quick check
-order_id
+kucoin::get_orders_by_id(c(order_id, order_id2))
 
-# post a market order: sell KCS worth 0.0001 BTC
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
-    side = "sell",
-    quote_size = 0.0001
-)
-
-# quick check
-order_id
 
 }
 

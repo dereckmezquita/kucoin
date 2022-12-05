@@ -23,8 +23,8 @@
 #' # you already setup the API key
 #' # in a proper .Renviron file
 #' 
-#' # import library
-#' library("kucoin")
+#' # check market metadata
+#' kucoin::get_currency_details("BTC")
 #' 
 #' # get a deposit address for a currency
 #' deposit_address <- kucoin::get_deposit_address("BTC", "btc")

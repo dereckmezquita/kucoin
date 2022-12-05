@@ -19,7 +19,7 @@ cancel_all_orders(symbols = NULL, tradeType = NULL, delay = 0, retries = 3)
 Success returns \code{character} vector of n order id(s) (designated by KuCoin).
 }
 \description{
-Cancel all order(s) for a symbol
+TODO: in development.
 }
 \details{
 This endpoint requires the Trade permission.
@@ -28,6 +28,8 @@ This API is restricted for each account, the request rate limit is 3 times/3s.
 }
 \section{---------------}{
 For more information see documentation: \href{https://docs.kucoin.com/#cancel-all-orders}{KuCoin - cancel-all-orders}
+
+TODO: if no symbols provided cancel all
 }
 
 \examples{
@@ -37,9 +39,6 @@ For more information see documentation: \href{https://docs.kucoin.com/#cancel-al
 # to run this example, make sure
 # you already setup the API key
 # in a proper .Renviron file
-
-# import library
-library("kucoin")
 
 symbol <- "ETH/USDT"
 
