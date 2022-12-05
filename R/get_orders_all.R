@@ -1,6 +1,10 @@
 
 #' @title Get all order(s)
 #' 
+#' @description 
+#' 
+#' Experimental.
+#' 
 #' @param symbol A `character` vector of one or more which contain symbol(s) of format "BTC/USDT" (optional - default `NULL`).
 #' @param status A `character` vector of one either "done" or "active" (optional - default `NULL`).
 #' @param side A `character` vector of one either "buy" or "sell" (optional - default `NULL`).
