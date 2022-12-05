@@ -15,21 +15,13 @@ A \code{data.table} with metadata
 \description{
 Get all market symbols' metadata
 }
-\details{
-TODO: this function needs to be updated to v2 of the API.
-}
 \section{---------------}{
 For more information see documentation: \href{https://docs.kucoin.com/#get-symbols-list-deprecated}{KuCoin - get-symbols-list-deprecated}
 }
 
 \examples{
-# import library
-library("kucoin")
 
 # get all symbols' most recent metadata
-metadata <- kucoin::get_market_metadata()
-
-# quick check
-metadata
+kucoin::get_market_metadata()
 
 }
