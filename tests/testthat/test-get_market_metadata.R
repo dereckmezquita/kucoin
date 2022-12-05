@@ -1,4 +1,6 @@
 
+# using v2 api; this is not available in the sandbox - expect errors
+
 metadata <- kucoin::get_market_metadata()
 
 # test that columns match; note in sandbox api the "min_funds" column is missing
