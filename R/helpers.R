@@ -182,7 +182,7 @@ get_paths <- function(x, type = "path", append = NULL) {
     # lkp <- as.data.frame(lkp)
 
     # get specified endpoint
-    results <- lkp[x == this.x, ..type]
+    results <- lkp[x == this.x, ][[type]]
 
     # append if not null
     if (!is.null(append)) {
