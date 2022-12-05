@@ -8,7 +8,6 @@ submit_limit_order(
   symbol = NULL,
   side = NULL,
   base_size = NULL,
-  quote_size = NULL,
   price = NULL,
   timeInForce = "GTC",
   cancelAfter = NULL,
@@ -23,9 +22,7 @@ submit_limit_order(
 
 \item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"} (required - default \code{NULL}).}
 
-\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair (required if \code{quote_size} NULL - default \code{NULL}).}
-
-\item{quote_size}{A \code{numeric} vector which specify the base or quote currency size; n units of the second currency in the pair (required if \code{base_size} NULL - default \code{NULL}).}
+\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair (required - default \code{NULL}).}
 
 \item{price}{A \code{numeric} vector of one which specify the price of the order (required - default \code{NULL}).}
 
@@ -82,48 +79,26 @@ For more information see the \href{https://docs.kucoin.com/#place-a-new-order}{K
 # you already setup the API key
 # in a proper .Renviron file
 
-# import library
-library("kucoin")
+# check our balances
+kucoin::get_account_balances()
 
-# post a market order: buy 1 KCS
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
-    side = "buy",
-    base_size = 1
-)
-
-# quick check
-order_id
-
-# post a market order: sell 1 KCS
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
+# submit an order to sell 1 ETH for USDT at price of 100000
+order_id <- kucoin::submit_limit_order(
+    symbol = "ETH/USDT",
     side = "sell",
-    base_size = 1
-)
+    base_size = 1,
+    price = 100000
+); order_id
 
-# quick check
-order_id
-
-# post a market order: buy KCS worth 0.0001 BTC
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
+# submit an order to buy 1 ETH for USDT at price of 0.01
+order_id <- kucoin::submit_limit_order(
+    symbol = "ETH/USDT",
     side = "buy",
-    quote_size = 0.0001
-)
+    base_size = 1,
+    price = 0.01
+); order_id
 
-# quick check
-order_id
-
-# post a market order: sell KCS worth 0.0001 BTC
-order_id <- submit_limit_order(
-    symbol = "KCS/BTC",
-    side = "sell",
-    quote_size = 0.0001
-)
-
-# quick check
-order_id
+kucoin::get_account_balances()
 
 }
 
