@@ -1,4 +1,8 @@
 #' @title Cancel all order(s) for a symbol
+#' 
+#' @description
+#' 
+#' TODO: in development.
 #'
 #' @param symbols A `character` vector of one or more symbols; format "BTC/USDT" (optional - default `NULL`).
 #' @param tradeType A `character` vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE" (optional - default `NULL`).
@@ -16,6 +20,8 @@
 #' # ---------------
 #' For more information see documentation: [KuCoin - cancel-all-orders](https://docs.kucoin.com/#cancel-all-orders)
 #'
+#' TODO: if no symbols provided cancel all
+#' 
 #' @examples
 #'
 #' \dontrun{
@@ -23,9 +29,6 @@
 #' # to run this example, make sure
 #' # you already setup the API key
 #' # in a proper .Renviron file
-#'
-#' # import library
-#' library("kucoin")
 #' 
 #' symbol <- "ETH/USDT"
 #' 
@@ -95,7 +98,10 @@ cancel_all_orders <- function(symbols = NULL, tradeType = NULL, delay = 0, retri
 
     # prepare query params
     query_params <- list(
-        symbol = prep_symbols(symbol),
+        symbol = (\() {
+            if (!is.null(symbol)) prep_symbols(symbol)
+            return(NULL)
+        })(),
         tradeType = tradeType
     )
 

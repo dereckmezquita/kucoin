@@ -25,30 +25,14 @@ Get user's balance(s) list
 # you already setup the API key
 # in a proper .Renviron file
 
-# import library
-library("kucoin")
-
 # get user's balance details
-balances <- kucoin::get_account_balances()
-
-# quick check
-balances
+kucoin::get_account_balances()
 
 # get user's balance details for BTC only
-balances <- kucoin::get_account_balances(
-  currency = "BTC"
-)
-
-# quick check
-balances
+kucoin::get_account_balances(currency = "BTC")
 
 # get user's balance details for trade account only
-balances <- kucoin::get_account_balances(
-  type = "trade"
-)
-
-# quick check
-balances
+kucoin::get_account_balances(type = "trade")
 
 }
 

@@ -26,9 +26,6 @@
 #' # to run this example, make sure
 #' # you already setup the API key
 #' # in a proper .Renviron file
-#'
-#' # import library
-#' library("kucoin")
 #' 
 #' # set a limit order
 #' order_id1 <- kucoin::post_kucoin_limit_order(

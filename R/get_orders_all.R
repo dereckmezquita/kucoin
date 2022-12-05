@@ -3,7 +3,7 @@
 #' 
 #' @description 
 #' 
-#' Experimental.
+#' TODO: experimental.
 #' 
 #' @param symbol A `character` vector of one or more which contain symbol(s) of format "BTC/USDT" (optional - default `NULL`).
 #' @param status A `character` vector of one either "done" or "active" (optional - default `NULL`).
@@ -225,5 +225,5 @@ get_orders_all <- function(
 
     results[, (logical_cols) := lapply(.SD, as.logical), .SDcols = logical_cols]
 
-    return(results)
+    return(results[])
 }

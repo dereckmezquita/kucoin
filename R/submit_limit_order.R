@@ -52,28 +52,57 @@
 #' # check our balances
 #' kucoin::get_account_balances()
 #' 
-#' # submit an order to sell 1 ETH for USDT at price of 100000
+#' ## -------
+#' # to avoid errors we will calculate our price and order size
+#' # kucoin accepts these values in specific increments per ticker symbol
+#' 
+#' # get the market metadata
+#' ticker <- "BTC/USDT"
+#' price_per_coin <- 10000
+#' amount_to_spend <- 300
+#' 
+#' metadata <- kucoin::get_market_metadata.deprecated()[symbol == ticker, ]
+#' price_increment <- metadata[symbol == ticker, ]$price_increment
+#' size_increment <- metadata[symbol == ticker, ]$base_increment
+#' 
+#' # calculate size and price
+#' size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+#' price <- floor(price_per_coin / price_increment) * price_increment
+#' 
+#' ## ----
+#' # submit order
+#' message(stringr::str_interp('${ticker}: selling ${size} ${gsub("\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\/", "", ticker)}.'))
 #' order_id <- kucoin::submit_limit_order(
-#'     symbol = "ETH/USDT",
+#'     symbol = ticker,
 #'     side = "sell",
-#'     base_size = 1,
-#'     price = 100000
+#'     base_size = size,
+#'     price = price
 #' ); order_id
 #' 
-#' # submit an order to buy 1 ETH for USDT at price of 0.01
-#' order_id <- kucoin::submit_limit_order(
-#'     symbol = "ETH/USDT",
+#' 
+#' ## ----
+#' # buying asset so recalculate
+#' price_per_coin <- 0.0005
+#' amount_to_spend <- 300
+#' 
+#' # calculate size and price
+#' size <- floor(amount_to_spend / price_per_coin / size_increment) * size_increment
+#' price <- floor(price_per_coin / price_increment) * price_increment
+#' 
+#' message(stringr::str_interp('${ticker}: buying ${size} ${gsub("\\\\/.*", "", ticker)} @ ${price} ${gsub(".*\\\\/", "", ticker)}.'))
+#' order_id2 <- kucoin::submit_limit_order(
+#'     symbol = ticker,
 #'     side = "buy",
-#'     base_size = 1,
-#'     price = 0.01
-#' ); order_id
+#'     base_size = size,
+#'     price = price
+#' ); order_id2
 #' 
-#' kucoin::get_account_balances()
+#' kucoin::get_orders_by_id(c(order_id, order_id2))
+#' 
 #'
 #' }
 #' 
 #' @export
-
 submit_limit_order <- function(
     symbol = NULL, # accepts format "KCS/BTC"
     side = NULL, # buy or sell
@@ -118,31 +147,18 @@ submit_limit_order <- function(
     
 
     # post limit order
-    if (!is.null(base_size)) {
-        results <- .submit_limit_order(
-            symbol = prep_symbols(symbol),
-            side = side,
-            price = format(price, scientific = FALSE),
-            timeInForce = timeInForce,
-            cancelAfter = cancelAfter,
-            postOnly = postOnly,
-            hidden = hidden,
-            iceberg = iceberg,
-            visibleSize = visibleSize
-        )
-    } else {
-        results <- .submit_limit_order(
-            symbol = prep_symbols(symbol),
-            side = side,
-            price = format(price, scientific = FALSE),
-            timeInForce = timeInForce,
-            cancelAfter = cancelAfter,
-            postOnly = postOnly,
-            hidden = hidden,
-            iceberg = iceberg,
-            visibleSize = visibleSize
-        )
-    }
+    results <- .submit_limit_order(
+        symbol = prep_symbols(symbol),
+        side = side,
+        size = format(base_size, scientific = FALSE),
+        price = format(price, scientific = FALSE),
+        timeInForce = timeInForce,
+        cancelAfter = cancelAfter,
+        postOnly = postOnly,
+        hidden = hidden,
+        iceberg = iceberg,
+        visibleSize = visibleSize
+    )
 
     # return result
     return(results)

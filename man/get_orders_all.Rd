@@ -39,7 +39,7 @@ get_orders_all(
 A \code{data.table} containing order details
 }
 \description{
-Experimental.
+TODO: experimental.
 }
 \details{
 For more information see documentation: \href{https://docs.kucoin.com/#list-orders}{KuCoin - list-orders}
