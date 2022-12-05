@@ -26,48 +26,36 @@
 #' # you already setup the API key
 #' # in a proper .Renviron file
 #'
-#' # import library
-#' library("kucoin")
-#'
-#' # post a market order: buy 1 KCS
+#' # check our balances
+#' kucoin::get_account_balances()
+#' 
+#' # post a market order: buy 1 ETH
 #' order_id <- kucoin::submit_market_order(
-#'     symbol = "KCS/BTC",
+#'     symbol = "ETH/BTC",
 #'     side = "buy",
 #'     base_size = 1
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: sell 1 KCS
+#' ); order_id
+#' 
+#' # post a market order: sell 1 ETH
 #' order_id <- kucoin::submit_market_order(
-#'     symbol = "KCS/BTC",
+#'     symbol = "ETH/BTC",
 #'     side = "sell",
 #'     base_size = 1
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: buy KCS worth 0.0001 BTC
+#' ); order_id
+#' 
+#' # post a market order: buy ETH worth 0.0001 BTC
 #' order_id <- kucoin::submit_market_order(
-#'     symbol = "KCS/BTC",
+#'     symbol = "ETH/BTC",
 #'     side = "buy",
 #'     quote_size = 0.0001
-#' )
-#'
-#' # quick check
-#' order_id
-#'
-#' # post a market order: sell KCS worth 0.0001 BTC
+#' ); order_id
+#' 
+#' # post a market order: sell ETH worth 0.0001 BTC
 #' order_id <- kucoin::submit_market_order(
-#'     symbol = "KCS/BTC",
+#'     symbol = "ETH/BTC",
 #'     side = "sell",
 #'     quote_size = 0.0001
-#' )
-#'
-#' # quick check
-#' order_id
+#' ); order_id
 #'
 #' }
 #'
