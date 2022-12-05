@@ -187,6 +187,11 @@ get_orders_all <- function(
         }
     }
 
+    if (nrow(results) == 0) {
+        message("No orders found.")
+        return(results)
+    }
+
     colnames(results) <- to_snake_case(colnames(results))
 
     numeric_cols <- c("price", "size", "funds", "deal_funds", "deal_size", "fee", "stop_price", "visible_size", "cancel_after", "created_at")
