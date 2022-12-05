@@ -11,3 +11,19 @@ I want to also get data back from the order book:
 ```
 
 More information here: https://docs.kucoin.com/#get-part-order-book-aggregated
+
+## Reasses types passed to `api`
+
+https://docs.kucoin.com/#request
+
+    Types
+
+    Timestamps
+
+    Unless otherwise specified, all timestamps from API are returned in milliseconds(e.g. 1546658861000). Most modern languages and libraries will handle this without issues.
+
+    But please note that the timestamps between the matching engine and the order system are in nanoseconds.
+
+    Numbers
+
+    Decimal numbers are returned as strings in order to preserve the full precision across platforms. When making a request, it is recommended that you also convert your numbers to strings to avoid truncation and precision errors.

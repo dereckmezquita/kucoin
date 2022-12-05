@@ -1,37 +1,33 @@
 
 #' @title Post a limit order
 #'
-#' @param symbol A `character` vector of one or more pair symbol.
-#' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"`.
-#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair.
-#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair.
-#' @param price A `numeric` vector of one which specify the price of the order.
-#' @param timeInForce A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill).
-#' @param cancelAfter A `numeric` vector of one specifying the number of seconds to wait before cancelling the order.
-#' @param postOnly A `logical` vector of one specifying whether the order is post only; invalid when `timeInForce` is `"IOC"` or `"FOK"`.
-#' @param hidden A `logical` vector of one specifying whether the order is hidden.
-#' @param iceberg A `logical` vector of one specifying whether the order is iceberg.
-#' @param visibleSize A `numeric` vector of one specifying the visible size of the iceberg order.
+#' @param symbol A `character` vector of one or more pair symbol (required - default `NULL`).
+#' @param side A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).
+#' @param base_size A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required if `quote_size` NULL - default `NULL`).
+#' @param quote_size A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair (required if `base_size` NULL - default `NULL`).
+#' @param price A `numeric` vector of one which specify the price of the order (required - default `NULL`).
+#' @param timeInForce A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill) (optional - default `"GTC"`).
+#' @param cancelAfter A `numeric` vector of one specifying the number of seconds to wait before cancelling the order (optional - default `NULL`).
+#' @param postOnly A `logical` vector of one specifying whether the order is post only; invalid when `timeInForce` is `"IOC"` or `"FOK"` (optional - default `NULL`).
+#' @param hidden A `logical` vector of one specifying whether the order is hidden (optional - default `NULL`).
+#' @param iceberg A `logical` vector of one specifying whether the order is iceberg (optional - default `NULL`).
+#' @param visibleSize A `numeric` vector of one specifying the visible size of the iceberg order (optional - default `0`).
 #' 
 #' @details
-#' For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
 #' 
 #' This API is restricted for each account, the request rate limit is 45 times/3s.
 #' 
 #' Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 #' 
-#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_an_order()].
+#' This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_orders_by_id()].
 #' 
-#' ---------------
+#' # ---------------
 #' Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
 #'
-#' GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
-#'
-#' GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
-#'
-#' IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
-#'
-#' FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
+#' 1. GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
+#' 1. GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
+#' 1. IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
+#' 1. FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
 #'
 #' Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.
 #'
@@ -40,6 +36,9 @@
 #' If a post only order will get executed immediately against the existing orders (except iceberg and hidden orders) in the market, the order will be cancelled.
 #'
 #' For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
+#' 
+#' # ---------------
+#' For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
 #'
 #' @return If success returns `character` vector of one; order id designated by KuCoin.
 #'
@@ -55,7 +54,7 @@
 #' library("kucoin")
 #'
 #' # post a market order: buy 1 KCS
-#' order_id <- post_kucoin_limit_order(
+#' order_id <- submit_limit_order(
 #'     symbol = "KCS/BTC",
 #'     side = "buy",
 #'     base_size = 1
@@ -65,7 +64,7 @@
 #' order_id
 #'
 #' # post a market order: sell 1 KCS
-#' order_id <- post_kucoin_limit_order(
+#' order_id <- submit_limit_order(
 #'     symbol = "KCS/BTC",
 #'     side = "sell",
 #'     base_size = 1
@@ -75,7 +74,7 @@
 #' order_id
 #'
 #' # post a market order: buy KCS worth 0.0001 BTC
-#' order_id <- post_kucoin_limit_order(
+#' order_id <- submit_limit_order(
 #'     symbol = "KCS/BTC",
 #'     side = "buy",
 #'     quote_size = 0.0001
@@ -85,7 +84,7 @@
 #' order_id
 #'
 #' # post a market order: sell KCS worth 0.0001 BTC
-#' order_id <- post_kucoin_limit_order(
+#' order_id <- submit_limit_order(
 #'     symbol = "KCS/BTC",
 #'     side = "sell",
 #'     quote_size = 0.0001
@@ -97,9 +96,9 @@
 #' }
 #' 
 #' @export
-post_kucoin_limit_order <- function(
-    symbol, # accepts format "KCS/BTC"
-    side, # buy or sell
+submit_limit_order <- function(
+    symbol = NULL, # accepts format "KCS/BTC"
+    side = NULL, # buy or sell
     base_size = NULL, # base size
     quote_size = NULL, # quote size
     price = NULL, # price per base currency
@@ -110,23 +109,42 @@ post_kucoin_limit_order <- function(
     iceberg = NULL, # only part of order displayed in order book
     visibleSize = NULL # max visible size of iceberg order
 ) {
+    if (is.null(symbol)) {
+        rlang::abort('Argument "symbol" must be provided.')
+    }
+
     if (!side %in% c("buy", "sell")) {
-        rlang::abort(stringr::str_interp('Argument "side" must be either "buy" or "sell"; received ${side}!'))
+        rlang::abort(stringr::str_interp('Argument "side" must be either "buy" or "sell"; received ${side}.'))
     }
 
     if (!is.null(base_size) & !is.null(quote_size)) {
-        rlang::abort('Choose either "base_size" or "quote_size" arguments!')
+        rlang::abort('Choose either "base_size" or "quote_size" arguments.')
     } else if (is.null(base_size) & is.null(quote_size)) {
-        rlang::abort('There is no specified size argument!')
+        rlang::abort('There is no specified size argument.')
     }
 
     if (is.null(price)) {
-        rlang::abort('There is no specified price argument!')
+        rlang::abort('There is no specified price argument.')
     }
+
+    if (!timeInForce %in% c("GTC", "GTT", "IOC", "FOK")) {
+        rlang::abort(stringr::str_interp('Argument "timeInForce" must be either "GTC", "GTT", "IOC", or "FOK"; received ${timeInForce}.'))
+    }
+
+    # cancelAfter requires timeInForce to be set to GTT
+    if (!is.null(cancelAfter) && timeInForce != "GTT") {
+        rlang::abort('Argument "cancelAfter" requires "timeInForce" to be set to "GTT".')
+    }
+
+    # postOnly is invalid when timeInForce is IOC or FOK
+    if (!is.null(postOnly) & timeInForce %in% c("IOC", "FOK")) {
+        rlang::abort('Argument "postOnly" is invalid when "timeInForce" is "IOC" or "FOK".')
+    }
+    
 
     # post limit order
     if (!is.null(base_size)) {
-        results <- post_limit_order(
+        results <- .submit_limit_order(
             symbol = prep_symbols(symbol),
             side = side,
             size = format(base_size, scientific = FALSE),
@@ -139,7 +157,7 @@ post_kucoin_limit_order <- function(
             visibleSize = visibleSize
         )
     } else {
-        results <- post_limit_order(
+        results <- .submit_limit_order(
             symbol = prep_symbols(symbol),
             side = side,
             funds = format(quote_size, scientific = FALSE),
@@ -158,7 +176,7 @@ post_kucoin_limit_order <- function(
 }
 
 # https://docs.kucoin.com/#place-a-new-order
-post_limit_order <- function(
+.submit_limit_order <- function(
     symbol, # requires prep_symbols() format; "BTC-USDT"
     side, # buy or sell
     size = NULL, # amount of base currency to buy or sell

@@ -1,16 +1,22 @@
-
 #' @title Cancel order(s)
 #'
-#' @param order_ids A `character` vector of one or more which contain the order id(s) designated by KuCoin.
-#' @param delay A `numeric` value to delay data request in milliseconds.
-#' @param retries A `numeric` value to specify the number of retries in case of failure.
+#' @param orderIds A `character` vector of one or more which contains the order id(s) designated by KuCoin (required - default `NULL`).
+#' @param delay A `numeric` value to delay data request in milliseconds (optional - default `0`).
+#' @param retries A `numeric` value to specify the number of retries in case of failure (optional - default `3`).
 #'
 #' @return If success returns `character` vector of n order id(s); designated by KuCoin.
 #' 
 #' @details
 #' 
+#' This endpoint requires the Trade permission.
+#' 
 #' This API is restricted for each account, the request rate limit is 60 times/3s.
 #' 
+#' This interface is only for cancellation requests. The cancellation result needs to be obtained by querying the order status, you can use [kucoin::get_orders_by_id()]. 
+#' 
+#' It is recommended that you DO NOT cancel the order until receiving the Open message, otherwise the order cannot be cancelled successfully.
+#' 
+#' # ---------------
 #' For more information see documentation: [KuCoin - cancel-order](https://docs.kucoin.com/#cancel-an-order)
 #'
 #' @examples
@@ -25,7 +31,14 @@
 #' library("kucoin")
 #' 
 #' # set a limit order
-#' order_id <- kucoin::post_kucoin_limit_order(
+#' order_id1 <- kucoin::post_kucoin_limit_order(
+#'    symbol = "ETH/USDT",
+#'    side = "sell",
+#'    base_size = 1,
+#'    price = 100000
+#' )
+#' 
+#' order_id2 <- kucoin::post_kucoin_limit_order(
 #'    symbol = "ETH/USDT",
 #'    side = "sell",
 #'    base_size = 1,
@@ -33,21 +46,25 @@
 #' )
 #'
 #' # get order details
-#' cancelled <- kucoin::cancel_kucoin_order(order_id)
+#' cancelled <- kucoin::cancel_order(c(order_id1, order_id2))
 #'
 #' }
 #'
 #' @export
 
-cancel_kucoin_order <- function(orderId, delay = 0, retries = 3) {
+cancel_order <- function(orderIds = NULL, delay = 0, retries = 3) {
+    if (is.null(orderIds)) {
+        rlang::abort('Argument "orderIds" must be provided.')
+    }
+
     # force order id to unique
-    order_ids <- unique(orderId)
+    order_ids <- unique(orderIds)
 
     results <- vector(mode = "character", length = length(order_ids))
 
     # TODO: consider using a tryCatch and return list(success, failure)
     for (i in seq_along(order_ids)) {
-        results[i] <- cancel_an_order(orderId = order_ids[i], retries = retries)
+        results[i] <- .cancel_order(orderId = order_ids[i], retries = retries)
 
         Sys.sleep(delay)
     }
@@ -55,12 +72,12 @@ cancel_kucoin_order <- function(orderId, delay = 0, retries = 3) {
     return(results)
 }
 
-# This endpoint requires the Trade permission.
+# https://docs.kucoin.com/#cancel-an-order
+.cancel_order <- function(orderId = NULL, retries = 3) {
+    if (is.null(orderId)) {
+        rlang::abort('Argument "orderId" must be provided.')
+    }
 
-# This API is restricted for each account, the request rate limit is 60 times/3s.
-
-# This interface is only for cancellation requests. The cancellation result needs to be obtained by querying the order status or subscribing to websocket. It is recommended that you DO NOT cancel the order until receiving the Open message, otherwise the order cannot be cancelled successfully.
-cancel_an_order <- function(orderId, retries = 3) {
     # get current timestamp
     current_timestamp <- as.character(get_kucoin_time(raw = TRUE))
 
@@ -91,5 +108,11 @@ cancel_an_order <- function(orderId, retries = 3) {
     # parse json result
     parsed <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"))
 
-    return(parsed$data$cancelledOrderIds)
+    results <- parsed$data$cancelledOrderIds
+
+    if (length(results) == 0) {
+        message(stringr::str_interp('No order cancelled for order id: ${orderId}'))
+    }
+
+    return(results)
 }

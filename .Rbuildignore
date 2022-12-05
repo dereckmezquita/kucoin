@@ -4,5 +4,11 @@
 ^README\.Rmd$
 ^\.travis\.yml$
 ^\.Renviron
+
 dev/
 check-install.sh
+.vscode
+README.*
+TODO.*
+deprecated/
+keys.sensitive.txt

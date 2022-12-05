@@ -161,6 +161,11 @@ get_base_url <- function(endpoint = "https://api.kucoin.com") {
 get_paths <- function(x, type = "path", append = NULL) {
     this.x <- x
 
+    # --------------------
+    # TODO: Get Symbols List(deprecated) - GET /api/v1/symbols
+
+    # https://docs.kucoin.com/#get-klines
+
     # lookup table
     lkp <- data.table::fread(
         '"x", "endpoint", "path"
