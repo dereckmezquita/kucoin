@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>"
 )
+
+options("datatable.print.topn" = 3, "datatable.print.nrows" = 50, "datatable.print.class" = TRUE, "datatable.print.trunc.cols" = TRUE)
 ```
 
 # kucoin
@@ -37,24 +39,24 @@ remotes::install_github("dereckdemezquita/kucoin")
 library("kucoin")
 ```
 
-### API Authorization
+### API Authorisation
 
 Some functions in this package require permissioned access and need a proper API key, secret, and passphrase. If you don't have a key, or need more information, visit the [Generating an API Key](https://docs.kucoin.com/#generating-an-api-key){target="_blank}.
 
-Current functions that need API authorization are:
+Current functions that need API authorisation are:
 
-* `post_kucoin_market_order()`
-* `get_kucoin_balances()`
-* `get_kucoin_order()`
+* `kucoin::cancel_all_orders`
+* `kucoin::cancel_order`
+* `kucoin::get_orders_all`
+* `kucoin::get_account_balances`
+* `kucoin::get_deposit_address`
+* `kucoin::get_orders_by_id`
+* `kucoin::submit_limit_order`
+* `kucoin::submit_market_order`
 
 #### Setting-up API Key
 
-To setup the API, the recommended way is using `.Renviron` file, which could be conveniently done using [`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html){target="_blank"}:
-
-```{r, eval=FALSE}
-# you can also use `scope = "project"` for local environment
-usethis::edit_r_environ(scope = "user")
-```
+Use an `.Renviron` file to set your API key. You can `touch` or use `usethat` to create a new `.Renviron` file; [`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html){target="_blank"}:
 
 In the `.Renviron` file, insert your API key details as follow:
 
@@ -66,72 +68,68 @@ KC-API-SECRET = XXXXXXXXXX
 KC-API-PASSPHRASE = XXXXXXXXXX
 ```
 
-The `KC-API-ENDPOINT` variable is optional. This is used to allow the user to use KuCoin's sandbox `api` for paper trading. If not set then the real `api` is used by default:
+The `KC-API-ENDPOINT` variable is optional. This is used to allow the user access KuCoin's sandbox API for paper trading. If not set then the real API is used by default:
 
 1. https://openapi-sandbox.kucoin.com
 1. https://api.kucoin.com/
 
 ### Market Data
 
-**All market data is publicly accessible, and could be accessed without API authorization.**
+**All market data is publicly accessible, and could be accessed without API authorisation.**
 
-For getting historical data, you can use `get_kucoin_prices()`:
+For getting historical data, you can use `kucoin::get_market_data()`:
 
 ```{r}
 # get one pair of symbol prices
-prices <- get_kucoin_prices(
+prices <- kucoin::get_market_data(
     symbols = "KCS/USDT",
     from = "2022-10-05 00:00:00",
     to = "2022-11-06 00:00:00",
     frequency = "1 hour"
 )
 
-# quick check
 prices
 ```
 
-The `get_kucoin_prices()` function also support for querying multiple symbols:
+The `kucoin::get_market_data()` function also supports for querying multiple symbols:
 
 ```{r}
 # get one pair of symbol prices
-prices <- get_kucoin_prices(
+prices <- kucoin::get_market_data(
     symbols = c("KCS/USDT", "BTC/USDT", "KCS/BTC"),
     from = "2022-10-05 00:00:00",
     to = "2022-11-06 00:00:00",
     frequency = "1 hour"
 )
 
-# quick check
 prices
 ```
 
-You can also get the most recent metadata for all symbols using `get_kucoin_symbols()`:
+You can also get the most recent metadata for all symbols using `kucoin::get_market_metadata()`:
 
 ```{r}
 # get all symbols' most recent metadata
-metadata <- get_kucoin_symbols()
+metadata <- kucoin::get_market_metadata()
 
-# quick check
 metadata
 ```
 
 ### Get User Information
 
-**All user information data is private, and need API authorization.**
+**All user information data is private, and needs API authorisation.**
 
-To get the balance information, you can use `get_kucoin_balance()`:
+To get balance information you can use `kucoin::get_account_balances()`:
 
 ```{r, eval=FALSE}
 # get user's balance details
-balances <- get_kucoin_balances()
+balances <- kucoin::get_account_balances()
 
-# quick check
 balances
 ```
 
 ### Post an Order
 
-**All order posting functions are private, and need API authorization.**
+**All order posting functions are private, and need API authorisation.**
 
 #### Market Order
 
@@ -139,12 +137,26 @@ Here is an example of posting a market order:
 
 ```{r, eval=FALSE}
 # post a market order: buy 1 KCS
-order_detail <- post_kucoin_market_order(
+order_id <- kucoin::submit_market_order(
     symbol = "KCS/BTC",
     side = "buy",
     base_size = 1
 )
 
-# quick check
-order_detail
+order_id
+```
+
+#### Limit Order
+
+Here is an example of posting a limit order:
+
+```{r, eval=FALSE}
+# post a limit order: buy 1 KCS
+order_id <- submit_limit_order(
+    symbol = "KCS/BTC",
+    side = "buy",
+    base_size = 1
+)
+
+order_id
 ```
