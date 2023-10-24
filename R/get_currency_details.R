@@ -3,12 +3,12 @@
 #' @description
 #' 
 #' Get a currencies' details. This includes what chains are available for depositing; this function is useful for then generating a deposit address by use of [kucoin::get_deposit_address()].
-#' 
-#' currency | name | full_name | precision | is_margin_enabled | is_debit_enabled | chain_name | withdrawal_min_size | withdrawal_min_fee | is_withdraw_enabled | is_deposit_enabled | confirms | contract_address
-#' -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
-#' BTC | BTC | BTC | 8 | TRUE | TRUE | BTC | 0.001 | 0.001 | TRUE | TRUE | 3 |  
-#' BTC | BTC | BTC | 8 | TRUE | TRUE | TRC20 | 0.001 | 0.003 | TRUE | TRUE | 19 |  
-#' BTC | BTC | BTC | 8 | TRUE | TRUE | BTC-Segwit | 0.001 | 0.001 | TRUE | TRUE | 3 |  
+#'
+#' | currency | name | full_name | precision | is_margin_enabled | is_debit_enabled | chain_name | chain  | withdrawal_min_size | withdrawal_min_fee | is_withdraw_enabled | is_deposit_enabled | confirms | pre_confirms | contract_address                           |
+#' |----------|------|-----------|-----------|-------------------|------------------|------------|--------|---------------------|--------------------|---------------------|--------------------|----------|--------------|--------------------------------------------|
+#' | BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | BTC        | btc    | 0.0008              | 0.0005             | TRUE                | TRUE               | 3        | 1            |                                            |
+#' | BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | KCC        | kcc    | 0.0008              | 0.00002            | TRUE                | TRUE               | 20       | 20           | 0xfa93c12cd345c658bc4644d1d4e1b9615952258c |
+#' | BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | BTC-Segwit | bech32 | 0.0008              | 0.0005             | FALSE               | TRUE               | 2        | 2            |                                            |
 #' 
 #' @param currencies A `character` vector to specify the currencies to get details for (required - default `NULL`).
 #' 
