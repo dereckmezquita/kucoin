@@ -6,7 +6,7 @@
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Travis build
-status](https://travis-ci.org/dereckdemezquita/kucoin.svg?branch=master)](https://travis-ci.org/dereckdemezquita/kucoin)
+status](https://travis-ci.org/dereckmezquita/kucoin.svg?branch=master)](https://travis-ci.org/dereckmezquita/kucoin)
 <!-- badges: end -->
 
 ## Installation
@@ -15,7 +15,7 @@ You can install the development version of `kucoin` using:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("dereckdemezquita/kucoin")
+remotes::install_github("dereckmezquita/kucoin")
 ```
 
 ## Getting Started

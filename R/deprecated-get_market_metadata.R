@@ -42,7 +42,7 @@ get_market_metadata.deprecated <- function(retries = 3) {
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
     # seems that the only thing that changes in colnames is they are made to snake_case
-    # https://github.com/dereckdemezquita/kucoin/issues/1
+    # https://github.com/dereckmezquita/kucoin/issues/1
     # Error in setnames(x, value) : 
     # Can't assign 14 names to a 17 column data.table
     # colnames(results) <- c(
