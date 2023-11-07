@@ -3,7 +3,7 @@
 analyze_response <- function(x) {
     # stop if not return json
     if (httr::http_type(x) != "application/json") {
-        stop("Server not responded correctly")
+        rlang::abort("Server not responded correctly")
     }
 
     # stop if server responding with error
@@ -49,26 +49,26 @@ prep_frequency <- function(x) {
     }
 
     lkp <- data.table::fread(
-        '"freq","formatted"
-        "1 minute","1min"
-        "3 minutes","3min"
-        "5 minutes","5min"
-        "15 minutes","15min"
-        "30 minutes","30min"
-        "1 hour","1hour"
-        "2 hours","2hour"
-        "4 hours","4hour"
-        "6 hours","6hour"
-        "8 hours","8hour"
-        "12 hours","12hour"
-        "1 day","1day"
-        "1 week","1week"'
+        '"freq", "formatted"
+        "1 minute", "1min"
+        "3 minutes", "3min"
+        "5 minutes", "5min"
+        "15 minutes", "15min"
+        "30 minutes", "30min"
+        "1 hour", "1hour"
+        "2 hours", "2hour"
+        "4 hours", "4hour"
+        "6 hours", "6hour"
+        "8 hours", "8hour"
+        "12 hours", "12hour"
+        "1 day", "1day"
+        "1 week", "1week"'
     )
 
     x <- lkp[freq == x, ]$formatted
 
     if (length(x) == 0) {
-        rlang::abort("Unsupported frequency! See function documentation for helps")
+        rlang::abort("Unsupported frequency! See function documentation for help")
     }
 
     return(x)
@@ -130,7 +130,6 @@ prep_datetime_range <- function(from, to, frequency) {
 }
 
 prep_query_strings <- function(queries) {
-
     # convert to query strings
     if (length(queries) > 0) {
         results <- c()
@@ -139,6 +138,7 @@ prep_query_strings <- function(queries) {
             result <- paste(i, queries[[i]], sep = "=")
             results <- c(results, result)
         }
+
         results <- paste0("?", paste0(results, collapse = "&"))
     } else {
         results <- ""
@@ -182,9 +182,6 @@ get_paths <- function(x, type = "path", append = NULL) {
         "currencies", "/api/v2/currencies", "api/v2/currencies"
         "deposit-addresses", "/api/v2/deposit-addresses", "api/v2/deposit-addresses"'
     )
-
-    # convert to data frame
-    # lkp <- as.data.frame(lkp)
 
     # get specified endpoint
     results <- lkp[x == this.x, ][[type]]

@@ -3,6 +3,11 @@
 .DS_Store
 deprecated/
 
+*.ignore
+*.ignore.*
+
+.Rprofile
+
 # sensitive files and tokens
 *.sensitive.*
 

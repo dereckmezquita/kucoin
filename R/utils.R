@@ -16,7 +16,6 @@
 #' @export
 
 get_kucoin_time <- function(raw = FALSE) {
-
     # get server response
     response <- httr::GET(
         url = get_base_url(),

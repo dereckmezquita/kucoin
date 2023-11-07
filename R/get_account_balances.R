@@ -70,6 +70,11 @@ get_account_balances <- function(currency = NULL, type = NULL) {
     # tidy the parsed data
     results <- data.table::data.table(parsed$data, check.names = FALSE)
 
+    if (nrow(results) == 0) {
+        message("No assets found.")
+        return(results)
+    }
+
     results <- results[, c("type", "id", "currency", "balance", "available", "holds")]
 
     # results[, 4:6] <- lapply(results[, 4:6], as.numeric)
