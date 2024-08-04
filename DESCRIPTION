@@ -1,13 +1,19 @@
 Package: kucoin
 Title: R API to KuCoin Crytocurrency Exchange Market
 Version: 0.1.0
-Authors@R: person(given = "Dereck", family = "de Mezquita", email = "dereck@demezquita.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9307-6762"))
-License: All rights reserved.
+URL: https://github.com/dereckmezquita/kucoin
+Authors@R: 
+    person(given = "Dereck",
+           family = "Mezquita",
+           role = c("aut", "cre"),
+           email = "dereck@mezquita.io",
+           comment = c(ORCID = "0000-0002-9307-6762"))
+Maintainer: Dereck Mezquita <dereck@mezquita.io>
+License: MIT + file LICENSE
 Description: An R API to KuCoin crytocurrency exchange market.
 Encoding: UTF-8
 LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.2
 Depends:
     R (>= 3.5.0)
 Imports:
