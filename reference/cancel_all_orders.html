@@ -54,33 +54,31 @@
 
 
 <dl><dt id="arg-symbols">symbols<a class="anchor" aria-label="anchor" href="#arg-symbols"></a></dt>
-<dd><p>A <code>character</code> vector of one or more symbols; format "BTC/USDT" (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one or more symbols; format "BTC/USDT" (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-tradetype">tradeType<a class="anchor" aria-label="anchor" href="#arg-tradetype"></a></dt>
-<dd><p>A <code>character</code> vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE" (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE" (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-delay">delay<a class="anchor" aria-label="anchor" href="#arg-delay"></a></dt>
-<dd><p>A <code>numeric</code> value to delay data request in milliseconds (optional - default <code>0</code>).</p></dd>
+<dd><p>A `numeric` value to delay data request in milliseconds (optional - default `0`).</p></dd>
 
 
 <dt id="arg-retries">retries<a class="anchor" aria-label="anchor" href="#arg-retries"></a></dt>
-<dd><p>A <code>numeric</code> value to specify the number of retries in case of failure (optional - default <code>3</code>).</p></dd>
+<dd><p>A `numeric` value to specify the number of retries in case of failure (optional - default `3`).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Success returns <code>character</code> vector of n order id(s) (designated by KuCoin).</p>
+    <p>Success returns `character` vector of n order id(s) (designated by KuCoin).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This endpoint requires the Trade permission.</p>
 <p>This API is restricted for each account, the request rate limit is 3 times/3s.</p>
-    </div>
-    <div class="section level2">
-    <h2 id="-">—————<a class="anchor" aria-label="anchor" href="#-"></a></h2>
-    <p>For more information see documentation: <a href="https://docs.kucoin.com/#cancel-all-orders" class="external-link">KuCoin - cancel-all-orders</a></p>
+<p># —————
+For more information see documentation: [KuCoin - cancel-all-orders](https://docs.kucoin.com/#cancel-all-orders)</p>
 <p>TODO: if no symbols provided cancel all</p>
     </div>
 

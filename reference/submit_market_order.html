@@ -59,31 +59,31 @@
 
 
 <dl><dt id="arg-symbol">symbol<a class="anchor" aria-label="anchor" href="#arg-symbol"></a></dt>
-<dd><p>A <code>character</code> vector of one or more pair symbol (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one or more pair symbol (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-side">side<a class="anchor" aria-label="anchor" href="#arg-side"></a></dt>
-<dd><p>A <code>character</code> vector of one which specify the order side: <code>"buy"</code> or <code>"sell"</code> (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-base-size">base_size<a class="anchor" aria-label="anchor" href="#arg-base-size"></a></dt>
-<dd><p>A <code>numeric</code> vector of one determining the base size of the order; n units of the first currency in the pair (required or <code>quote_size</code> - default <code>NULL</code>).</p></dd>
+<dd><p>A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required or `quote_size` - default `NULL`).</p></dd>
 
 
 <dt id="arg-quote-size">quote_size<a class="anchor" aria-label="anchor" href="#arg-quote-size"></a></dt>
-<dd><p>A <code>numeric</code> vector which specify the base or quote currency size; n units of the second currency in the pair (required or <code>base_size</code> - default <code>NULL</code>).</p></dd>
+<dd><p>A `numeric` vector which specify the base or quote currency size; n units of the second currency in the pair (required or `base_size` - default `NULL`).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>If success returns <code>character</code> vector of one; order id designated by KuCoin.</p>
+    <p>If success returns `character` vector of one; order id designated by KuCoin.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>For more information see the <a href="https://docs.kucoin.com/#place-a-new-order" class="external-link">KuCoin API documentation - new order</a>.</p>
+    <p>For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).</p>
 <p>This API is restricted for each account, the request rate limit is 45 times/3s.</p>
 <p>Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.</p>
-<p>This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function <code><a href="get_orders_by_id.html">get_orders_by_id()</a></code>.</p>
+<p>This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_orders_by_id()].</p>
     </div>
 
     <div class="section level2">

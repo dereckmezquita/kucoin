@@ -65,66 +65,66 @@
 
 
 <dl><dt id="arg-symbol">symbol<a class="anchor" aria-label="anchor" href="#arg-symbol"></a></dt>
-<dd><p>A <code>character</code> vector of one or more pair symbol (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one or more pair symbol (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-side">side<a class="anchor" aria-label="anchor" href="#arg-side"></a></dt>
-<dd><p>A <code>character</code> vector of one which specify the order side: <code>"buy"</code> or <code>"sell"</code> (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-base-size">base_size<a class="anchor" aria-label="anchor" href="#arg-base-size"></a></dt>
-<dd><p>A <code>numeric</code> vector of one determining the base size of the order; n units of the first currency in the pair (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-price">price<a class="anchor" aria-label="anchor" href="#arg-price"></a></dt>
-<dd><p>A <code>numeric</code> vector of one which specify the price of the order (required - default <code>NULL</code>).</p></dd>
+<dd><p>A `numeric` vector of one which specify the price of the order (required - default `NULL`).</p></dd>
 
 
 <dt id="arg-timeinforce">timeInForce<a class="anchor" aria-label="anchor" href="#arg-timeinforce"></a></dt>
-<dd><p>A <code>character</code> vector of one specifying the time in force policy: <code>"GTC"</code> (Good Till Canceled), <code>"GTT"</code> (Good Till Time), <code>"IOC"</code> (Immediate Or Cancel), or <code>"FOK"</code> (Fill Or Kill) (optional - default <code>"GTC"</code>).</p></dd>
+<dd><p>A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill) (optional - default `"GTC"`).</p></dd>
 
 
 <dt id="arg-cancelafter">cancelAfter<a class="anchor" aria-label="anchor" href="#arg-cancelafter"></a></dt>
-<dd><p>A <code>numeric</code> vector of one specifying the number of seconds to wait before cancelling the order (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `numeric` vector of one specifying the number of seconds to wait before cancelling the order (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-postonly">postOnly<a class="anchor" aria-label="anchor" href="#arg-postonly"></a></dt>
-<dd><p>A <code>logical</code> vector of one specifying whether the order is post only; invalid when <code>timeInForce</code> is <code>"IOC"</code> or <code>"FOK"</code> (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `logical` vector of one specifying whether the order is post only; invalid when `timeInForce` is `"IOC"` or `"FOK"` (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
-<dd><p>A <code>logical</code> vector of one specifying whether the order is hidden (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `logical` vector of one specifying whether the order is hidden (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-iceberg">iceberg<a class="anchor" aria-label="anchor" href="#arg-iceberg"></a></dt>
-<dd><p>A <code>logical</code> vector of one specifying whether the order is iceberg (optional - default <code>NULL</code>).</p></dd>
+<dd><p>A `logical` vector of one specifying whether the order is iceberg (optional - default `NULL`).</p></dd>
 
 
 <dt id="arg-visiblesize">visibleSize<a class="anchor" aria-label="anchor" href="#arg-visiblesize"></a></dt>
-<dd><p>A <code>numeric</code> vector of one specifying the visible size of the iceberg order (optional - default <code>0</code>).</p></dd>
+<dd><p>A `numeric` vector of one specifying the visible size of the iceberg order (optional - default `0`).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>If success returns <code>character</code> vector of one; order id designated by KuCoin.</p>
+    <p>If success returns `character` vector of one; order id designated by KuCoin.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This API is restricted for each account, the request rate limit is 45 times/3s.</p>
 <p>Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.</p>
-<p>This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function <code><a href="get_orders_by_id.html">get_orders_by_id()</a></code>.</p>
-    </div>
-    <div class="section level2">
-    <h2 id="-">—————<a class="anchor" aria-label="anchor" href="#-"></a></h2>
-    <p>Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.</p><ol><li><p>GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.</p></li>
-<li><p>GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.</p></li>
-<li><p>IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.</p></li>
-<li><p>FOK Fill Or Kill orders are rejected if the entire size cannot be matched.</p></li>
-</ol><p>Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.</p>
+<p>This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_orders_by_id()].</p>
+<p># —————
+Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.</p>
+<p>1. GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
+1. GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
+1. IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
+1. FOK Fill Or Kill orders are rejected if the entire size cannot be matched.</p>
+<p>Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.</p>
 <p>The post-only flag ensures that the trader always pays the maker fee and provides liquidity to the order book. If any part of the order is going to pay taker fee, the order will be fully rejected.</p>
 <p>If a post only order will get executed immediately against the existing orders (except iceberg and hidden orders) in the market, the order will be cancelled.</p>
 <p>For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.</p>
-<p>For more information see the <a href="https://docs.kucoin.com/#place-a-new-order" class="external-link">KuCoin API documentation - new order</a>.</p>
+<p># —————
+For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).</p>
     </div>
 
     <div class="section level2">
