@@ -2,8 +2,6 @@
 
 #' @title `kucoin`: An R API to KuCoin Crytocurrency Exchange Market
 #'
-#' @docType package
-#' 
 #' @import data.table
 #' 
 #' @importFrom data.table data.table
