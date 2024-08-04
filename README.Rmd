@@ -58,11 +58,10 @@ Current functions that need API authorisation are:
 
 #### Setting-up API Key
 
-Use an `.Renviron` file to set your API key. You can `touch` or use `usethat` to create a new `.Renviron` file; [`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html){target="_blank"}:
+Use an `.Renviron` file to set your API key. In the `.Renviron` file, insert your API key details as follow:
 
-In the `.Renviron` file, insert your API key details as follow:
-
-```bash
+```{shell, eval=FALSE}
+# sandbox has been deprecated see kucoin documentation for more information
 KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
 
 KC-API-KEY = XXXXXXXXXX

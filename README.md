@@ -20,6 +20,9 @@ remotes::install_github("dereckmezquita/kucoin")
 
 ## Getting Started
 
+For more details and tutorials see the documentation at
+[TUTORIALS](TUTORIALS.md).
+
 ``` r
 # import library
 library("kucoin")
@@ -46,14 +49,11 @@ Current functions that need API authorisation are:
 
 #### Setting-up API Key
 
-Use an `.Renviron` file to set your API key. You can `touch` or use
-`usethat` to create a new `.Renviron` file;
-<a href="https://usethis.r-lib.org/reference/edit.html"
-target="_blank"><code>usethis::edit_r_environ()</code></a>:
+Use an `.Renviron` file to set your API key. In the `.Renviron` file,
+insert your API key details as follow:
 
-In the `.Renviron` file, insert your API key details as follow:
-
-``` bash
+``` shell
+# sandbox has been deprecated see kucoin documentation for more information
 KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
 
 KC-API-KEY = XXXXXXXXXX
@@ -85,25 +85,16 @@ prices <- kucoin::get_market_data(
 )
 
 prices
-#>        symbol            datetime      open      high       low     close
-#>        <char>              <POSc>     <num>     <num>     <num>     <num>
-#>   1: KCS/USDT 2022-10-05 00:00:00 21205.960 21205.960 21205.960 21205.960
-#>   2: KCS/USDT 2022-10-05 01:00:00 21205.960 21205.960 21205.960 21205.960
-#>   3: KCS/USDT 2022-10-05 02:00:00 21205.960 21205.960 21205.960 21205.960
-#>  ---                                                                     
-#> 661: KCS/USDT 2022-11-01 12:00:00    17.613    17.613    17.613    17.613
-#> 662: KCS/USDT 2022-11-01 13:00:00    17.613    17.613    17.613    17.613
-#> 663: KCS/USDT 2022-11-01 14:00:00    17.100    17.100    17.100    17.100
-#>      volume
-#>       <num>
-#>   1:   0.00
-#>   2:   0.00
-#>   3:   0.00
-#>  ---       
-#> 661:   0.00
-#> 662:   0.00
-#> 663:   0.15
-#> 1 variable not shown: [turnover <num>]
+#>        symbol            datetime   open   high    low  close   volume
+#>        <char>              <POSc>  <num>  <num>  <num>  <num>    <num>
+#>   1: KCS/USDT 2022-10-05 00:00:00  9.208  9.214  9.155  9.162 3753.287
+#>   2: KCS/USDT 2022-10-05 01:00:00  9.162  9.174  9.156  9.164 1946.244
+#>   3: KCS/USDT 2022-10-05 02:00:00  9.164  9.173  9.152  9.156 1885.309
+#>  ---                                                                  
+#> 766: KCS/USDT 2022-11-05 21:00:00 10.221 10.221 10.190 10.200 1628.069
+#> 767: KCS/USDT 2022-11-05 22:00:00 10.201 10.256 10.201 10.212 2743.678
+#> 768: KCS/USDT 2022-11-05 23:00:00 10.212 10.231 10.173 10.221 7536.361
+#> 1 variable(s) not shown: [turnover <num>]
 ```
 
 The `kucoin::get_market_data()` function also supports for querying
@@ -119,25 +110,16 @@ prices <- kucoin::get_market_data(
 )
 
 prices
-#>         symbol            datetime     open     high      low    close
-#>         <char>              <POSc>    <num>    <num>    <num>    <num>
-#>    1: KCS/USDT 2022-10-05 00:00:00 21205.96 21205.96 21205.96 21205.96
-#>    2: KCS/USDT 2022-10-05 01:00:00 21205.96 21205.96 21205.96 21205.96
-#>    3: KCS/USDT 2022-10-05 02:00:00 21205.96 21205.96 21205.96 21205.96
-#>   ---                                                                 
-#> 1079: BTC/USDT 2022-11-05 21:00:00 66271.00 66271.00 50000.00 62522.12
-#> 1080: BTC/USDT 2022-11-05 22:00:00 63000.00 66270.00 59600.00 59600.00
-#> 1081: BTC/USDT 2022-11-05 23:00:00 52500.00 76999.00  1000.00  1993.00
-#>           volume
-#>            <num>
-#>    1: 0.00000000
-#>    2: 0.00000000
-#>    3: 0.00000000
-#>   ---           
-#> 1079: 0.04779697
-#> 1080: 0.00416984
-#> 1081: 1.16038578
-#> 1 variable not shown: [turnover <num>]
+#>         symbol            datetime      open      high       low     close
+#>         <char>              <POSc>     <num>     <num>     <num>     <num>
+#>    1: KCS/USDT 2022-10-05 00:00:00 9.2080000 9.2140000 9.1550000 9.1620000
+#>    2: KCS/USDT 2022-10-05 01:00:00 9.1620000 9.1740000 9.1560000 9.1640000
+#>    3: KCS/USDT 2022-10-05 02:00:00 9.1640000 9.1730000 9.1520000 9.1560000
+#>   ---                                                                     
+#> 2302:  KCS/BTC 2022-11-05 21:00:00 0.0004785 0.0004790 0.0004781 0.0004782
+#> 2303:  KCS/BTC 2022-11-05 22:00:00 0.0004782 0.0004803 0.0004782 0.0004795
+#> 2304:  KCS/BTC 2022-11-05 23:00:00 0.0004795 0.0004802 0.0004783 0.0004800
+#> 2 variable(s) not shown: [volume <num>, turnover <num>]
 ```
 
 You can also get the most recent metadata for all symbols using
@@ -148,16 +130,16 @@ You can also get the most recent metadata for all symbols using
 metadata <- kucoin::get_market_metadata()
 
 metadata
-#>         symbol       name base_currency quote_currency fee_currency market
-#>         <char>     <char>        <char>         <char>       <char> <char>
-#>  1: ADA3S/USDT ADA3S/USDT         ADA3S           USDT         USDT    ETF
-#>  2:  ALGO/USDT  ALGO/USDT          ALGO           USDT         USDT   USDS
-#>  3:   AMPL/BTC   AMPL/BTC          AMPL            BTC          BTC   DeFi
-#> ---                                                                       
-#> 95:   XSR/USDT   XSR/USDT           XSR           USDT         USDT   USDS
-#> 96:   ZEN/USDT   ZEN/USDT           ZEN           USDT         USDT   USDS
-#> 97:   ZIL/USDT   ZIL/USDT           ZIL           USDT         USDT   USDS
-#> 10 variables not shown: [base_min_size <num>, quote_min_size <num>, base_max_size <num>, quote_max_size <num>, base_increment <num>, quote_increment <num>, price_increment <num>, price_limit_rate <num>, is_margin_enabled <lgcl>, enable_trading <lgcl>]
+#>           symbol       name base_currency quote_currency fee_currency market
+#>           <char>     <char>        <char>         <char>       <char> <char>
+#>    1:  1CAT/USDT  1CAT/USDT          1CAT           USDT         USDT   USDS
+#>    2: 1INCH/USDT 1INCH/USDT         1INCH           USDT         USDT   USDS
+#>    3:    AA/USDT    AA/USDT            AA           USDT         USDT   USDS
+#>   ---                                                                       
+#> 1263:   ZRO/USDT   ZRO/USDT           ZRO           USDT         USDT   USDS
+#> 1264:    ZRX/BTC    ZRX/BTC           ZRX            BTC          BTC   DeFi
+#> 1265:   ZRX/USDT   ZRX/USDT           ZRX           USDT         USDT   USDS
+#> 11 variable(s) not shown: [base_min_size <num>, quote_min_size <num>, base_max_size <num>, quote_max_size <num>, base_increment <num>, quote_increment <num>, price_increment <num>, price_limit_rate <num>, min_funds <num>, is_margin_enabled <lgcl>, ...]
 ```
 
 ### Get User Information
