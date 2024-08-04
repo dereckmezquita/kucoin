@@ -15,7 +15,7 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: "Getting Started with kucoin"
+      - text: "Getting started with kucoin"
         href: articles/getting-started-kucoin.html
     donate:
       text: Donate
