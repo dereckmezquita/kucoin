@@ -71,6 +71,7 @@
 <div class="section level2">
 <h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
+<p>For more details and tutorials see the documentation at <a href="TUTORIALS.html">TUTORIALS</a>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># import library</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/dereckmezquita/kucoin" class="external-link">"kucoin"</a></span><span class="op">)</span></span></code></pre></div>
@@ -92,13 +93,13 @@
 <div class="section level4">
 <h4 id="setting-up-api-key">Setting-up API Key<a class="anchor" aria-label="anchor" href="#setting-up-api-key"></a>
 </h4>
-<p>Use an <code>.Renviron</code> file to set your API key. You can <code>touch</code> or use <code>usethat</code> to create a new <code>.Renviron</code> file; <a href="https://usethis.r-lib.org/reference/edit.html" target="_blank" class="external-link"><code>usethis::edit_r_environ()</code></a>:</p>
-<p>In the <code>.Renviron</code> file, insert your API key details as follow:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">KC-API-ENDPOINT</span> = https://openapi-sandbox.kucoin.com</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="ex">KC-API-KEY</span> = XXXXXXXXXX</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="ex">KC-API-SECRET</span> = XXXXXXXXXX</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="ex">KC-API-PASSPHRASE</span> = XXXXXXXXXX</span></code></pre></div>
+<p>Use an <code>.Renviron</code> file to set your API key. In the <code>.Renviron</code> file, insert your API key details as follow:</p>
+<pre class="shell"><code># sandbox has been deprecated see kucoin documentation for more information
+KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
+
+KC-API-KEY = XXXXXXXXXX
+KC-API-SECRET = XXXXXXXXXX
+KC-API-PASSPHRASE = XXXXXXXXXX</code></pre>
 <p>The <code>KC-API-ENDPOINT</code> variable is optional. This is used to allow the user access KuCoin’s sandbox API for paper trading. If not set then the real API is used by default:</p>
 <ol style="list-style-type: decimal">
 <li><a href="https://openapi-sandbox.kucoin.com" class="external-link uri">https://openapi-sandbox.kucoin.com</a></li>
@@ -121,25 +122,16 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prices</span></span>
-<span><span class="co">#&gt;        symbol            datetime      open      high       low     close</span></span>
-<span><span class="co">#&gt;        &lt;char&gt;              &lt;POSc&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt;   1: KCS/USDT 2022-10-05 00:00:00 21205.960 21205.960 21205.960 21205.960</span></span>
-<span><span class="co">#&gt;   2: KCS/USDT 2022-10-05 01:00:00 21205.960 21205.960 21205.960 21205.960</span></span>
-<span><span class="co">#&gt;   3: KCS/USDT 2022-10-05 02:00:00 21205.960 21205.960 21205.960 21205.960</span></span>
-<span><span class="co">#&gt;  ---                                                                     </span></span>
-<span><span class="co">#&gt; 661: KCS/USDT 2022-11-01 12:00:00    17.613    17.613    17.613    17.613</span></span>
-<span><span class="co">#&gt; 662: KCS/USDT 2022-11-01 13:00:00    17.613    17.613    17.613    17.613</span></span>
-<span><span class="co">#&gt; 663: KCS/USDT 2022-11-01 14:00:00    17.100    17.100    17.100    17.100</span></span>
-<span><span class="co">#&gt;      volume</span></span>
-<span><span class="co">#&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt;   1:   0.00</span></span>
-<span><span class="co">#&gt;   2:   0.00</span></span>
-<span><span class="co">#&gt;   3:   0.00</span></span>
-<span><span class="co">#&gt;  ---       </span></span>
-<span><span class="co">#&gt; 661:   0.00</span></span>
-<span><span class="co">#&gt; 662:   0.00</span></span>
-<span><span class="co">#&gt; 663:   0.15</span></span>
-<span><span class="co">#&gt; 1 variable not shown: [turnover &lt;num&gt;]</span></span></code></pre></div>
+<span><span class="co">#&gt;        symbol            datetime   open   high    low  close   volume</span></span>
+<span><span class="co">#&gt;        &lt;char&gt;              &lt;POSc&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt;   1: KCS/USDT 2022-10-05 00:00:00  9.208  9.214  9.155  9.162 3753.287</span></span>
+<span><span class="co">#&gt;   2: KCS/USDT 2022-10-05 01:00:00  9.162  9.174  9.156  9.164 1946.244</span></span>
+<span><span class="co">#&gt;   3: KCS/USDT 2022-10-05 02:00:00  9.164  9.173  9.152  9.156 1885.309</span></span>
+<span><span class="co">#&gt;  ---                                                                  </span></span>
+<span><span class="co">#&gt; 766: KCS/USDT 2022-11-05 21:00:00 10.221 10.221 10.190 10.200 1628.069</span></span>
+<span><span class="co">#&gt; 767: KCS/USDT 2022-11-05 22:00:00 10.201 10.256 10.201 10.212 2743.678</span></span>
+<span><span class="co">#&gt; 768: KCS/USDT 2022-11-05 23:00:00 10.212 10.231 10.173 10.221 7536.361</span></span>
+<span><span class="co">#&gt; 1 variable(s) not shown: [turnover &lt;num&gt;]</span></span></code></pre></div>
 <p>The <code><a href="reference/get_market_data.html">kucoin::get_market_data()</a></code> function also supports for querying multiple symbols:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># get one pair of symbol prices</span></span>
@@ -151,41 +143,32 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prices</span></span>
-<span><span class="co">#&gt;         symbol            datetime     open     high      low    close</span></span>
-<span><span class="co">#&gt;         &lt;char&gt;              &lt;POSc&gt;    &lt;num&gt;    &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt;    1: KCS/USDT 2022-10-05 00:00:00 21205.96 21205.96 21205.96 21205.96</span></span>
-<span><span class="co">#&gt;    2: KCS/USDT 2022-10-05 01:00:00 21205.96 21205.96 21205.96 21205.96</span></span>
-<span><span class="co">#&gt;    3: KCS/USDT 2022-10-05 02:00:00 21205.96 21205.96 21205.96 21205.96</span></span>
-<span><span class="co">#&gt;   ---                                                                 </span></span>
-<span><span class="co">#&gt; 1079: BTC/USDT 2022-11-05 21:00:00 66271.00 66271.00 50000.00 62522.12</span></span>
-<span><span class="co">#&gt; 1080: BTC/USDT 2022-11-05 22:00:00 63000.00 66270.00 59600.00 59600.00</span></span>
-<span><span class="co">#&gt; 1081: BTC/USDT 2022-11-05 23:00:00 52500.00 76999.00  1000.00  1993.00</span></span>
-<span><span class="co">#&gt;           volume</span></span>
-<span><span class="co">#&gt;            &lt;num&gt;</span></span>
-<span><span class="co">#&gt;    1: 0.00000000</span></span>
-<span><span class="co">#&gt;    2: 0.00000000</span></span>
-<span><span class="co">#&gt;    3: 0.00000000</span></span>
-<span><span class="co">#&gt;   ---           </span></span>
-<span><span class="co">#&gt; 1079: 0.04779697</span></span>
-<span><span class="co">#&gt; 1080: 0.00416984</span></span>
-<span><span class="co">#&gt; 1081: 1.16038578</span></span>
-<span><span class="co">#&gt; 1 variable not shown: [turnover &lt;num&gt;]</span></span></code></pre></div>
+<span><span class="co">#&gt;         symbol            datetime      open      high       low     close</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;              &lt;POSc&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt;    1: KCS/USDT 2022-10-05 00:00:00 9.2080000 9.2140000 9.1550000 9.1620000</span></span>
+<span><span class="co">#&gt;    2: KCS/USDT 2022-10-05 01:00:00 9.1620000 9.1740000 9.1560000 9.1640000</span></span>
+<span><span class="co">#&gt;    3: KCS/USDT 2022-10-05 02:00:00 9.1640000 9.1730000 9.1520000 9.1560000</span></span>
+<span><span class="co">#&gt;   ---                                                                     </span></span>
+<span><span class="co">#&gt; 2302:  KCS/BTC 2022-11-05 21:00:00 0.0004785 0.0004790 0.0004781 0.0004782</span></span>
+<span><span class="co">#&gt; 2303:  KCS/BTC 2022-11-05 22:00:00 0.0004782 0.0004803 0.0004782 0.0004795</span></span>
+<span><span class="co">#&gt; 2304:  KCS/BTC 2022-11-05 23:00:00 0.0004795 0.0004802 0.0004783 0.0004800</span></span>
+<span><span class="co">#&gt; 2 variable(s) not shown: [volume &lt;num&gt;, turnover &lt;num&gt;]</span></span></code></pre></div>
 <p>You can also get the most recent metadata for all symbols using <code><a href="reference/get_market_metadata.html">kucoin::get_market_metadata()</a></code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># get all symbols' most recent metadata</span></span>
 <span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/get_market_metadata.html">get_market_metadata</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">metadata</span></span>
-<span><span class="co">#&gt;         symbol       name base_currency quote_currency fee_currency market</span></span>
-<span><span class="co">#&gt;         &lt;char&gt;     &lt;char&gt;        &lt;char&gt;         &lt;char&gt;       &lt;char&gt; &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1: ADA3S/USDT ADA3S/USDT         ADA3S           USDT         USDT    ETF</span></span>
-<span><span class="co">#&gt;  2:  ALGO/USDT  ALGO/USDT          ALGO           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt;  3:   AMPL/BTC   AMPL/BTC          AMPL            BTC          BTC   DeFi</span></span>
-<span><span class="co">#&gt; ---                                                                       </span></span>
-<span><span class="co">#&gt; 95:   XSR/USDT   XSR/USDT           XSR           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt; 96:   ZEN/USDT   ZEN/USDT           ZEN           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt; 97:   ZIL/USDT   ZIL/USDT           ZIL           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt; 10 variables not shown: [base_min_size &lt;num&gt;, quote_min_size &lt;num&gt;, base_max_size &lt;num&gt;, quote_max_size &lt;num&gt;, base_increment &lt;num&gt;, quote_increment &lt;num&gt;, price_increment &lt;num&gt;, price_limit_rate &lt;num&gt;, is_margin_enabled &lt;lgcl&gt;, enable_trading &lt;lgcl&gt;]</span></span></code></pre></div>
+<span><span class="co">#&gt;           symbol       name base_currency quote_currency fee_currency market</span></span>
+<span><span class="co">#&gt;           &lt;char&gt;     &lt;char&gt;        &lt;char&gt;         &lt;char&gt;       &lt;char&gt; &lt;char&gt;</span></span>
+<span><span class="co">#&gt;    1:  1CAT/USDT  1CAT/USDT          1CAT           USDT         USDT   USDS</span></span>
+<span><span class="co">#&gt;    2: 1INCH/USDT 1INCH/USDT         1INCH           USDT         USDT   USDS</span></span>
+<span><span class="co">#&gt;    3:    AA/USDT    AA/USDT            AA           USDT         USDT   USDS</span></span>
+<span><span class="co">#&gt;   ---                                                                       </span></span>
+<span><span class="co">#&gt; 1263:   ZRO/USDT   ZRO/USDT           ZRO           USDT         USDT   USDS</span></span>
+<span><span class="co">#&gt; 1264:    ZRX/BTC    ZRX/BTC           ZRX            BTC          BTC   DeFi</span></span>
+<span><span class="co">#&gt; 1265:   ZRX/USDT   ZRX/USDT           ZRX           USDT         USDT   USDS</span></span>
+<span><span class="co">#&gt; 11 variable(s) not shown: [base_min_size &lt;num&gt;, quote_min_size &lt;num&gt;, base_max_size &lt;num&gt;, quote_max_size &lt;num&gt;, base_increment &lt;num&gt;, quote_increment &lt;num&gt;, price_increment &lt;num&gt;, price_limit_rate &lt;num&gt;, min_funds &lt;num&gt;, is_margin_enabled &lt;lgcl&gt;, ...]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="get-user-information">Get User Information<a class="anchor" aria-label="anchor" href="#get-user-information"></a>
