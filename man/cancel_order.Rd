@@ -7,14 +7,14 @@
 cancel_order(orderIds = NULL, delay = 0, retries = 3)
 }
 \arguments{
-\item{orderIds}{A \code{character} vector of one or more which contains the order id(s) designated by KuCoin (required - default \code{NULL}).}
+\item{orderIds}{A `character` vector of one or more which contains the order id(s) designated by KuCoin (required - default `NULL`).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0}).}
+\item{delay}{A `numeric` value to delay data request in milliseconds (optional - default `0`).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 }
 \value{
-If success returns \code{character} vector of n order id(s); designated by KuCoin.
+If success returns `character` vector of n order id(s); designated by KuCoin.
 }
 \description{
 Cancel order(s)
@@ -24,14 +24,13 @@ This endpoint requires the Trade permission.
 
 This API is restricted for each account, the request rate limit is 60 times/3s.
 
-This interface is only for cancellation requests. The cancellation result needs to be obtained by querying the order status, you can use \code{\link[=get_orders_by_id]{get_orders_by_id()}}.
+This interface is only for cancellation requests. The cancellation result needs to be obtained by querying the order status, you can use [kucoin::get_orders_by_id()]. 
 
 It is recommended that you DO NOT cancel the order until receiving the Open message, otherwise the order cannot be cancelled successfully.
-}
-\section{---------------}{
-For more information see documentation: \href{https://docs.kucoin.com/#cancel-an-order}{KuCoin - cancel-order}
-}
 
+# ---------------
+For more information see documentation: [KuCoin - cancel-order](https://docs.kucoin.com/#cancel-an-order)
+}
 \examples{
 
 \dontrun{

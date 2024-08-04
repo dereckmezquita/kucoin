@@ -7,18 +7,18 @@
 get_deposit_address(currency = NULL, chain = NULL)
 }
 \arguments{
-\item{currency}{A \code{character} vector length 1 to specify the currencies to get deposit addresses for (required - default \code{NULL})}
+\item{currency}{A `character` vector length 1 to specify the currencies to get deposit addresses for (required - default `NULL`)}
 
-\item{chain}{A \code{character} vector length 1 to specify the chain (network) to use for the deposit address (required - default \code{NULL}).}
+\item{chain}{A `character` vector length 1 to specify the chain (network) to use for the deposit address (required - default `NULL`).}
 }
 \value{
-A \code{data.table} containing deposit address information
+A `data.table` containing deposit address information
 }
 \description{
-Get a deposit address for a currency. This function is useful for generating a deposit address for a currency. Note you must provide the chain (network) to use for the deposit address. This can be obtained by use of \code{\link[=get_currency_details]{get_currency_details()}}.
+Get a deposit address for a currency. This function is useful for generating a deposit address for a currency. Note you must provide the chain (network) to use for the deposit address. This can be obtained by use of [kucoin::get_currency_details()].
 }
 \details{
-For more information see documentation: \href{https://docs.kucoin.com/#get-deposit-addresses-v2}{KucCoin - get-deposit-addresses-v2}.
+For more information see documentation: [KucCoin - get-deposit-addresses-v2](https://docs.kucoin.com/#get-deposit-addresses-v2).
 }
 \examples{
 
@@ -41,5 +41,5 @@ deposit_address
 
 }
 \seealso{
-\code{kucoin::get_currency_details()()}
+`kucoin::get_currency_details()()`
 }

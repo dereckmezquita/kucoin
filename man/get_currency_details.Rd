@@ -7,21 +7,22 @@
 get_currency_details(currencies = NULL)
 }
 \arguments{
-\item{currencies}{A \code{character} vector to specify the currencies to get details for (required - default \code{NULL}).}
+\item{currencies}{A `character` vector to specify the currencies to get details for (required - default `NULL`).}
 }
 \value{
-A \code{data.table} with currency information
+A `data.table` with currency information
 }
 \description{
-Get a currencies' details. This includes what chains are available for depositing; this function is useful for then generating a deposit address by use of \code{\link[=get_deposit_address]{get_deposit_address()}}.\tabular{lllllllllllll}{
-   currency \tab name \tab full_name \tab precision \tab is_margin_enabled \tab is_debit_enabled \tab chain_name \tab withdrawal_min_size \tab withdrawal_min_fee \tab is_withdraw_enabled \tab is_deposit_enabled \tab confirms \tab contract_address \cr
-   BTC \tab BTC \tab BTC \tab 8 \tab TRUE \tab TRUE \tab BTC \tab 0.001 \tab 0.001 \tab TRUE \tab TRUE \tab 3 \tab   \cr
-   BTC \tab BTC \tab BTC \tab 8 \tab TRUE \tab TRUE \tab TRC20 \tab 0.001 \tab 0.003 \tab TRUE \tab TRUE \tab 19 \tab   \cr
-   BTC \tab BTC \tab BTC \tab 8 \tab TRUE \tab TRUE \tab BTC-Segwit \tab 0.001 \tab 0.001 \tab TRUE \tab TRUE \tab 3 \tab   \cr
-}
+Get a currencies' details. This includes what chains are available for depositing; this function is useful for then generating a deposit address by use of [kucoin::get_deposit_address()].
+
+| currency | name | full_name | precision | is_margin_enabled | is_debit_enabled | chain_name | chain  | withdrawal_min_size | withdrawal_min_fee | is_withdraw_enabled | is_deposit_enabled | confirms | pre_confirms | contract_address                           |
+|----------|------|-----------|-----------|-------------------|------------------|------------|--------|---------------------|--------------------|---------------------|--------------------|----------|--------------|--------------------------------------------|
+| BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | BTC        | btc    | 0.0008              | 0.0005             | TRUE                | TRUE               | 3        | 1            |                                            |
+| BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | KCC        | kcc    | 0.0008              | 0.00002            | TRUE                | TRUE               | 20       | 20           | 0xfa93c12cd345c658bc4644d1d4e1b9615952258c |
+| BTC      | BTC  | Bitcoin   | 8         | TRUE              | TRUE             | BTC-Segwit | bech32 | 0.0008              | 0.0005             | FALSE               | TRUE               | 2        | 2            |                                            |
 }
 \details{
-For more information see documentation: \href{https://docs.kucoin.com/#get-currency-detail-recommend}{KuCoin - get-currency-detail}
+For more information see documentation: [KuCoin - get-currency-detail](https://docs.kucoin.com/#get-currency-detail-recommend)
 
 Using v2 of the api.
 }
@@ -32,5 +33,5 @@ kucoin::get_currency_details(c("BTC", "XMR"))
 
 }
 \seealso{
-\code{kucoin::get_deposit_address()}
+`kucoin::get_deposit_address()`
 }

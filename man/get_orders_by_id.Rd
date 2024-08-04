@@ -7,20 +7,20 @@
 get_orders_by_id(orderIds = NULL, delay = 0, retries = 3)
 }
 \arguments{
-\item{orderIds}{A \code{character} vector of one or more which contain the order id(s) designated by KuCoin (required - default \code{NULL}).}
+\item{orderIds}{A `character` vector of one or more which contain the order id(s) designated by KuCoin (required - default `NULL`).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0}).}
+\item{delay}{A `numeric` value to delay data request in milliseconds (optional - default `0`).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 }
 \value{
-A \code{data.table} containing order details
+A `data.table` containing order details
 }
 \description{
 Get order(s) details by order id
 }
 \details{
-For more information see documentation: \href{https://docs.kucoin.com/#get-an-order}{KuCoin - get-order}
+For more information see documentation: [KuCoin - get-order](https://docs.kucoin.com/#get-an-order)
 }
 \examples{
 

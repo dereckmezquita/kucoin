@@ -14,46 +14,44 @@ get_market_data(
 )
 }
 \arguments{
-\item{symbols}{A \code{character} vector of one or more pair symbol (required - default \code{NULL}).}
+\item{symbols}{A `character` vector of one or more pair symbol (required - default `NULL`).}
 
-\item{from}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as a start of datetime range (required - default \code{NULL}).}
+\item{from}{A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range (required - default `NULL`).}
 
-\item{to}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as an end of datetime range (required - default \code{NULL}).}
+\item{to}{A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range (required - default `NULL`).}
 
-\item{frequency}{A \code{character} vector of one which specify the frequency option, see details for further information (required - default \code{NULL}).}
+\item{frequency}{A `character` vector of one which specify the frequency option, see details for further information (required - default `NULL`).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0}).}
+\item{delay}{A `numeric` value to delay data request in milliseconds (optional - default `0`).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 }
 \value{
-A \code{data.table} with price data
+A `data.table` with price data
 }
 \description{
 Get historical market data for symbols
 }
 \details{
 There are several supported frequencies:
-\itemize{
-\item \code{"1 minute"}
-\item \code{"3 minutes"}
-\item \code{"5 minutes"}
-\item \code{"15 minutes"}
-\item \code{"30 minutes"}
-\item \code{"1 hour"}
-\item \code{"2 hours"}
-\item \code{"4 hours"}
-\item \code{"6 hours"}
-\item \code{"8 hours"}
-\item \code{"12 hours"}
-\item \code{"1 day"}
-\item \code{"1 week"}
-}
-}
-\section{---------------}{
-For more information see documentation: \href{https://docs.kucoin.com/#get-klines}{KuCoin - get-klines}
-}
 
+ * `"1 minute"`
+ * `"3 minutes"`
+ * `"5 minutes"`
+ * `"15 minutes"`
+ * `"30 minutes"`
+ * `"1 hour"`
+ * `"2 hours"`
+ * `"4 hours"`
+ * `"6 hours"`
+ * `"8 hours"`
+ * `"12 hours"`
+ * `"1 day"`
+ * `"1 week"`
+
+# ---------------
+For more information see documentation: [KuCoin - get-klines](https://docs.kucoin.com/#get-klines)
+}
 \examples{
 
 # get one symbol

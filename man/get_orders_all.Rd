@@ -17,32 +17,32 @@ get_orders_all(
 )
 }
 \arguments{
-\item{symbol}{A \code{character} vector of one or more which contain symbol(s) of format "BTC/USDT" (optional - default \code{NULL}).}
+\item{symbol}{A `character` vector of one or more which contain symbol(s) of format "BTC/USDT" (optional - default `NULL`).}
 
-\item{status}{A \code{character} vector of one either "done" or "active" (optional - default \code{NULL}).}
+\item{status}{A `character` vector of one either "done" or "active" (optional - default `NULL`).}
 
-\item{side}{A \code{character} vector of one either "buy" or "sell" (optional - default \code{NULL}).}
+\item{side}{A `character` vector of one either "buy" or "sell" (optional - default `NULL`).}
 
-\item{type}{A \code{character} vector of one either "limit", "market", "limit_stop", "market_stop" (optional - default \code{NULL}).}
+\item{type}{A `character` vector of one either "limit", "market", "limit_stop", "market_stop" (optional - default `NULL`).}
 
-\item{tradeType}{A \code{character} vector of one either "TRADE" (spot trading), "MARGIN_TRADE" (cross margin trading), "MARGIN_ISOLATED_TRADE" (isolated margin trading) (required - default \code{TRADE}).}
+\item{tradeType}{A `character` vector of one either "TRADE" (spot trading), "MARGIN_TRADE" (cross margin trading), "MARGIN_ISOLATED_TRADE" (isolated margin trading) (required - default `TRADE`).}
 
-\item{from}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as a start of datetime range (optional - default \code{NULL}).}
+\item{from}{A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as a start of datetime range (optional - default `NULL`).}
 
-\item{to}{A \code{character} with valid \code{date}/\code{datetime} format, or \code{date}/\code{datetime} object as an end of datetime range (optional - default \code{NULL}).}
+\item{to}{A `character` with valid `date`/`datetime` format, or `date`/`datetime` object as an end of datetime range (optional - default `NULL`).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0.1}).}
+\item{delay}{A `numeric` value to delay data request in milliseconds (optional - default `0.1`).}
 }
 \value{
-A \code{data.table} containing order details
+A `data.table` containing order details
 }
 \description{
 TODO: experimental.
 }
 \details{
-For more information see documentation: \href{https://docs.kucoin.com/#list-orders}{KuCoin - list-orders}
+For more information see documentation: [KuCoin - list-orders](https://docs.kucoin.com/#list-orders)
 }
 \examples{
 

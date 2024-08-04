@@ -7,12 +7,12 @@
 get_account_balances(currency = NULL, type = NULL)
 }
 \arguments{
-\item{currency}{A \code{character} vector of one currency symbol (optional).}
+\item{currency}{A `character` vector of one currency symbol (optional).}
 
-\item{type}{A \code{character} vector of one indicating the \code{"main"} or \code{"trade"} account type (optional).}
+\item{type}{A `character` vector of one indicating the `"main"` or `"trade"` account type (optional).}
 }
 \value{
-A \code{data.table} containing balance details
+A `data.table` containing balance details
 }
 \description{
 Get user's balance(s) list

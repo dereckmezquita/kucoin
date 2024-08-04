@@ -7,21 +7,20 @@
 get_market_metadata.deprecated(retries = 3)
 }
 \arguments{
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 }
 \value{
-A \code{data.table} with metadata
+A `data.table` with metadata
 }
 \description{
 Get all market symbols' metadata --deprecated--
 }
 \details{
 TODO: this function needs to be updated to v2 of the API.
-}
-\section{---------------}{
-For more information see documentation: \href{https://docs.kucoin.com/#get-symbols-list-deprecated}{KuCoin - get-symbols-list-deprecated}
-}
 
+# ---------------
+For more information see documentation: [KuCoin - get-symbols-list-deprecated](https://docs.kucoin.com/#get-symbols-list-deprecated)
+}
 \examples{
 # import library
 library("kucoin")

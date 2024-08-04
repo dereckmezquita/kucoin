@@ -18,28 +18,28 @@ submit_limit_order(
 )
 }
 \arguments{
-\item{symbol}{A \code{character} vector of one or more pair symbol (required - default \code{NULL}).}
+\item{symbol}{A `character` vector of one or more pair symbol (required - default `NULL`).}
 
-\item{side}{A \code{character} vector of one which specify the order side: \code{"buy"} or \code{"sell"} (required - default \code{NULL}).}
+\item{side}{A `character` vector of one which specify the order side: `"buy"` or `"sell"` (required - default `NULL`).}
 
-\item{base_size}{A \code{numeric} vector of one determining the base size of the order; n units of the first currency in the pair (required - default \code{NULL}).}
+\item{base_size}{A `numeric` vector of one determining the base size of the order; n units of the first currency in the pair (required - default `NULL`).}
 
-\item{price}{A \code{numeric} vector of one which specify the price of the order (required - default \code{NULL}).}
+\item{price}{A `numeric` vector of one which specify the price of the order (required - default `NULL`).}
 
-\item{timeInForce}{A \code{character} vector of one specifying the time in force policy: \code{"GTC"} (Good Till Canceled), \code{"GTT"} (Good Till Time), \code{"IOC"} (Immediate Or Cancel), or \code{"FOK"} (Fill Or Kill) (optional - default \code{"GTC"}).}
+\item{timeInForce}{A `character` vector of one specifying the time in force policy: `"GTC"` (Good Till Canceled), `"GTT"` (Good Till Time), `"IOC"` (Immediate Or Cancel), or `"FOK"` (Fill Or Kill) (optional - default `"GTC"`).}
 
-\item{cancelAfter}{A \code{numeric} vector of one specifying the number of seconds to wait before cancelling the order (optional - default \code{NULL}).}
+\item{cancelAfter}{A `numeric` vector of one specifying the number of seconds to wait before cancelling the order (optional - default `NULL`).}
 
-\item{postOnly}{A \code{logical} vector of one specifying whether the order is post only; invalid when \code{timeInForce} is \code{"IOC"} or \code{"FOK"} (optional - default \code{NULL}).}
+\item{postOnly}{A `logical` vector of one specifying whether the order is post only; invalid when `timeInForce` is `"IOC"` or `"FOK"` (optional - default `NULL`).}
 
-\item{hidden}{A \code{logical} vector of one specifying whether the order is hidden (optional - default \code{NULL}).}
+\item{hidden}{A `logical` vector of one specifying whether the order is hidden (optional - default `NULL`).}
 
-\item{iceberg}{A \code{logical} vector of one specifying whether the order is iceberg (optional - default \code{NULL}).}
+\item{iceberg}{A `logical` vector of one specifying whether the order is iceberg (optional - default `NULL`).}
 
-\item{visibleSize}{A \code{numeric} vector of one specifying the visible size of the iceberg order (optional - default \code{0}).}
+\item{visibleSize}{A `numeric` vector of one specifying the visible size of the iceberg order (optional - default `0`).}
 }
 \value{
-If success returns \code{character} vector of one; order id designated by KuCoin.
+If success returns `character` vector of one; order id designated by KuCoin.
 }
 \description{
 Post a limit order
@@ -49,16 +49,15 @@ This API is restricted for each account, the request rate limit is 45 times/3s.
 
 Currencies are traded in pairs. The first currency is called the base currency and the second currency is called the quote currency. So for example, BTC/USDT, means that the base currency is the BTC and the quote currency is the USDT.
 
-This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function \code{\link[=get_orders_by_id]{get_orders_by_id()}}.
-}
-\section{---------------}{
+This function returns the order ID set by KuCoin typically looks like this: "63810a330091a60001ceeb04". This can be used to get the status of the order. See the function [kucoin::get_orders_by_id()].
+
+# ---------------
 Time in force policies provide guarantees about the lifetime of an order. There are four policies: Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
-\enumerate{
-\item GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
-\item GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
-\item IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
-\item FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
-}
+
+1. GTC Good Till Canceled orders remain open on the book until canceled. This is the default behavior if no policy is specified.
+1. GTT Good Till Time orders remain open on the book until canceled or the allotted cancelAfter is depleted on the matching engine. GTT orders are guaranteed to cancel before any other order is processed after the cancelAfter seconds placed in order book.
+1. IOC Immediate Or Cancel orders instantly cancel the remaining size of the limit order instead of opening it on the book.
+1. FOK Fill Or Kill orders are rejected if the entire size cannot be matched.
 
 Note that self trades belong to match as well. For market orders, using the “TimeInForce” parameter has no effect.
 
@@ -68,9 +67,9 @@ If a post only order will get executed immediately against the existing orders (
 
 For post only orders, it will get executed immediately against the iceberg orders and hidden orders in the market. Users placing the post only order will be charged the maker fees and the iceberg and hidden orders will be charged the taker fees.
 
-For more information see the \href{https://docs.kucoin.com/#place-a-new-order}{KuCoin API documentation - new order}.
+# ---------------
+For more information see the [KuCoin API documentation - new order](https://docs.kucoin.com/#place-a-new-order).
 }
-
 \examples{
 
 \dontrun{

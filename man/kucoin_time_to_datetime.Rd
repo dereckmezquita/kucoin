@@ -2,18 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{kucoin_time_to_datetime}
 \alias{kucoin_time_to_datetime}
-\title{Convert raw Kucoin time to a \code{datetime} object}
+\title{Convert raw Kucoin time to a `datetime` object}
 \usage{
 kucoin_time_to_datetime(time)
 }
 \arguments{
-\item{time}{A \code{numeric} vector of time returned from KuCoin API (milliseconds) to be converted to a \code{datetime} object.}
+\item{time}{A `numeric` vector of time returned from KuCoin API (milliseconds) to be converted to a `datetime` object.}
 }
 \value{
-A \code{datetime} object
+A `datetime` object
 }
 \description{
-Convert raw Kucoin time to a \code{datetime} object
+Convert raw Kucoin time to a `datetime` object
 }
 \examples{
 # import library

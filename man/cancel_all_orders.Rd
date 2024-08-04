@@ -7,16 +7,16 @@
 cancel_all_orders(symbols = NULL, tradeType = NULL, delay = 0, retries = 3)
 }
 \arguments{
-\item{symbols}{A \code{character} vector of one or more symbols; format "BTC/USDT" (optional - default \code{NULL}).}
+\item{symbols}{A `character` vector of one or more symbols; format "BTC/USDT" (optional - default `NULL`).}
 
-\item{tradeType}{A \code{character} vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE" (optional - default \code{NULL}).}
+\item{tradeType}{A `character` vector of one either "TRADE" or "MARGIN_ISOLATED_TRADE" (optional - default `NULL`).}
 
-\item{delay}{A \code{numeric} value to delay data request in milliseconds (optional - default \code{0}).}
+\item{delay}{A `numeric` value to delay data request in milliseconds (optional - default `0`).}
 
-\item{retries}{A \code{numeric} value to specify the number of retries in case of failure (optional - default \code{3}).}
+\item{retries}{A `numeric` value to specify the number of retries in case of failure (optional - default `3`).}
 }
 \value{
-Success returns \code{character} vector of n order id(s) (designated by KuCoin).
+Success returns `character` vector of n order id(s) (designated by KuCoin).
 }
 \description{
 TODO: in development.
@@ -25,13 +25,12 @@ TODO: in development.
 This endpoint requires the Trade permission.
 
 This API is restricted for each account, the request rate limit is 3 times/3s.
-}
-\section{---------------}{
-For more information see documentation: \href{https://docs.kucoin.com/#cancel-all-orders}{KuCoin - cancel-all-orders}
+
+# ---------------
+For more information see documentation: [KuCoin - cancel-all-orders](https://docs.kucoin.com/#cancel-all-orders)
 
 TODO: if no symbols provided cancel all
 }
-
 \examples{
 
 \dontrun{
