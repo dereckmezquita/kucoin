@@ -8,7 +8,7 @@ kucoin::get_account_balances()
 # get the market metadata
 ticker <- "BTC/USDT"
 base_to_buy <- 0.0001 # amount of btc
-quote_to_spend <- 1 # 1 usdt
+quote_to_spend <- 1 # 1 usdt
 
 metadata <- kucoin::get_market_metadata.deprecated()[symbol == ticker, ]
 base_size_increment <- metadata[symbol == ticker, ]$base_increment
