@@ -25,5 +25,5 @@ cat("This print is synchronous\n")
 
 # Run the event loop until all scheduled tasks have been processed.
 while (!later$loop_empty()) {
-    later$run_now(timeout = 0.1)
+    later$run_now()
 }
