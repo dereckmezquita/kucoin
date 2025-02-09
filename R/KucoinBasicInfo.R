@@ -53,7 +53,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
 
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 if (!is.null(result$code) && result$code != "200000") {
-                rlang::abort(sprintf("API error %s: %s", result$code, result$msg))
+                    rlang::abort(sprintf("API error %s: %s", result$code, result$msg))
                 }
                 data.table::as.data.table(result$data)
             }, error = function(e) {
@@ -88,7 +88,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get account list", .parent = e)
+                rlang::abort("Failed to get account list", parent = e)
             })
         }),
 
@@ -102,21 +102,21 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
             tryCatch({
                 method <- "GET"
                 endpoint <- paste0("/api/v1/accounts/", accountId)
-                    url <- paste0(get_base_url(self$config), endpoint)
-                    headers <- await(build_headers(method, endpoint, "", self$config))
+                url <- paste0(get_base_url(self$config), endpoint)
+                headers <- await(build_headers(method, endpoint, "", self$config))
 
-                    res <- httr::GET(url, headers)
-                    if (httr::status_code(res) != 200) {
+                res <- httr::GET(url, headers)
+                if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
-                }, error = function(e) "NO CONTENT")
+                    }, error = function(e) "NO CONTENT")
                     rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
 
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result)
             }, error = function(e) {
-                rlang::abort("Failed to get account detail", .parent = e)
+                rlang::abort("Failed to get account detail", parent = e)
             })
         }),
 
@@ -155,7 +155,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$items)
             }, error = function(e) {
-                rlang::abort("Failed to get account ledgers", .parent = e)
+                rlang::abort("Failed to get account ledgers", parent = e)
             })
         }),
 
@@ -207,7 +207,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get trade HF account ledgers", .parent = e)
+                rlang::abort("Failed to get trade HF account ledgers", parent = e)
             })
         }),
 
@@ -253,13 +253,14 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    rlang::abort(sprintf("HTTP error %s: %s", 
+                        httr::status_code(res), err_msg))
                 }
 
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get margin HF account ledgers", .parent = e)
+                rlang::abort("Failed to get margin HF account ledgers", parent = e)
             })
         }),
 
@@ -312,7 +313,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 # For futures, ledger records are in result$data$dataList.
                 data.table::as.data.table(result$data$dataList)
             }, error = function(e) {
-                rlang::abort("Failed to get futures account ledgers", .parent = e)
+                rlang::abort("Failed to get futures account ledgers", parent = e)
             })
         })
     )
