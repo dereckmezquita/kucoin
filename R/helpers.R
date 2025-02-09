@@ -1,18 +1,39 @@
+#' Build Query String
+#'
+#' Constructs a URL query string from a named list of parameters, omitting any NULL values.
+#'
+#' @param params A named list of query parameters.
+#'
+#' @return A character string beginning with "?" if parameters exist; otherwise an empty string.
+#'
+#' @examples
+#' \dontrun{
+#'   qs <- build_query(list(currency = "BTC", type = "trade"))
+#'   # qs: "?currency=BTC&type=trade"
+#' }
+build_query <- function(params) {
+  params <- params[!sapply(params, is.null)]
+  if (length(params) == 0) return("")
+  # Use httr::modify_url with an empty base URL to generate a query string.
+  httr::modify_url(url = "", query = params)
+}
+
 #' Build KuCoin API Headers
 #'
 #' Constructs the HTTP headers required for authenticated KuCoin API requests.
 #'
 #' @param method A character string. The HTTP method (e.g., "GET", "POST").
 #' @param endpoint A character string. The API endpoint path (e.g., "/api/v2/user-info").
-#' @param body A character string. The JSON body as a string (or "" for GET requests).
-#' @param config A named list with API configuration parameters. Must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The API key version (default is "2").
+#' @param body A character string. The JSON body (or "" for GET requests).
+#' @param config A named list with the following required elements:
+#'   \describe{
+#'     \item{api_key}{Your KuCoin API key.}
+#'     \item{api_secret}{Your KuCoin API secret.}
+#'     \item{api_passphrase}{Your KuCoin API passphrase.}
+#'     \item{key_version}{The API key version (default is "2").}
+#'   }
 #'
-#' @return An object of class \code{request}, as returned by \code{httr::add_headers()},
-#' which can be passed to \code{httr::GET()}, \code{httr::POST()}, etc.
+#' @return An object (of class \code{request}) returned by \code{httr::add_headers()}.
 #'
 #' @examples
 #' \dontrun{
@@ -21,18 +42,18 @@
 #'   headers <- build_headers("GET", "/api/v2/user-info", "", config)
 #' }
 build_headers <- function(method, endpoint, body, config) {
-  # Get current timestamp in milliseconds as a character string
+  # Get current timestamp in milliseconds as a character string.
   timestamp <- sprintf("%.0f", as.numeric(Sys.time()) * 1000)
   
-  # Create prehash string: timestamp + HTTP_METHOD + endpoint + body
+  # Create the prehash string: timestamp + HTTP_METHOD + endpoint + body.
   prehash <- paste0(timestamp, toupper(method), endpoint, body)
   
-  # Generate signature using HMAC SHA256 and then Base64-encode it
+  # Generate the signature using HMAC SHA256 and then Base64-encode it.
   sig_raw <- digest::hmac(key = config$api_secret, object = prehash,
                             algo = "sha256", serialize = FALSE, raw = TRUE)
   signature <- base64enc::base64encode(sig_raw)
   
-  # Encrypt the API passphrase in the same way
+  # Encrypt the API passphrase (using the same process as for the signature).
   passphrase_raw <- digest::hmac(key = config$api_secret,
                                  object = config$api_passphrase,
                                  algo = "sha256", serialize = FALSE, raw = TRUE)
@@ -50,12 +71,9 @@ build_headers <- function(method, endpoint, body, config) {
 
 #' Get Base URL for KuCoin API
 #'
-#' Returns the base URL to be used for KuCoin REST API calls. The function
-#' checks the provided configuration; if no base URL is specified, a default
-#' Spot API URL is returned.
+#' Returns the base URL for KuCoin REST API calls based on the provided configuration.
 #'
-#' @param config A named list containing configuration. Optionally, a field
-#'   \code{base_url} may be provided.
+#' @param config A named list that may contain the field \code{base_url}.
 #'
 #' @return A character string representing the base URL.
 #'

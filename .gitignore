@@ -1,0 +1,6 @@
+# dev
+.Renviron
+
+# machine
+.DS_Store
+node_modules
