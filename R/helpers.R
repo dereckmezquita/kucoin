@@ -16,6 +16,7 @@ build_query <- function(params) {
 #' Asynchronously retrieves the current server time from KuCoin API.
 #'
 #' @param base_url A character string. The base URL for KuCoin API (default: "https://api.kucoin.com").
+#'
 #' @return A promise that resolves to a numeric value representing the server timestamp in milliseconds.
 get_server_time <- function(base_url = "https://api.kucoin.com") {
     promises::promise(function(resolve, reject) {
@@ -25,13 +26,12 @@ get_server_time <- function(base_url = "https://api.kucoin.com") {
                 err_msg <- tryCatch({
                     httr::content(res, as = "text", encoding = "UTF-8")
                 }, error = function(e) "NO CONTENT")
-                reject(rlang::abort(sprintf("HTTP error %s: %s", 
-                    httr::status_code(res), err_msg)))
+                reject(stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg)))
             }
             result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
             resolve(result$data)
         }, error = function(e) {
-            reject(rlang::abort("Failed to get server time", parent = e))
+            reject(stop("Failed to get server time"))
         })
     })
 }
@@ -50,6 +50,7 @@ get_server_time <- function(base_url = "https://api.kucoin.com") {
 #'     \item{api_passphrase}{Your KuCoin API passphrase.}
 #'     \item{key_version}{The API key version (default is "2").}
 #'   }
+#'
 #' @return A promise that resolves to an httr::add_headers object.
 build_headers <- coro::async(function(method, endpoint, body, config) {
     timestamp <- await(get_server_time(get_base_url(config)))
@@ -76,6 +77,7 @@ build_headers <- coro::async(function(method, endpoint, body, config) {
 #' Returns the base URL for KuCoin REST API calls based on the provided configuration.
 #'
 #' @param config A named list that may contain the field `base_url`.
+#'
 #' @return A character string representing the base URL.
 get_base_url <- function(config) {
     if (!is.null(config$base_url)) {

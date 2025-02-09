@@ -21,7 +21,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
             required <- c("api_key", "api_secret", "api_passphrase")
             missing <- setdiff(required, names(config))
             if (length(missing) > 0) {
-                rlang::abort(sprintf("Missing required config fields: %s", paste(missing, collapse = ", ")))
+                stop(sprintf("Missing required config fields: %s", paste(missing, collapse = ", ")))
             }
             if (is.null(config$key_version)) config$key_version <- "2"
             if (is.null(config$base_url)) config$base_url <- "https://api.kucoin.com"
@@ -40,24 +40,20 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 body <- ""
                 url <- paste0(get_base_url(self$config), endpoint)
                 headers <- await(build_headers(method, endpoint, body, self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
-                    }, error = function(e) {
-                        return("NO CONTENT")
-                    })
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    }, error = function(e) "NO CONTENT")
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 if (!is.null(result$code) && result$code != "200000") {
-                    rlang::abort(sprintf("API error %s: %s", result$code, result$msg))
+                    stop(sprintf("API error %s: %s", result$code, result$msg))
                 }
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get account summary info", parent = e)
+                stop("Failed to get account summary info")
             })
         }),
 
@@ -76,19 +72,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 query <- build_query(params)
                 url <- paste0(get_base_url(self$config), endpoint, query)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get account list", parent = e)
+                stop("Failed to get account list")
             })
         }),
 
@@ -104,19 +98,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 endpoint <- paste0("/api/v1/accounts/", accountId)
                 url <- paste0(get_base_url(self$config), endpoint)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result)
             }, error = function(e) {
-                rlang::abort("Failed to get account detail", parent = e)
+                stop("Failed to get account detail")
             })
         }),
 
@@ -144,18 +136,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 query <- build_query(params)
                 url <- paste0(get_base_url(self$config), endpoint, query)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$items)
             }, error = function(e) {
-                rlang::abort("Failed to get account ledgers", parent = e)
+                stop("Failed to get account ledgers")
             })
         }),
 
@@ -171,15 +162,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
         #' @param startAt (optional) Start time (milliseconds).
         #' @param endAt (optional) End time (milliseconds).
         #' @return A promise that resolves to a data.table of ledger records.
-        getAccountLedgersTradeHF = coro::async(function(
-            currency = NULL,
-            direction = NULL,
-            bizType = NULL,
-            lastId = NULL,
-            limit = NULL,
-            startAt = NULL,
-            endAt = NULL
-        ) {
+        getAccountLedgersTradeHF = coro::async(function(currency = NULL, direction = NULL, bizType = NULL, lastId = NULL, limit = NULL, startAt = NULL, endAt = NULL) {
             tryCatch({
                 method <- "GET"
                 endpoint <- "/api/v1/hf/accounts/ledgers"
@@ -195,19 +178,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 query <- build_query(params)
                 url <- paste0(get_base_url(self$config), endpoint, query)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get trade HF account ledgers", parent = e)
+                stop("Failed to get trade HF account ledgers")
             })
         }),
 
@@ -223,15 +204,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
         #' @param startAt (optional) Start time (milliseconds).
         #' @param endAt (optional) End time (milliseconds).
         #' @return A promise that resolves to a data.table of ledger records.
-        getAccountLedgersMarginHF = coro::async(function(
-            currency = NULL,
-            direction = NULL,
-            bizType = NULL,
-            lastId = NULL,
-            limit = NULL,
-            startAt = NULL,
-            endAt = NULL
-        ) {
+        getAccountLedgersMarginHF = coro::async(function(currency = NULL, direction = NULL, bizType = NULL, lastId = NULL, limit = NULL, startAt = NULL, endAt = NULL) {
             tryCatch({
                 method <- "GET"
                 endpoint <- "/api/v3/hf/margin/account/ledgers"
@@ -247,19 +220,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 query <- build_query(params)
                 url <- paste0(get_base_url(self$config), endpoint, query)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get margin HF account ledgers", parent = e)
+                stop("Failed to get margin HF account ledgers")
             })
         }),
 
@@ -275,15 +246,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
         #' @param type (optional) Transaction type (e.g., "RealisedPNL", "Deposit").
         #' @param currency (optional) Filter by currency.
         #' @return A promise that resolves to a data.table of futures ledger records.
-        getAccountLedgersFutures = coro::async(function(
-            offset = NULL,
-            forward = TRUE,
-            maxCount = NULL,
-            startAt = NULL,
-            endAt = NULL,
-            type = NULL,
-            currency = NULL
-        ) {
+        getAccountLedgersFutures = coro::async(function(offset = NULL, forward = TRUE, maxCount = NULL, startAt = NULL, endAt = NULL, type = NULL, currency = NULL) {
             tryCatch({
                 method <- "GET"
                 endpoint <- "/api/v1/transaction-history"
@@ -299,20 +262,17 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 query <- build_query(params)
                 url <- paste0(get_base_url(self$config), endpoint, query)
                 headers <- await(build_headers(method, endpoint, "", self$config))
-
                 res <- httr::GET(url, headers)
                 if (httr::status_code(res) != 200) {
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
+                    stop(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
-
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
-                # For futures, ledger records are in result$data$dataList.
                 data.table::as.data.table(result$data$dataList)
             }, error = function(e) {
-                rlang::abort("Failed to get futures account ledgers", parent = e)
+                stop("Failed to get futures account ledgers")
             })
         })
     )
