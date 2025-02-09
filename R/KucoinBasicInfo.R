@@ -253,8 +253,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                     err_msg <- tryCatch({
                         httr::content(res, as = "text", encoding = "UTF-8")
                     }, error = function(e) "NO CONTENT")
-                    rlang::abort(sprintf("HTTP error %s: %s", 
-                        httr::status_code(res), err_msg))
+                    rlang::abort(sprintf("HTTP error %s: %s", httr::status_code(res), err_msg))
                 }
 
                 result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
