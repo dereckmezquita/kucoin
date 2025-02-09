@@ -1,0 +1,273 @@
+# ./1-REST_account_basic-info_get-account-summary-info.R
+
+
+box::use(
+    ./modules/utils[build_query, get_base_url],
+    ./modules/api[get_server_time, build_headers],
+    ./modules/account[getAccountSummaryInfo],
+    ./modules/config[create_config],
+    ./modules/errors[kucoin_error]
+)
+
+# File: main.R
+#!/usr/bin/env Rscript
+options(error = function() {
+    rlang::entrace()
+    rlang::last_trace()
+})
+
+box::use(
+    rlang,
+    later,
+    ./modules/utils[build_query, get_base_url],
+    ./modules/api[get_server_time, build_headers],
+    ./modules/account[getAccountSummaryInfo],
+    ./modules/config[create_config],
+    ./modules/errors[kucoin_error, http_error, api_error]
+)
+
+# Create configuration
+config <- create_config()
+
+cat("Testing: Get Account Summary Info\n")
+getAccountSummaryInfo(config)$
+    then(function(dt) {
+        cat("Account Summary Info (data.table):\n")
+        print(dt)
+    })$
+    catch(function(e) {
+        if (inherits(e, "kucoin_error")) {
+            message("KuCoin API Error: ", conditionMessage(e))
+            if (!is.null(e$parent)) {
+                message("Caused by: ", conditionMessage(e$parent))
+            }
+        } else {
+            message("Unexpected error: ", conditionMessage(e))
+        }
+        rlang::last_error()
+    })
+
+# Run the later event loop until all async tasks are processed
+while (!later::loop_empty()) {
+    later::run_now(timeout = 0.1)
+}
+# ./helpers.R
+
+
+# ./modules/account.R
+
+box::use(
+    ./utils[get_base_url],
+    ./api[build_headers],
+    ./errors[kucoin_error, http_error, api_error]
+)
+
+
+# File: account.R
+#' @export
+getAccountSummaryInfo <- coro::async(function(config) {
+    tryCatch({
+        method <- "GET"
+        endpoint <- "/api/v2/user-info"
+        body <- ""
+        url <- paste0(get_base_url(config), endpoint)
+        headers <- await(build_headers(method, endpoint, body, config))
+        res <- httr::GET(url, headers)
+        
+        if (httr::status_code(res) != 200) {
+            err_msg <- tryCatch({
+                httr::content(res, as = "text", encoding = "UTF-8")
+            }, error = function(e) "NO CONTENT")
+            
+            rlang::abort(
+                http_error(
+                    status = httr::status_code(res),
+                    content = err_msg
+                )
+            )
+        }
+        
+        result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
+        
+        if (!is.null(result$code) && result$code != "200000") {
+            rlang::abort(
+                api_error(
+                    code = result$code,
+                    msg = result$msg
+                )
+            )
+        }
+        
+        data.table::as.data.table(result$data)
+        
+    }, error = function(e) {
+        if (inherits(e, "kucoin_error")) {
+            rlang::abort(e$message, parent = e)
+        } else {
+            kucoin_error(
+                message = "Failed to get account summary info",
+                class = "kucoin_account_error",
+                parent = e
+            )
+        }
+    })
+})
+# ./modules/api.R
+
+box::use(
+    ./utils[get_base_url],
+    ./errors[kucoin_error, http_error]
+)
+
+# File: api.R
+#' @export
+get_server_time <- function(base_url = "https://api.kucoin.com") {
+    promises::promise(function(resolve, reject) {
+        tryCatch({
+            res <- httr::GET(paste0(base_url, "/api/v1/timestamp"))
+            
+            if (httr::status_code(res) != 200) {
+                err_msg <- tryCatch({
+                    httr::content(res, as = "text", encoding = "UTF-8")
+                }, error = function(e) "NO CONTENT")
+                
+                reject(http_error(
+                    status = httr::status_code(res),
+                    content = err_msg
+                ))
+            }
+            
+            result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
+            resolve(result$data)
+            
+        }, error = function(e) {
+            if (inherits(e, "kucoin_error")) {
+                reject(e)
+            } else {
+                reject(kucoin_error(
+                    message = "Failed to get server time",
+                    class = "kucoin_server_time_error",
+                    parent = e
+                ))
+            }
+        })
+    })
+}
+
+#' @export
+build_headers <- coro::async(function(method, endpoint, body, config) {
+    tryCatch({
+        timestamp <- await(get_server_time(get_base_url(config)))
+        prehash <- paste0(timestamp, toupper(method), endpoint, body)
+        
+        sig_raw <- digest::hmac(
+            key = config$api_secret,
+            object = prehash,
+            algo = "sha256",
+            serialize = FALSE,
+            raw = TRUE
+        )
+        signature <- base64enc::base64encode(sig_raw)
+        
+        passphrase_raw <- digest::hmac(
+            key = config$api_secret,
+            object = config$api_passphrase,
+            algo = "sha256",
+            serialize = FALSE,
+            raw = TRUE
+        )
+        encrypted_passphrase <- base64enc::base64encode(passphrase_raw)
+        
+        httr::add_headers(
+            `KC-API-KEY` = config$api_key,
+            `KC-API-SIGN` = signature,
+            `KC-API-TIMESTAMP` = timestamp,
+            `KC-API-PASSPHRASE` = encrypted_passphrase,
+            `KC-API-KEY-VERSION` = config$key_version,
+            `Content-Type` = "application/json"
+        )
+    }, error = function(e) {
+        if (inherits(e, "kucoin_error")) {
+            rlang::abort(e$message, parent = e)
+        } else {
+            kucoin_error(
+                message = "Failed to build request headers",
+                class = "kucoin_headers_error",
+                parent = e
+            )
+        }
+    })
+})
+
+# ./modules/config.R
+
+# File: config.R
+#' @export
+create_config <- function(
+    api_key = Sys.getenv("KC-API-KEY"),
+    api_secret = Sys.getenv("KC-API-SECRET"),
+    api_passphrase = Sys.getenv("KC-API-PASSPHRASE"),
+    base_url = Sys.getenv("KC-API-ENDPOINT"),
+    key_version = "2"
+) {
+    list(
+        api_key = api_key,
+        api_secret = api_secret,
+        api_passphrase = api_passphrase,
+        base_url = base_url,
+        key_version = key_version
+    )
+}
+# ./modules/errors.R
+
+# File: errors.R
+#' @export
+kucoin_error <- function(message, class = NULL, ..., call = rlang::caller_env(), parent = NULL) {
+    rlang::abort(
+        message = message,
+        class = c(class, "kucoin_error"),
+        ...,
+        call = call,
+        parent = parent
+    )
+}
+
+#' @export
+http_error <- function(status, content, call = rlang::caller_env()) {
+    kucoin_error(
+        message = sprintf("HTTP error %s: %s", status, content),
+        class = "kucoin_http_error",
+        status = status,
+        content = content,
+        call = call
+    )
+}
+
+#' @export
+api_error <- function(code, msg, call = rlang::caller_env()) {
+    kucoin_error(
+        message = sprintf("API error %s: %s", code, msg),
+        class = "kucoin_api_error",
+        code = code,
+        msg = msg,
+        call = call
+    )
+}
+# ./modules/utils.R
+
+# File: utils.R
+#' @export
+build_query <- function(params) {
+    params <- params[!sapply(params, is.null)]
+    if (length(params) == 0) return("")
+    return(httr::modify_url(url = "", query = params))
+}
+
+#' @export
+get_base_url <- function(config) {
+    if (!is.null(config$base_url)) {
+        return(config$base_url)
+    }
+    return("https://api.kucoin.com")
+}
+
