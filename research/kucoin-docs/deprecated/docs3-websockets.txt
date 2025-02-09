@@ -1,0 +1,1098 @@
+Websocket
+
+Introduction
+
+While there is a strict access frequency control for REST API, we highly recommend that API users utilize Websocket to get the real-time data.
+
+TIP
+The recommended way is to just create a websocket connection and subscribe to multiple channels.
+
+Basic Info
+
+Apply connect token
+
+Introduction
+
+You need to apply for one of the two tokens below to create a websocket connection. It should be noted that: if you subscribe to spot/margin data, you need to obtain tokens through the spot base URL; if you subscribe to futures data, you need to obtain tokens through the futures base URL, which cannot be mixed.
+
+Public token (No authentication required):
+
+{
+  "code": "200000",
+  "data": {
+    "token": "2neAiuYvAU61ZDXANAGAsiL4-iAExhsBXZxftpOeh_55i3Ysy2q2LEsEWU64mdzUOPusi34M_wGoSf7iNyEWJ4aBZXpWhrmY9jKtqkdWoFa75w3istPvPtiYB9J6i9GjsxUuhPw3BlrzazF6ghq4L_u0MhKxG3x8TeN4aVbNiYo=.mvnekBb8DJegZIgYLs2FBQ==",
+    "instanceServers": [
+      {
+        "endpoint": "wss://ws-api-spot.kucoin.com/", //It is recommended to use a dynamic URL, which may change
+        "encrypt": true,
+        "protocol": "websocket",
+        "pingInterval": 18000,
+        "pingTimeout": 10000
+      }
+    ]
+  }
+}
+If you only use public channels (e.g. all public market data), please make request as follows to obtain the server list and temporary public token:
+
+HTTP REQUEST
+
+POST /api/v1/bullet-public
+
+REQUEST URL
+
+This endpoint support Spot URL or Futures URL
+
+REQUEST RATE LIMIT
+
+Public weight：10
+
+Private channels (Authentication request required):
+
+For private channels and messages (e.g. account balance notice), please make request as follows after authorization to obtain the server list and authorized token.
+
+HTTP REQUEST
+
+POST /api/v1/bullet-private
+
+REQUEST URL
+
+This endpoint support Spot URL or Futures URL
+
+REQUEST RATE LIMIT
+
+Spot weight：10 Futures weight：10
+
+RESPONSES
+
+Param	Description
+endpoint	Websocket server address for establishing connection
+protocol	Protocol supported
+encrypt	Indicate whether SSL encryption is used
+pingInterval	Recommended to send ping interval in millisecond
+pingTimeout	After such a long time(millisecond), if you do not receive pong, it will be considered as disconnected.
+token	token
+
+Create connection
+
+var socket = new WebSocket(
+  'wss://ws-api-spot.kucoin.com/?token=xxx&[connectId=xxxxx]',
+);
+When the connection is successfully established, the system will send a welcome message.
+
+TIP
+Only when the welcome message is received will the connection be available
+
+{
+  "id": "hQvf8jkno",
+  "type": "welcome"
+}
+connectId: the connection id, a unique value taken from the client side. Both the id of the welcome message and the id of the error message are connectId.
+
+If you only want to receive private messages of the specified topic, please set privateChannel to true when subscribing.
+
+Ping
+
+{
+  "id": "1545910590801",
+  "type": "ping"
+}
+To prevent the TCP link being disconnected by the server, the client side needs to send ping messages every pingInterval time to the server to keep alive the link.
+
+After the ping message is sent to the server, the system would return a pong message to the client side.
+
+If the server has not received any message from the client for a long time, the connection will be disconnected.
+
+{
+  "id": "1545910590801",
+  "type": "pong"
+}
+
+Subscribe
+
+Introduction
+
+//Spot Demo
+{
+  "id": 1545910660739, //The id should be an unique value
+  "type": "subscribe",
+  "topic": "/market/ticker:BTC-USDT,ETH-USDT", //Topic needs to be subscribed. Some topics support to divisional subscribe the informations of multiple trading pairs through ",".
+  "privateChannel": false, //Adopted the private channel or not. Set as false by default.
+  "response": true //Whether the server needs to return the receipt information of this subscription or not. Set as false by default.
+}
+//Future Demo
+{
+  "id": 1545910660739, //The id should be an unique value
+  "type": "subscribe",
+  "topic": "/market/ticker:XBTUSDM", //Subscribed topic. Some topics support to divisional subscribe the informations of multiple trading pairs through ",".
+  "privateChannel": false, //Adopted the private channel or not. Set as false by default.
+  "response": true //Whether the server needs to return the receipt information of this subscription or not. Set as false by default.
+}
+To subscribe channel messages from a certain server, the client side should send subscription message to the server.
+
+If the subscription succeeds, the system will send ack messages to you, when the response is set as true.
+
+{
+  "id": "1545910660739",
+  "type": "ack"
+}
+While there are topic messages generated, the system will send the corresponding messages to the client side. For details about the message format, please check the definitions of topics.
+
+Parameters
+
+ID
+
+ID is unique string to mark the request which is same as id property of ack.
+
+Topic
+
+The topic you want to subscribe to.
+
+PrivateChannel
+
+You can subscribe to some private topics through the privateChannel parameter. This parameter is set to "false" by default. When set to "true", you can only receive content pushes related to the topics you subscribe to.
+
+Response
+
+If the response is set as true, the system will return the ack messages after the subscription succeed.
+
+UnSubscribe
+
+Introduction
+
+Unsubscribe from topics you have subscribed to.
+
+//Spot Unsubscribe Topic
+{
+  "id": "1545910840805", //The id should be an unique value
+  "type": "unsubscribe",
+  "topic": "/market/ticker:BTC-USDT,ETH-USDT", //Topic needs to be unsubscribed. Some topics support to divisional unsubscribe the informations of multiple trading pairs through ",".
+  "privateChannel": false,
+  "response": true //Whether the server needs to return the receipt information of this subscription or not. Set as false by default.
+}
+//Futures Unsubscribe Topic
+{
+  "id": "1545910840805", //The id should be an unique value
+  "type": "unsubscribe",
+  "topic": "/market/ticker:XBTUSDM", //Topic needs to be unsubscribed. Some topics support to divisional unsubscribe the informations of multiple trading pairs through ",".
+  "privateChannel": false,
+  "response": true //Whether the server needs to return the receipt information of this subscription or not. Set as false by default.
+}
+{
+  "id": "1545910840805",
+  "type": "ack"
+}
+
+Parameters
+
+ID
+
+Unique string to mark the request.
+
+Topic
+
+The topic you want to subscribe.
+
+PrivateChannel
+
+You can unsubscribe from some private topics through the privateChannel parameter. Set to "true", you can unsubscribe related private channel push.
+
+Response
+
+If the response is set as true, the system would return the ack messages after the unsubscription succeed.
+
+Multiplex
+
+Introduction
+
+In one physical connection, you could open different multiplex tunnels to subscribe different topics for different data.
+
+Open
+
+For example, enter the command below to open bt1 multiple tunnel : {"id": "1Jpg30DEdU", "type": "openTunnel", "newTunnelId": "bt1", "response": true}
+
+Add “tunnelId” in the command: Spot/Margin：{"id": "1JpoPamgFM", "type": "subscribe", "topic": "/market/ticker:KCS-BTC"，"tunnelId": "bt1", "response": true} Futures：{"id": "1JpoPamgFM", "type": "subscribe", "topic": "/market/ticker:XBTUSDM"，"tunnelId": "bt1", "response": true}
+
+Response
+
+After the request is successful, you will receive messages corresponding to the id tunnelIId Spot/Margin：{"id": "1JpoPamgFM", "type": "message", "topic": "/market/ticker:KCS-BTC", "subject": "trade.ticker", "tunnelId": "bt1", "data": {...}} Futures：{"id": "1JpoPamgFM", "type": "message", "topic": "/market/ticker:XBTUSDM", "subject": "trade.ticker", "tunnelId": "bt1", "data": {...}}
+
+Close
+
+To close the tunnel, you can enter the command below: {"id": "1JpsAHsxKS", "type": "closeTunnel", "tunnelId": "bt1", "response": true}
+
+Limitations
+
+The multiplex tunnel is provided for API users only.
+The maximum multiplex tunnels available: 5.
+
+Sequence Numbers
+
+The sequence field exists in order book, trade history and snapshot messages by default and the Level 3 and Level 2 data works to ensure the full connection of the sequence. If the sequence is non-sequential, please enable the calibration logic.
+
+General Logic for Message Judgement in Client Side
+
+Judge message type. There are three types of messages at present: message (the commonly used messages for push), notice (the notices generally used), command (consecutive command).
+Judge messages by userId. Messages with userId are private messages, and messages without userId are general messages.(Only Futures)
+Judge messages by topic. You could judge the message type through the topic.
+Judge messages by subject. For the same type of messages with the same topic, you could judge the type of messages through their subjects.
+
+Spot Trading
+
+Public Channels
+
+Ticker
+
+{
+  "id": 1545910660739,
+  "type": "subscribe",
+  "topic": "/market/ticker:BTC-USDT",
+  "response": true
+}
+{
+  "type": "message",
+  "topic": "/market/ticker:BTC-USDT",
+  "subject": "trade.ticker",
+  "data": {
+    "sequence": "1545896668986", // Sequence number
+    "price": "0.08", // Last traded price
+    "size": "0.011", //  Last traded amount
+    "bestAsk": "0.08", // Best ask price
+    "bestAskSize": "0.18", // Best ask size
+    "bestBid": "0.049", // Best bid price
+    "bestBidSize": "0.036", // Best bid size
+	"Time": 1704873323416	//The matching time of the latest transaction
+  }
+}
+Topic: /market/ticker:{symbol},{symbol}...
+
+Push frequency: once every 100ms
+Subscribe to this topic to get the specified [symbol] (/docs/rest/spot-trading/market-data/get-symbols-list) push of BBO changes.
+
+Please note that more information may be added to messages from this channel in the near future.
+
+All Tickers
+
+{
+  "id": 1545910660739,
+  "type": "subscribe",
+  "topic": "/market/ticker:all",
+  "response": true
+}
+{
+  "type": "message",
+  "topic": "/market/ticker:all",
+  "subject": "BTC-USDT",
+  "data": {
+    "sequence": "1545896668986",
+    "price": "0.08",
+    "size": "0.011",
+    "bestAsk": "0.08",
+    "bestAskSize": "0.18",
+    "bestBid": "0.049",
+    "bestBidSize": "0.036",
+	"Time": 1704873323416	//The matching time of the latest transaction
+  }
+}
+Topic: /market/ticker:all
+
+Push frequency: once every 100ms
+Subscribe to this topic to get the push of all market symbols BBO change.
+
+Symbol Snapshot
+
+{
+  "type": "message",
+  "topic": "/market/snapshot:KCS-BTC",
+  "subject": "trade.snapshot",
+  "data": {
+    "sequence": "1545896669291",
+    "data": {
+      "trading": true,
+      "symbol": "KCS-BTC",
+      "buy": 0.00011,
+      "sell": 0.00012,
+      "sort": 100, //sorting number(Pointless)
+      "volValue": 3.13851792584, //24-hour rolling transaction volume, refreshed every 2s
+      "baseCurrency": "KCS",
+      "market": "BTC",
+      "quoteCurrency": "BTC",
+      "symbolCode": "KCS-BTC",
+      "datetime": 1548388122031,
+      "high": 0.00013,
+      "vol": 27514.34842,
+      "low": 0.0001,
+      "changePrice": -1.0e-5,
+      "changeRate": -0.0769,
+      "lastTradedPrice": 0.00012,
+      "board": 0, //Trading pair partition： 0.primary partition 1.KuCoin Plus", example = "1"
+      "mark": 0 //Trading Pair Mark： 0.default 1.ST. 2.NEW", example = "1"
+    }
+  }
+}
+Topic: /market/snapshot:{symbol}
+
+Push frequency: once every 2s
+Subscribe to get snapshot data for a single symbol.
+
+Market Snapshot
+
+{
+  "type": "message",
+  "topic": "/market/snapshot:BTC",
+  "subject": "trade.snapshot",
+  "data": {
+    "sequence": "1545896669291",
+    "data": [
+      {
+        "trading": true,
+        "symbol": "KCS-BTC",
+        "buy": 0.00011,
+        "sell": 0.00012,
+        "sort": 100, //sorting number
+        "volValue": 3.13851792584,
+        "baseCurrency": "KCS",
+        "market": "BTC",
+        "quoteCurrency": "BTC",
+        "symbolCode": "KCS-BTC",
+        "datetime": 1548388122031,
+        "high": 0.00013,
+        "vol": 27514.34842,
+        "low": 0.0001,
+        "changePrice": -1.0e-5,
+        "changeRate": -0.0769,
+        "lastTradedPrice": 0.00012,
+        "board": 0, //Trading pair partition： 0.primary partition 1.KuCoin Plus", example = "1"
+        "mark": 0 //Trading Pair Mark： 0.default 1.ST. 2.NEW", example = "1"
+      }
+    ]
+  }
+}
+Topic: /market/snapshot:{market}
+
+Push frequency: once every 2s
+Subscribe this topic to get the snapshot data of for the entire market.
+
+Level1 - BBO Market Data
+
+{
+    "type": "message",
+    "topic": "/spotMarket/level1:BTC-USDT",
+    "subject": "level1",
+    "data": {
+	    "asks":
+            ["9989","8"]    //price, size
+        ,
+        "bids":
+            ["9984","10"]
+        ,
+        "timestamp": 1586948108193
+    }
+}
+Topic: /spotMarket/level1:{symbol},{symbol}...
+
+Push frequency: once every 10ms
+A topic supports up to 100 symbols.
+The system will return the 1 best ask/bid orders data, which is the snapshot data of every 10 milliseconds (in other words, the 1 best ask/bid orders data returned every 10 milliseconds in real-time).
+
+Please note: If there is no change in the market, data will not be pushed
+
+Level2 - Market Data
+
+{
+  "id": 1545910660740,
+  "type": "subscribe",
+  "topic": "/market/level2:BTC-USDT",
+  "response": true
+}
+Topic: /market/level2:{symbol},{symbol}...
+
+Push frequency:real-time
+A topic supports up to 100 symbols.
+Subscribe to this topic to get the specified [symbol] (/docs/rest/spot-trading/market-data/get-symbols-list) of Level2 order book data.
+
+When the websocket subscription is successful, the system would send the increment change data pushed by the websocket to you.
+
+{
+  "type": "message",
+  "topic": "/market/level2:BTC-USDT",
+  "subject": "trade.l2update",
+  "data": {
+    "changes": {
+      "asks": [
+        [
+          "18906", //price
+          "0.00331", //size
+          "14103845" //sequence
+        ],
+        ["18907.3", "0.58751503", "14103844"]
+      ],
+      "bids": [["18891.9", "0.15688", "14103847"]]
+    },
+    "sequenceEnd": 14103847,
+    "sequenceStart": 14103844,
+    "symbol": "BTC-USDT",
+    "time": 1663747970273 //milliseconds
+  }
+}
+Calibration procedure：
+
+After receiving the websocket Level 2 data flow, cache the data.
+Initiate a Level 2 request to get the snapshot data of Level 2 order book.
+Playback the cached Level 2 data flow.
+Apply the new Level 2 data flow to the local snapshot to ensure that sequenceStart(new)<=sequenceEnd+1(old) and sequenceEnd(new) > sequenceEnd(old). The sequence on each record in changes only represents the last modification of the corresponding sequence of the price, and does not serve as a basis for judging message continuity.
+Update the level2 full data based on sequence according to the price and size. If the price is 0, ignore the messages and update the sequence. If the size=0, update the sequence and remove the price of which the size is 0 out of level 2. For other cases, please update the price.
+The Change attribute of Level 2 is a string value of "price, size, sequence", namely: ["price", "quantity", "sequence"].
+
+Please note: size refers to the latest size corresponding to price. When the size is 0, the corresponding price needs to be deleted from the order book.
+
+Example
+
+Take BTC/USDT as an example, suppose the current order book data in level 2 is as follows:
+
+After subscribing to the channel, you would receive changes as follows:
+
+...
+"asks":[
+  ["3988.59","3", "16"], // ignore it because sequence = 16
+  ["3988.61","0", "19"], // Remove 3988.61
+  ["3988.62","8", "15"], // ignore it because sequence < 16
+]
+"bids":[
+  ["3988.50", "44", "18"] // Update size of 3988.50 to 44
+]
+"sequenceStart": 19,
+"sequenceEnd": 15,
+...
+TIP
+The sequence on each record in changes only represents the last modification of the corresponding sequence of the price, not as a basis for judging the continuity of the message; for example, when there are multiple updates at the same price ["3988.50", "20", "17" "], ["3988.50", "44", "18"], at this time only the latest ["3988.50", "44", "18"] will be pushed
+
+Get a snapshot of the order book through a REST request (Level 2) to build a local order book. Suppose that data we got is as follows:
+
+...
+"sequence": "16",
+"asks":[
+  ["3988.62","8"],//[Price, Size]
+  ["3988.61","32"],
+  ["3988.60","47"],
+  ["3988.59","3"],
+]
+"bids":[
+  ["3988.51","56"],
+  ["3988.50","15"],
+  ["3988.49","100"],
+  ["3988.48","10"]
+]
+...
+The current data on the local order book is as follows:
+
+| Price | Size | Side |
+|---------|-----|------|
+| 3988.62 | 8   | Sell |
+| 3988.61 | 32  | Sell |
+| 3988.60 | 47  | Sell |
+| 3988.59 | 3   | Sell |
+| 3988.51 | 56  | Buy  |
+| 3988.50 | 15  | Buy  |
+| 3988.49 | 100 | Buy  |
+| 3988.48 | 10  | Buy  |
+In the beginning, the sequence of the order book is 16. Discard the feed data of sequence that is below or equals to 16, and apply playback the sequence [18,19] to update the snapshot of the order book. Now the sequence of your order book is 19 and your local order book is up-to-date.
+
+Diff:
+
+Update size of 3988.50 to 44 (Sequence 18)
+Remove 3988.61 (Sequence 19)
+Now your current order book is up-to-date and final data is as follows:
+
+| Price | Size | Side |
+|---------|-----|------|
+| 3988.62 | 8   | Sell |
+| 3988.60 | 47  | Sell |
+| 3988.59 | 3   | Sell |
+| 3988.51 | 56  | Buy  |
+| 3988.50 | 44  | Buy  |
+| 3988.49 | 100 | Buy  |
+| 3988.48 | 10  | Buy  |
+
+Level2 - 5 best ask/bid orders
+
+{
+  "type": "message",
+  "topic": "/spotMarket/level2Depth5:BTC-USDT",
+  "subject": "level2",
+  "data": {
+    "asks": [
+      ["9989", "8"], //price, size
+      ["9990", "32"],
+      ["9991", "47"],
+      ["9992", "3"],
+      ["9993", "3"]
+    ],
+    "bids": [
+      ["9988", "56"],
+      ["9987", "15"],
+      ["9986", "100"],
+      ["9985", "10"],
+      ["9984", "10"]
+    ],
+    "timestamp": 1586948108193
+  }
+}
+Topic: /spotMarket/level2Depth5:{symbol},{symbol}...
+
+Push frequency: once every 100ms
+The system will return the 5 best ask/bid orders data, which is the snapshot data of every 100 milliseconds (in other words, the 5 best ask/bid orders data returned every 100 milliseconds in real-time).
+
+Level2 - 50 best ask/bid orders
+
+{
+    "type": "message",
+    "topic": "/spotMarket/level2Depth50:BTC-USDT",
+    "subject": "level2",
+    "data": {
+	    "asks":[
+            ["9993","3"],    //price,size
+            ["9992","3"],
+            ["9991","47"],
+            ["9990","32"],
+            ["9989","8"]
+        ],
+        "bids":[
+            ["9988","56"],
+            ["9987","15"],
+            ["9986","100"],
+            ["9985","10"],
+            ["9984","10"]
+        ]
+        "timestamp": 1586948108193
+      }
+  }
+Topic: /spotMarket/level2Depth50:{symbol},{symbol}...
+
+Push frequency: once every 100ms
+The system will return the 50 best ask/bid orders data, which is the snapshot data of every 100 milliseconds (in other words, the 50 best ask/bid orders data returned every 100 milliseconds in real-time).
+
+Klines
+
+{
+  "type": "message",
+  "topic": "/market/candles:BTC-USDT_1hour",
+  "subject": "trade.candles.update",
+  "data": {
+    "symbol": "BTC-USDT", // symbol
+    "candles": [
+      "1589968800", // Start time of the candle cycle
+      "9786.9", // open price
+      "9740.8", // close price
+      "9806.1", // high price
+      "9732", // low price
+      "27.45649579", // Transaction volume
+      "268280.09830877" // Transaction amount
+    ],
+    "time": 1589970010253893337 // now（us）
+  }
+}
+Topic: /market/candles:{symbol}_{type}
+
+Push frequency: real-time
+Param	Description
+symbol	symbol
+type	1min, 3min, 15min, 30min, 1hour, 2hour, 4hour, 6hour, 8hour, 12hour, 1day, 1week
+Subscribe to this topic to get K-Line data.
+
+Match Execution Data
+
+{
+  "id": 1545910660741,
+  "type": "subscribe",
+  "topic": "/market/match:BTC-USDT",
+  "privateChannel": false,
+  "response": true
+}
+Topic: /market/match:{symbol},{symbol}...
+
+Push frequency: real-time
+A topic supports up to 100 symbols.
+Subscribe to this topic to get the matching event data flow of Level 3.
+
+For each order traded, the system would send you the match messages in the following format.
+
+{
+  "type": "message",
+  "topic": "/market/match:BTC-USDT",
+  "subject": "trade.l3match",
+  "data": {
+    "sequence": "1545896669145",
+    "type": "match",
+    "symbol": "BTC-USDT",
+    "side": "buy",
+    "price": "0.08200000000000000000",
+    "size": "0.01022222000000000000",
+    "tradeId": "5c24c5da03aa673885cd67aa",
+    "takerOrderId": "5c24c5d903aa6772d55b371e",
+    "makerOrderId": "5c2187d003aa677bd09d5c93",
+    "time": "1545913818099033203"
+  }
+}
+
+Private Channels
+
+Introduction
+
+Subscribe to private channels require privateChannel=“true”.
+
+Private Order Change
+
+Topic: /spotMarket/tradeOrders
+
+Push frequency: real-time
+This topic will push all change events of your orders.
+
+Order Status
+
+“match”: when taker order executes with orders in the order book, the taker order status is “match”;
+
+“open”: the order is in the order book;
+
+“done”: the order is fully executed successfully;
+
+Message Type
+
+open
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrders",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab07953bdea00089965d2",
+    "type": "open",
+    "orderTime": 1670329987026,
+    "size": "0.1",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487481000906",
+    "remainSize": "0.1",
+    "status": "open",
+    "ts": 1670329987311000000
+  }
+}
+when the order enters into the order book;
+
+match
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrders",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "sell",
+    "orderId": "5efab07953bdea00089965fa",
+    "liquidity": "taker",
+    "type": "match",
+    "feeType": "takerFee", //Fee type, this parameter is only included when type=match, message type: "takerFee", "makerFee"
+    "orderTime": 1670329987026,
+    "size": "0.1",
+    "filledSize": "0.1",
+    "price": "0.938",
+    "matchPrice": "0.96738",
+    "matchSize": "0.1",
+    "tradeId": "5efab07a4ee4c7000a82d6d9",
+    "clientOid": "1593487481000313",
+    "remainSize": "0",
+    "status": "match",
+    "ts": 1670329987311000000
+  }
+}
+when the order has been executed;
+
+filled
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrders",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "sell",
+    "orderId": "5efab07953bdea00089965fa",
+    "type": "filled",
+    "orderTime": 1670329987026,
+    "size": "0.1",
+    "filledSize": "0.1",
+    "price": "0.938",
+    "clientOid": "1593487481000313",
+    "remainSize": "0",
+    "status": "done",
+    "ts": 1670329987311000000
+  }
+}
+when the order has been executed and its status was changed into DONE;
+
+canceled
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrders",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab07953bdea00089965d2",
+    "type": "canceled",
+    "orderTime": 1670329987026,
+    "size": "0.1",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487481000906",
+    "remainSize": "0",
+    "status": "done",
+    "ts": 1670329987311000000
+  }
+}
+when the order has been cancelled and its status was changed into DONE;
+
+update
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrders",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab13f53bdea00089971df",
+    "type": "update",
+    "oldSize": "0.1",
+    "orderTime": 1670329987026,
+    "size": "0.06",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487679000249",
+    "remainSize": "0.06",
+    "status": "open",
+    "ts": 1670329987311000000
+  }
+}
+when the order has been updated;
+
+Private Order Change V2
+
+Topic: /spotMarket/tradeOrdersV2
+
+Push frequency: real-time
+This topic will push all change events of your orders. Compared with v1, v2 adds an Order Status: "new", there is no difference in push speed
+
+Order Status
+
+"new": the order enters the matching system;
+
+“open”: the order is in the order book（maker order）;
+
+“match”: when taker order executes with orders in the order book, the taker order status is “match”;
+
+“done”: the order is fully executed successfully;
+
+Order Type
+
+"received": The message sent when the order enters the matching system. When the order has just entered the matching system and has not yet done matching logic with the counterparty, a private message with the message type "received" and the order status "new" will be pushed.
+
+"open": the order is in the order book（maker order）;
+
+"match": the message sent when the order is match,
+
+When the status is open and the type is match, it is a maker match.
+When the status is match and the type is match, it is a taker match.
+"update": The message sent due to the order being modified: STP triggering, partial cancellation of the order. Includes these three situations:
+
+When the status is open and the type is update: partial amounts of the order have been canceled, or STP triggers
+When the status is match and the type is update: STP triggers
+When the status is done and the type is update: partial amounts of the order have been filled and the unfilled part got canceled, or STP is triggered.
+"filled": The message sent when the status of the order changes to DONE after the transaction
+
+"canceled": The message sent when the status of the order changes to DONE due to being canceled
+
+received
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab07953bdea00089965d2",
+    "type": "received",
+    "orderTime": 1593487481683297666,
+    "price": "0.937",
+    "clientOid": "1593487481000906",
+    "status": "new",
+    "originSize": "0.1", //original quantity
+    "originFunds": "0.1", //The original funds of the market order
+    "ts": 1593487481683297666 //push time(timestamp)
+  }
+}
+The message sent when the order enters the matching system. When the order has just entered the matching system and has not yet done matching logic with the counterparty, a private message with the message type "received" and the order status "new" will be pushed.
+
+open
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab07953bdea00089965d2",
+    "type": "open",
+    "orderTime": 1593487481683297666,
+    "size": "0.1",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487481000906",
+    "remainSize": "0.1",
+    "status": "open",
+    "canceledSize": "0.1", // Cumulative number of cancellations
+    "canceledFunds": "0.1", // Market order accumulative cancellation funds
+    "originSize": "0.1", // original quantity
+    "originFunds": "0.1", // Market order original funds
+    "ts": 1593487481683297666 //push time(timestamp)
+  }
+}
+when the order enters into the order book;
+
+match
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "sell",
+    "orderId": "5efab07953bdea00089965fa",
+    "liquidity": "taker",
+    "type": "match",
+    "feeType": "takerFee", //Fee type, this parameter is only included when type=match, message type: "takerFee", "makerFee"
+    "orderTime": 1593487482038606180,
+    "size": "0.1",
+    "filledSize": "0.1",
+    "price": "0.938",
+    "matchPrice": "0.96738",
+    "matchSize": "0.1",
+    "tradeId": "5efab07a4ee4c7000a82d6d9",
+    "clientOid": "1593487481000313",
+    "remainSize": "0",
+    "status": "match",
+    "canceledSize": "0.1", // Cumulative number of cancellations
+    "canceledFunds": "0.1", // Market order accumulative cancellation funds
+    "originSize": "0.1", // original quantity
+    "originFunds": "0.1", // Market order original funds
+    "ts": 1593487482038606180 //push time(timestamp)
+  }
+}
+when the order has been executed and its status was changed into DONE;
+
+update
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab13f53bdea00089971df",
+    "type": "update",
+    "oldSize": "0.1",
+    "orderTime": 1593487679693183319,
+    "size": "0.06",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487679000249",
+    "remainSize": "0.06",
+    "status": "open",
+    "canceledSize": "0.1", // Cumulative number of cancellations
+    "canceledFunds": "0.1", // Market order accumulative cancellation funds
+    "originSize": "0.1", // original quantity
+    "originFunds": "0.1", // Market order original funds
+    "ts": 1593487682916117521 //push time(timestamp)
+  }
+}
+The message sent by the order due to modification
+
+filled
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "sell",
+    "orderId": "5efab07953bdea00089965fa",
+    "type": "filled",
+    "orderTime": 1593487482038606180,
+    "size": "0.1",
+    "filledSize": "0.1",
+    "price": "0.938",
+    "clientOid": "1593487481000313",
+    "remainSize": "0",
+    "status": "done",
+    "canceledSize": "0.1", // Cumulative number of cancellations
+    "canceledFunds": "0.1", // Market order accumulative cancellation funds
+    "originSize": "0.1", // original quantity
+    "originFunds": "0.1", // Market order original funds
+    "ts": 1593487482038606180 //push time(timestamp)
+  }
+}
+The message sent when the status of the order changes to DONE after the transaction
+
+canceled
+
+{
+  "type": "message",
+  "topic": "/spotMarket/tradeOrdersV2",
+  "subject": "orderChange",
+  "channelType": "private",
+  "data": {
+    "symbol": "KCS-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "5efab07953bdea00089965d2",
+    "type": "canceled",
+    "orderTime": 1593487481683297666,
+    "size": "0.1",
+    "filledSize": "0",
+    "price": "0.937",
+    "clientOid": "1593487481000906",
+    "remainSize": "0",
+    "status": "done",
+    "canceledSize": "0.1", // Cumulative number of cancellations
+    "canceledFunds": "0.1", // Market order accumulative cancellation funds
+    "originSize": "0.1", // original quantity
+    "originFunds": "0.1", // Market order original funds
+    "ts": 1593487481893140844 //push time(timestamp)
+  }
+}
+The message sent when the status of the order changes to DONE due to being canceled
+
+Account Balance Change
+
+{
+  "type": "message",
+  "topic": "/account/balance",
+  "subject": "account.balance",
+  "channelType": "private",
+  "data": {
+    "total": "88", // total balance
+    "available": "88", // available balance
+    "availableChange": "88", // the change of available balance
+    "currency": "KCS", // currency
+    "hold": "0", // hold amount
+    "holdChange": "0", // the change of hold balance
+    "relationEvent": "trade.setted", //relation event
+    "relationEventId": "5c21e80303aa677bd09d7dff", // relation event id
+    "relationContext": {
+      "symbol": "BTC-USDT",
+      "tradeId": "5e6a5dca9e16882a7d83b7a4", // the trade Id when order is executed
+      "orderId": "5ea10479415e2f0009949d54"
+    }, // the context of trade event
+    "time": "1545743136994" // timestamp
+  }
+}
+Topic: /account/balance
+
+Push frequency: real-time
+You will receive this message when an account balance changes. The message contains the details of the change.
+
+Relation Event
+
+Type	Description
+main.deposit	Deposit
+main.withdraw_hold	Hold withdrawal amount
+main.withdraw_done	Withdrawal done
+main.transfer	Transfer (Main account)
+main.other	Other operations (Main account)
+trade.hold	Hold (Trade account)
+trade.setted	Settlement (Trade account)
+trade.transfer	Transfer (Trade account)
+trade.other	Other operations (Trade account)
+trade_hf.hold	Hold (trade_hf account)
+trade_hf.setted	Settlement (trade_hf account)
+trade_hf.transfer	Transfer (trade_hf account)
+trade_hf.other	Other operations (trade_hf account)
+margin.hold	Hold (Margin account)
+margin.setted	Settlement (Margin account)
+margin.transfer	Transfer (Margin account)
+margin.other	Other operations (Margin account)
+isolated_{symbol}.hold	Hold (Isolated margin account)
+isolated_{symbol}.setted	Settlement (Isolated margin account)
+isolated_{symbol}.transfer	Transfer (Isolated margin account)
+isolated_{symbol}.other	Other operations (Isolated margin account)
+marginV2.hold	Hold (margin_hf account)
+marginV2.setted	Settlement (margin_hf account)
+marginV2.transfer	Transfer (margin_hf account)
+marginV2.other	Other operations (margin_hf account)
+isolatedV2_{symbol}.hold	Hold (Isolated margin_hf account)
+isolatedV2_{symbol}.setted	Settlement (Isolated margin_hf account)
+isolatedV2_{symbol}.transfer	Transfer (Isolated margin_hf account)
+isolatedV2_{symbol}.other	Other operations (Isolated margin_hf account)
+other	Others
+
+Stop Order Event
+
+{
+  "type": "message",
+  "topic": "/spotMarket/advancedOrders",
+  "subject": "stopOrder",
+  "channelType": "private",
+  "data": {
+    "createdAt": 1589789942337,
+    "orderId": "5ec244f6a8a75e0009958237",
+    "orderPrice": "0.00062",
+    "orderType": "stop",
+    "side": "sell",
+    "size": "1",
+    "stop": "entry",
+    "stopPrice": "0.00062",
+    "symbol": "KCS-BTC",
+    "tradeType": "TRADE",
+    "triggerSuccess": true,
+    "ts": 1589790121382281286,
+    "type": "triggered"
+  }
+}
+Topic: /spotMarket/advancedOrders
+
+Push frequency: real-time
+Subject: stopOrder
+
+When a stop order is received by the system, you will receive a message with "open" type. It means that this order entered the system and waited to be triggered.
+
+When a stop order is triggered by current trading price, you will receive a message with "triggered" type.
+
+When you cancel a stop order, you will receive a message with "cancel" type.
+

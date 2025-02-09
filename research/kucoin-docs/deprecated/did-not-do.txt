@@ -1,0 +1,8 @@
+REST
+    Futures Trading
+    Earn
+    VIP Lending
+    Affiliate
+WEBSCOCKET
+    Margin
+    Future

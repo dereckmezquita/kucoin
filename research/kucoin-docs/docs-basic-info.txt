@@ -1,0 +1,183 @@
+Basic Info
+
+Request Rate Limit
+
+REST API
+
+New rate limit 2.0 has been launched，Compared with 1.0, users can more freely break through the rate limit of a single interface according to the strategy, and freely coordinate the use of interfaces, which makes the strategy that relies too much on certain interfaces run smoothly. For example, in the 1.0 rate limit, the order cancellation interface of high-frequency users is relatively restricted, but under the new logic, as long as other interfaces are not requested too much, the order cancellation can be 2-3 times that of the previous one, so it can be realized higher rate limit requirements That is to say, the new rate limit rules are equivalent to determining the resource supply and realizing the optimal configuration of the interface according to user needs.
+
+The specific rules of REST rate limit 2.0 are as follows:
+
+Resource pool: Each API resource pool has a certain quota, the specific amount depends on the VIP level:
+Spot rate limit (including margin)、Futures rate limit、Management rate limit、Public rate limit、Earn rate limit
+
+Level	Spot	Futures	Management	Public	Earn
+VIP0	4000/30s	2000/30s	2000/30s	2000/30s	2000/30s
+VIP1	6000/30s	2000/30s	2000/30s	2000/30s	2000/30s
+VIP2	8000/30s	4000/30s	4000/30s	2000/30s	2000/30s
+VIP3	10000/30s	5000/30s	5000/30s	2000/30s	2000/30s
+VIP4	13000/30s	6000/30s	6000/30s	2000/30s	2000/30s
+VIP5	16000/30s	7000/30s	7000/30s	2000/30s	2000/30s
+VIP6	20000/30s	8000/30s	8000/30s	2000/30s	2000/30s
+VIP7	23000/30s	10000/30s	10000/30s	2000/30s	2000/30s
+VIP8	26000/30s	12000/30s	12000/30s	2000/30s	2000/30s
+VIP9	30000/30s	14000/30s	14000/30s	2000/30s	2000/30s
+VIP10	33000/30s	16000/30s	16000/30s	2000/30s	2000/30s
+VIP11	36000/30s	18000/30s	18000/30s	2000/30s	2000/30s
+VIP12	40000/30s	20000/30s	20000/30s	2000/30s	2000/30s
+Weight: When a user requests any API, the weight of this interface will be deducted and updated every 30s (starting from the arrival time of the user's first request). For specific interfaces, please refer to the rate limit weight regulations under each interface.
+If the quota of any resource pool is used up within 30s, that is, after the rate limit is exceeded, an error message of http code:429, error code:429000 will be returned, and the request can be re-requested after how long the request header shows. At this time, user needs to stop accessing and wait until the resource quota is reset before continuing to access.
+
+For example:
+
+When the user's VIP is 5, he has a "total spot quota" of 16000/30s.
+
+The quota consumption for each "add spot limit order" is 2. After placing the first order, the user's remaining spot quota is 15998, after placing the second order, the remaining quota is 15996, and so on.
+
+If the quota is not used up within 30 seconds. When the next cycle comes, the spot resource pool quota will be reset and returned to the quota limit of 16000.
+
+Request header: The returned information of each request will carry the following information: total resource pool quota, resource pool remaining quota, resource pool quota reset countdown (milliseconds).
+"gw-ratelimit-limit": 500
+
+"gw-ratelimit-remaining": 300
+
+"gw-ratelimit-reset": 1489
+
+Public rate limit: It is based on IP rate limitation. If there is a large demand for the use of public interfaces, it is recommended to use the Websocket interface instead of the Rest interface (if the interface supports it). You can also use one server to bind multiple IP addresses (ipv4 or ipv6), or use different IPs to avoid IP rate limit issues.
+Spot rate limit (including margin), futures rate limit, management rate limit and Earn rate limit: all are based on uid, and the request header will carry the rate limit information of the resource pool, such as the remaining rate limit times, rate limit cycle time, etc. And the rate limit of the sub-account and the master account are independent of each other at the API request level, that is to say, if the demand for such interface access is relatively large, it can also be solved by using the sub-account
+In addition to the regular rate limit, server overload may also cause the rate limit. After the rate limit, the error code is 429000, but the request header will not carry other personal rate limit information. This type of rate limit does not count as the number of rate limits. It is recommended to try again later.
+
+In addition, during the transition period between 1.0 and 2.0, you may still encounter error code 1015. It is recommended to try again later. If it occurs frequently, please contact the official community to deal with it https://t.me/KuCoin_API
+
+Base URL
+
+The request URL needs to be determined by BASE and specific endpoint combination.
+
+Spot & Margin REST API: Base URL: https://api.kucoin.com
+Futures REST API: Base URL: https://api-futures.kucoin.com
+Spot & Margin Websocket API: Base URL: Please refer to Apply connect token to dynamically obtain the base URL
+Futures Websocket API: Base URL: Please refer to Apply connect token to dynamically obtain the base URL
+
+Connection Method
+
+Endpoint of the Interface
+
+Each interface has its own endpoint, described by field HTTP REQUEST in the docs.
+
+For the GET METHOD API, the endpoint needs to contain the query parameters string.
+
+E.G. For "List Accounts" , the default endpoint of this API is /api/v1/accounts. If you pass the "currency" parameter(BTC), the endpoint will become /api/v1/accounts?currency=BTC and the final request URL will be https://api.kucoin.com/api/v1/accounts?currency=BTC.
+
+E.G. For "Position", the default endpoint of this API is /api/v1/position. If you pass the "symbol" parameter (XBTUSDM), the endpoint will become /api/v1/position?symbol=XBTUSDM and the final request URL will be https://api-futures.kucoin.com/api/v1/position?symbol=XBTUSDM.
+
+Pager
+
+Introduction
+
+KuCoin Spot & Margin uses Pagination for all REST requests which return arrays.
+
+KuCoin Futures uses Pagination or HasMore for all REST requests which return arrays.
+
+
+Pagination
+
+Pagination allows for fetching results with the current page and is well suited for real time data. Endpoints like /api/v1/deposit-list, /api/v1/orders, /api/v1/fills, return the latest items by default. To retrieve more results, users should specify the currentPage number in the subsequent requests to turn the page based on the data previously returned.
+
+Example
+
+GET /api/v1/orders?currentPage=1&pageSize=50
+
+  {
+      "currentPage": 1,
+      "pageSize": 50,
+      "totalNum": 6,
+      "totalPage": 1,
+      "data": ...
+  }
+PARAMETERS
+
+Parameter	Default	Description
+currentPage	1	Current request page.
+pageSize	50	Number of results per request. Minimum is 10, maximum is 500.
+
+HasMore
+
+The HasMore pager uses sliding window scheme to obtain paged data by sliding a fixed-sized window on data stream. The returned results will provide field HasMore to show if there are more data. The HasMore pager is efficient and takes the same amount of time for each sliding which makes HasMore pager well suited for the real-time streaming data queries.
+
+Example
+
+GET /api/v1/interest/query?symbol=.XBTINT&offset=1558079160000&forward=true&maxCount=10
+
+PARAMETERS
+
+Parameter	Default	Description
+offset	-	Start offset. The unique attribute of the last returned result of the last request. The data of the first page will be returned by default.
+forward	boolean	Slide direction. Set to “TRUE” to look up data of the next page
+maxCount	int	The maximum amount for each sliding
+
+Types
+
+Timestamps
+
+Unless otherwise specified, all timestamps from API are returned in milliseconds(e.g. 1546658861000). Most modern languages and libraries will handle this without issues.
+
+But please note that the timestamps between the matching engine and the order system are in nanoseconds.
+
+The KC-API-TIMESTAMP header MUST be number of milliseconds since Unix Epoch in UTC, Unix Time (opens new window). e.g. 1547015186532
+
+Decimal values are allowed, e.g. 1547015186532. But you need to be aware that timestamp between match and order is nanosecond.
+
+The difference between your timestamp and the API service time must be less than 5 seconds , or your request will be considered expired and rejected. We recommend using the time endpoint to query for the API server time if you believe there may be time skew between your server and the API server.
+
+Numbers
+
+Decimal numbers are returned as strings in order to preserve the full precision across platforms. When making a request, it is recommended that you also convert your numbers to strings to avoid truncation and precision errors.
+
+Request
+
+Introduction
+
+All requests and responses are application/json content type.
+
+Unless otherwise stated, all timestamp parameters should in milliseconds. e.g. 1544657947759
+
+For the GET, DELETE request, all query parameters need to be included in the request url. (e.g. /api/v1/accounts?currency=BTC)
+
+For the POST request, all query parameters need to be included in the request body with JSON. (e.g. {"currency":"BTC"}).
+
+Do not include extra spaces in JSON strings.
+
+PARAMETERS
+
+Parameter	Default	Description
+currentPage	1	Current request page.
+pageSize	50	Number of results per request. Minimum is 10, maximum is 500.
+
+Success response
+
+A successful response is indicated by an HTTP status code 200 and system code 200000. The success response is as follows:
+
+{
+  "code": "200000",
+  "data": "1544657947759"
+}
+
+Error response
+
+When errors occur, the HTTP error code or system error code will be returned. The body will also contain a message parameter indicating the cause.
+
+{
+  "code": "400100",
+  "msg": "Invalid Parameter."
+}
+
+Creating a Request
+
+All private REST requests must contain the following headers:
+
+KC-API-KEY The API key as a string.
+KC-API-SIGN The base64-encoded signature (see Signing a Message).
+KC-API-TIMESTAMP A timestamp for your request.
+KC-API-PASSPHRASE The passphrase you specified when creating the API key.
+KC-API-KEY-VERSION You can check the version of API key on the page of API Management
+
