@@ -57,7 +57,7 @@ KucoinBasicInfo <- R6::R6Class("KucoinBasicInfo",
                 }
                 data.table::as.data.table(result$data)
             }, error = function(e) {
-                rlang::abort("Failed to get account summary info", .parent = e)
+                rlang::abort("Failed to get account summary info", parent = e)
             })
         }),
 
