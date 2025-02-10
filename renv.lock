@@ -63,14 +63,19 @@
     },
     "coro": {
       "Package": "coro",
-      "Version": "1.1.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "1.1.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "dereckmezquita",
+      "RemoteRepo": "fork-coro",
+      "RemoteRef": "main",
+      "RemoteSha": "57e0edb5167d2a9d0e5f7ef2c706bbb60b612e67",
       "Requirements": [
         "R",
         "rlang"
       ],
-      "Hash": "4998c8836ff95c90993a4eb8d853df71"
+      "Hash": "8e1ffc0268e62101a4867856c578225a"
     },
     "curl": {
       "Package": "curl",
