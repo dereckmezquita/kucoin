@@ -1,35 +1,55 @@
-box::use(
-    ./utils[get_base_url],
-    ./errors[kucoin_error, http_error]
-)
+box::use(./utils[get_base_url])
 
-# File: api.R
+#' Get Server Time from KuCoin Futures API
+#'
+#' Retrieves the current API server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
+#' This function performs an asynchronous GET request using a future promise and returns a promise
+#' that resolves to the server timestamp.
+#'
+#' The helper function \code{get_base_url()} is used to retrieve the base URL for the Futures domain.
+#'
+#' @return A promise that resolves to a numeric timestamp.
+#' @import httr jsonlite promises future rlang
 #' @export
-get_server_time <- function(base_url = "https://api.kucoin.com") {
-    promises::promise(function(resolve, reject) {
+get_server_time <- function(base_url = get_base_url()) {
+    promises::future_promise({
         tryCatch({
-            res <- httr::GET(paste0(base_url, "/api/v1/timestamp"))
-            if (httr::status_code(res) != 200) {
-                err_msg <- tryCatch({
-                    httr::content(res, as = "text", encoding = "UTF-8")
-                }, error = function(e) "NO CONTENT")
-                reject(http_error(
-                    status = httr::status_code(res),
-                    content = err_msg
-                ))
+            url <- paste0(base_url, "/api/v1/timestamp")
+            # Execute the GET request with a 10-second timeout.
+            response <- httr::GET(url, httr::timeout(10))
+            # Validate the HTTP response status.
+            if (httr::status_code(response) != 200) {
+                rlang::abort(
+                    "KuCoin API request failed",
+                    error_details = list(
+                        status_code = httr::status_code(response),
+                        url = url
+                    )
+                )
             }
-            result <- httr::content(res, as = "parsed", simplifyVector = TRUE)
-            resolve(result$data)
+            # Extract and parse the response.
+            response_text <- httr::content(response, as = "text", encoding = "UTF-8")
+            parsed_response <- jsonlite::fromJSON(response_text)
+            # Check that the response contains the required fields.
+            if (!all(c("code", "data") %in% names(parsed_response))) {
+                rlang::abort(
+                    "Invalid API response structure",
+                    error_details = list(response = parsed_response)
+                )
+            }
+            # Ensure that the API returned a successful code.
+            if (parsed_response$code != "200000") {
+                rlang::abort(
+                    "KuCoin API returned an error",
+                    error_details = list(
+                        code = parsed_response$code,
+                        response = parsed_response
+                    )
+                )
+            }
+            return(parsed_response$data)
         }, error = function(e) {
-            if (inherits(e, "kucoin_error")) {
-                reject(e)
-            } else {
-                reject(kucoin_error(
-                    message = "Failed to get server time",
-                    class = "kucoin_server_time_error",
-                    parent = e
-                ))
-            }
+            rlang::abort("Error retrieving server time", parent = e)
         })
     })
 }
