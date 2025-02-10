@@ -4,11 +4,36 @@ box::use(./utils[get_base_url])
 #'
 #' Retrieves the current API server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
 #' This function performs an asynchronous GET request using a future promise and returns a promise
-#' that resolves to the server timestamp.
+#' that resolves to the server timestamp. The server time is a critical component when making
+#' authenticated requests to KuCoin's API. For these requests (e.g., placing orders or fetching account data),
+#' the API requires you to include a timestamp header that is within 5 seconds of the actual server time.
+#' This helps ensure that requests are timely and protects against replay attacks.
 #'
 #' The helper function \code{get_base_url()} is used to retrieve the base URL for the Futures domain.
 #'
-#' @return A promise that resolves to a numeric timestamp.
+#' For further details, refer to the official KuCoin API documentation:
+#' \url{https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time}
+#'
+#' @param base_url The base URL for the KuCoin Futures API. Defaults to the result of \code{get_base_url()}.
+#' @return A promise that resolves to a numeric Unix timestamp in milliseconds.
+#'
+#' @examples
+#' \dontrun{
+#'     # Asynchronously retrieve the server time.
+#'     get_server_time()$
+#'         then(function(timestamp) {
+#'             cat("KuCoin Server Time:", timestamp, "\n")
+#'         })$
+#'         catch(function(e) {
+#'             message("Error retrieving server time: ", conditionMessage(e))
+#'         })
+#'
+#'     # Run the event loop until all asynchronous tasks are processed.
+#'     while (!later::loop_empty()) {
+#'         later::run_now(timeoutSecs = Inf, all = TRUE)
+#'     }
+#' }
+#'
 #' @import httr jsonlite promises future rlang
 #' @export
 get_server_time <- function(base_url = get_base_url()) {
