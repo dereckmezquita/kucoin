@@ -78,7 +78,7 @@ get_server_time <- function(base_url = get_base_url()) {
             }
             resolve(parsed_response$data)
         }, error = function(e) {
-            reject(rlang::abort("Error retrieving server time", parent = rlang::as_error(e)))
+            reject(rlang::abort("Error retrieving server time", parent = e))
         })
     })
 }
