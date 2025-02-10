@@ -4,11 +4,9 @@ bibentry(
   author   = "Dereck Mezquita",
   year     = "2025", 
   note     = "R package version 2.0.0",
-  url      = "https://github.com/dereckmezquita/kucoin",
   textVersion = paste(
     "Mezquita, D. (2025).",
     "kucoin: Async API wrapper to KuCoin Cryptocurrency Exchange.",
-    "R package version 2.0.0.",
-    "https://github.com/dereckmezquita/kucoin"
+    "R package version 2.0.0."
   )
 )
