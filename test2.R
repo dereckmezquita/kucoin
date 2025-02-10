@@ -1,42 +1,40 @@
 #!/usr/bin/env Rscript
 options(error = function() {
-    traceback(2)
+    rlang::entrace()
+    rlang::last_trace()
 })
 
 # Import modules and local packages using box.
 box::use(
-    coro,
-    httr,
-    data.table,
     rlang,
-    later,             # Import later!
-    ./R/helpers,
-    ./R/KucoinBasicInfo[ KucoinBasicInfo ]
+    later,
+    ./R/KucoinBasicInfo[ KucoinAccountsBasicInfo ]
 )
 
-# Build the configuration list from environment variables.
+# Create configuration (or source from environment variables)
 config <- list(
-    api_key        = Sys.getenv("KC-API-KEY"),
-    api_secret     = Sys.getenv("KC-API-SECRET"),
+    api_key = Sys.getenv("KC-API-KEY"),
+    api_secret = Sys.getenv("KC-API-SECRET"),
     api_passphrase = Sys.getenv("KC-API-PASSPHRASE"),
-    base_url       = Sys.getenv("KC-API-ENDPOINT"),  # e.g., "https://api.kucoin.com"
-    key_version    = "2"  # Default key version.
+    base_url = Sys.getenv("KC-API-ENDPOINT"),
+    key_version = "2"
 )
 
-# Instantiate the Basic Info module.
-basic_info <- KucoinBasicInfo$new(config)
+# Create a new instance of the class
+api <- KucoinAccountsBasicInfo$new(config)
 
 cat("Testing: Get Account Summary Info\n")
-basic_info$getAccountSummaryInfo()$
+api$getAccountSummaryInfo()$
     then(function(dt) {
         cat("Account Summary Info (data.table):\n")
         print(dt)
     })$
     catch(function(e) {
-        message("Error in getAccountSummaryInfo: ", e$message)
+        message("Error: ", conditionMessage(e))
+        rlang::last_error()
     })
 
-# Run the later event loop until all asynchronous tasks have been processed.
-while (!later$loop_empty()) {
-    later$run_now(timeout = 0.1)
+# Run the later event loop until all async tasks are processed
+while (!later::loop_empty()) {
+    later::run_now(timeout = 0.1)
 }
