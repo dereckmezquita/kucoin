@@ -36,12 +36,12 @@ async_main <- coro::async(function() {
     cat("Spot Account Type (boolean):\n")
     print(is_high_freq)
 
+    # Retrieve spot account list (as a data.table)
     dt_spot <- await(account$get_spot_account_dt())
     cat("Spot Account DT (data.table):\n")
     print(dt_spot)
 
-    # Optionally, if you want to retrieve account details for a specific account,
-    # extract an account ID from dt_spot (assuming the table has an 'id' column)
+    # Optionally, retrieve spot account detail for a specific account
     if (nrow(dt_spot) > 0) {
         account_id <- dt_spot$id[1]
         cat("Retrieving spot account detail for account", account_id, "...\n")
@@ -51,6 +51,18 @@ async_main <- coro::async(function() {
     } else {
         cat("No spot accounts available for detail retrieval.\n")
     }
+
+    # Retrieve cross margin account info using the new method.
+    # Optional query parameters can be passed (e.g., quoteCurrency = "USDT", queryType = "MARGIN")
+    dt_cross_margin <- await(account$get_cross_margin_account())
+    cat("Cross Margin Account Info (data.table):\n")
+    print(dt_cross_margin)
+
+    # Retrieve isolated margin account info with optional query parameters
+    query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
+    dt_isolated <- await(account$get_isolated_margin_account(query))
+    cat("Isolated Margin Account Info (data.table):\n")
+    print(dt_isolated)
 })
 
 async_main()

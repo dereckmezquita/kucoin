@@ -387,3 +387,149 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
         abort(paste("Error in get_spot_account_detail_impl:", conditionMessage(e)))
     })
 })
+
+#' Get Cross Margin Account Implementation
+#'
+#' This asynchronous function retrieves information about the cross margin account from the KuCoin API.
+#' It sends a GET request to the `/api/v3/margin/accounts` endpoint with optional query parameters and returns
+#' the parsed response data as a data.table.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the account information. Supported parameters include:
+#'   - **quoteCurrency** (string, optional): The quote currency. Allowed values: `"USDT"`, `"KCS"`, `"BTC"`.
+#'     If not provided, the default is `"USDT"`.
+#'   - **queryType** (string, optional): The type of account query. Allowed values:
+#'     `"MARGIN"` (only query low-frequency cross margin account),
+#'     `"MARGIN_V2"` (only query high-frequency cross margin account),
+#'     `"ALL"` (aggregate query, as seen on the website). The default is `"MARGIN"`.
+#'
+#' @return A promise that resolves to a data.table containing the cross margin account information. The
+#' data.table includes the following fields:
+#'   - **totalAssetOfQuoteCurrency** (string): Total assets in the quote currency.
+#'   - **totalLiabilityOfQuoteCurrency** (string): Total liabilities in the quote currency.
+#'   - **debtRatio** (string): The debt ratio.
+#'   - **status** (string): The position status (e.g., `"EFFECTIVE"`, `"BANKRUPTCY"`, `"LIQUIDATION"`,
+#'     `"REPAY"`, or `"BORROW"`).
+#'   - **accounts** (list): A list of margin account details. Each element is an object containing:
+#'       - **currency** (string): Currency code.
+#'       - **total** (string): Total funds in the account.
+#'       - **available** (string): Funds available for withdrawal or trading.
+#'       - **hold** (string): Funds on hold.
+#'       - **liability** (string): Current liabilities.
+#'       - **maxBorrowSize** (string): Maximum borrowable amount.
+#'       - **borrowEnabled** (boolean): Whether borrowing is enabled.
+#'       - **transferInEnabled** (boolean): Whether transfers into the account are enabled.
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v3/margin/accounts`
+#'
+#' For further details, see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin).
+#'
+#' @examples
+#' \dontrun{
+#'   query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
+#'   coro::run(function() {
+#'       dt <- await(get_cross_margin_account_impl(config, query))
+#'       print(dt)
+#'   })
+#' }
+#'
+#' @export
+get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v3/margin/accounts"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        headers <- await(build_headers(method, endpoint, body, config))
+        url <- paste0(base_url, endpoint, qs)
+        response <- GET(url, headers, timeout(3))
+        if (status_code(response) != 200) {
+            abort(paste("Request failed with status code", status_code(response)))
+        }
+        response_text <- content(response, as = "text", encoding = "UTF-8")
+        parsed_response <- fromJSON(response_text)
+        if (!all(c("code", "data") %in% names(parsed_response))) {
+            abort("Invalid API response structure.")
+        }
+        if (parsed_response$code != "200000") {
+            abort(paste("KuCoin API returned an error:", parsed_response$code))
+        }
+        dt <- as.data.table(parsed_response$data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get Isolated Margin Account Implementation
+#'
+#' This asynchronous function retrieves information about the isolated margin account from the KuCoin API.
+#' It sends a GET request to the `/api/v3/isolated/accounts` endpoint with optional query parameters and
+#' returns the parsed response data as a data.table.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the isolated margin account information.
+#'        Supported parameters include:
+#'         - **symbol** (string, optional): For isolated trading pairs; if omitted, queries all pairs.
+#'         - **quoteCurrency** (string, optional): The quote currency. Allowed values: `"USDT"`, `"KCS"`, `"BTC"`. Default is `"USDT"`.
+#'         - **queryType** (string, optional): The type of account query. Allowed values: `"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`. Default is `"ISOLATED"`.
+#'
+#' @return A promise that resolves to a data.table containing the isolated margin account information.
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v3/isolated/accounts`
+#'
+#' **Response Schema:**
+#' - **code** (string): `"200000"` indicates success.
+#' - **data** (object): Contains:
+#'     - **totalAssetOfQuoteCurrency** (string): Total assets in the quote currency.
+#'     - **totalLiabilityOfQuoteCurrency** (string): Total liabilities in the quote currency.
+#'     - **timestamp** (integer): The timestamp.
+#'     - **assets** (array of objects): Each object represents a margin account detail with fields such as:
+#'           - **symbol** (string): Trading pair symbol (e.g., "BTC-USDT").
+#'           - **status** (string): Position status.
+#'           - **debtRatio** (string): Debt ratio.
+#'           - **baseAsset** (object): Details of the base asset.
+#'           - **quoteAsset** (object): Details of the quote asset.
+#'
+#' For more details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
+#'     coro::run(function() {
+#'         dt <- await(get_isolated_margin_account_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_isolated_margin_account_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v3/isolated/accounts"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        headers <- await(build_headers(method, endpoint, body, config))
+        url <- paste0(base_url, endpoint, qs)
+        response <- GET(url, headers, timeout(3))
+        if (status_code(response) != 200) {
+            abort(paste("Request failed with status code", status_code(response)))
+        }
+        response_text <- content(response, as = "text", encoding = "UTF-8")
+        parsed_response <- fromJSON(response_text)
+        if (!all(c("code", "data") %in% names(parsed_response))) {
+            abort("Invalid API response structure.")
+        }
+        if (parsed_response$code != "200000") {
+            abort(paste("KuCoin API returned an error:", parsed_response$code))
+        }
+        dt <- as.data.table(parsed_response$data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
+    })
+})

@@ -5,7 +5,7 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_dt_impl, get_spot_account_detail_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl
     ],
     ./utils[get_api_keys]
 )
@@ -224,6 +224,64 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_spot_account_detail = function(accountId) {
             get_spot_account_detail_impl(self$config, accountId)
+        },
+
+        #' Get Cross Margin Account from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously retrieves information about the cross margin account by sending a GET request to the
+        #' `/api/v3/margin/accounts` endpoint with optional query parameters. The response is converted to a data.table.
+        #'
+        #' @param query A list of query parameters to filter the account information. Supported parameters include:
+        #'   - **quoteCurrency** (string, optional): Allowed values: `"USDT"`, `"KCS"`, `"BTC"`. Default is `"USDT"`.
+        #'   - **queryType** (string, optional): Allowed values: `"MARGIN"`, `"MARGIN_V2"`, `"ALL"`. Default is `"MARGIN"`.
+        #'
+        #' @return A promise that resolves to a data.table containing the cross margin account information.
+        #'
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v3/margin/accounts`
+        #'
+        #' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin).
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   coro::run(function() {
+        #'       dt <- await(account$get_cross_margin_account(list(quoteCurrency = "USDT", queryType = "MARGIN")))
+        #'       print(dt)
+        #'   })
+        #' }
+        get_cross_margin_account = function(query = list()) {
+            get_cross_margin_account_impl(self$config, query)
+        },
+
+        #' Get Isolated Margin Account from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously retrieves information about the isolated margin account by sending a GET request to the
+        #' `/api/v3/isolated/accounts` endpoint with optional query parameters. The response is converted to a data.table.
+        #'
+        #' @param query A list of query parameters to filter the isolated margin account information.
+        #'        Supported parameters include:
+        #'         - **symbol** (string, optional): For isolated trading pairs; if omitted, queries all pairs.
+        #'         - **quoteCurrency** (string, optional): Allowed values: `"USDT"`, `"KCS"`, `"BTC"`. Default is `"USDT"`.
+        #'         - **queryType** (string, optional): Allowed values: `"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`. Default is `"ISOLATED"`.
+        #'
+        #' @return A promise that resolves to a data.table containing the isolated margin account information.
+        #'
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v3/isolated/accounts`
+        #'
+        #' For more details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin).
+        #'
+        #' @examples
+        #' \dontrun{
+        #'     coro::run(function() {
+        #'         dt <- await(account$get_isolated_margin_account(list(quoteCurrency = "USDT", queryType = "ISOLATED")))
+        #'         print(dt)
+        #'     })
+        #' }
+        get_isolated_margin_account = function(query = list()) {
+            get_isolated_margin_account_impl(self$config, query)
         }
     )
 )
