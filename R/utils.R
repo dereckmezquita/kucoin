@@ -1,4 +1,5 @@
 # File: utils.R
+
 #' @export
 build_query <- function(params) {
     params <- params[!sapply(params, is.null)]
