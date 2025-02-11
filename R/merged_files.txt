@@ -7,7 +7,8 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl, get_spot_ledger_impl,
+        get_spot_hf_ledger_impl
     ],
     ./utils[get_api_keys]
 )
@@ -305,6 +306,64 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_futures_account = function(query = list()) {
             get_futures_account_impl(self$config, query)
+        },
+
+        #' Get Spot Ledger from KuCoin
+        #'
+        #' @description
+        #' Asynchronously retrieves the spot (and margin) ledger records by querying the `/api/v1/accounts/ledgers` endpoint.
+        #'
+        #' @param query A list of query parameters to filter the ledger records.
+        #'              Supported parameters include:
+        #'              - **currency** (string, optional): One or more currencies (up to 10).
+        #'              - **direction** (string, optional): "in" or "out".
+        #'              - **bizType** (string, optional): The business type (e.g., "TRANSFER").
+        #'              - **startAt** (integer, optional): Start time in milliseconds.
+        #'              - **endAt** (integer, optional): End time in milliseconds.
+        #'              - **currentPage** (integer, optional): The page number (default is 1).
+        #'              - **pageSize** (integer, optional): Number of results per page (default is 50).
+        #'
+        #' @return A promise that resolves to a data.table containing the ledger records.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'     coro::run(function() {
+        #'         dt <- await(account$get_spot_ledger(list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)))
+        #'         print(dt)
+        #'     })
+        #' }
+        get_spot_ledger = function(query = list()) {
+            get_spot_ledger_impl(self$config, query)
+        },
+
+        #' Get High-Frequency Ledger from KuCoin
+        #'
+        #' @description
+        #' Asynchronously retrieves the high-frequency trading ledger records by querying the
+        #' `/api/v1/hf/accounts/ledgers` endpoint. This endpoint returns all transfer records (both in and out)
+        #' for your high-frequency trading account.
+        #'
+        #' @param query A named list of query parameters to filter the ledger records.
+        #'              Supported parameters include:
+        #'              - **currency** (string, optional): One or more currencies (up to 10).
+        #'              - **direction** (string, optional): "in" or "out".
+        #'              - **bizType** (string, optional): Transaction type (e.g., "TRADE_EXCHANGE", "TRANSFER", etc.).
+        #'              - **lastId** (integer, optional): The last record ID from the previous page.
+        #'              - **limit** (integer, optional): Number of results per page (default 100, max 200).
+        #'              - **startAt** (integer, optional): Start time in milliseconds.
+        #'              - **endAt** (integer, optional): End time in milliseconds.
+        #'
+        #' @return A promise that resolves to a data.table containing the HF ledger records.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'     coro::run(function() {
+        #'         dt <- await(account$get_spot_hf_ledger(list(currency = "BTC", direction = "in", bizType = "TRANSFER", lastId = 254062248624417, limit = 100, startAt = 1728663338000, endAt = 1728692138000)))
+        #'         print(dt)
+        #'     })
+        #' }
+        get_spot_hf_ledger = function(query = list()) {
+            get_spot_hf_ledger_impl(self$config, query)
         }
     )
 )
@@ -754,16 +813,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' @param query A list of query parameters to filter the account information. Supported parameter:
 #'        - **currency** (string, optional): The account currency. The default is "XBT", but you may specify others (e.g., "USDT", "ETH").
 #'
-#' @return A promise that resolves to a data.table containing the futures account information. The table includes:
-#'         - **currency** (string): The account currency.
-#'         - **accountEquity** (number): Account equity (margin balance plus unrealised PNL).
-#'         - **unrealisedPNL** (number): Unrealised profit and loss.
-#'         - **marginBalance** (number): Margin balance.
-#'         - **positionMargin** (number): Position margin.
-#'         - **orderMargin** (number): Order margin.
-#'         - **frozenFunds** (number): Frozen funds for out-transfer.
-#'         - **availableBalance** (number): Available balance.
-#'         - **riskRatio** (number): The cross margin risk ratio.
+#' @return A promise that resolves to a data.table containing the futures account information.
 #'
 #' @details
 #' **Endpoint:** `GET https://api-futures.kucoin.com/api/v1/account-overview`
@@ -783,11 +833,11 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' @export
 get_futures_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        # For futures endpoints, use the futures base URL from config if available, else default.
-        base_url <- if (!is.null(config$futures_base_url)) {
-            config$futures_base_url
+        # Use the futures base URL if provided in config; otherwise, use the default.
+        if (!is.null(config$futures_base_url)) {
+            base_url <- config$futures_base_url
         } else {
-            "https://api-futures.kucoin.com"
+            base_url <- "https://api-futures.kucoin.com"
         }
         endpoint <- "/api/v1/account-overview"
         method <- "GET"
@@ -797,9 +847,7 @@ get_futures_account_impl <- coro::async(function(config, query = list()) {
         # Build authentication headers using the full endpoint (including query string)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL for futures account: ", url, "\n")  # Debug print
         response <- GET(url, headers, timeout(3))
-        # Process the response using the helper function.
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
         return(dt)
@@ -808,6 +856,114 @@ get_futures_account_impl <- coro::async(function(config, query = list()) {
     })
 })
 
+#' Get Spot Ledger Implementation
+#'
+#' This asynchronous function retrieves transaction records (ledgers) for spot/margin accounts from the KuCoin API.
+#' It sends a GET request to the `/api/v1/accounts/ledgers` endpoint with optional query parameters.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the ledger records. Supported parameters include:
+#'   - **currency** (string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.
+#'   - **direction** (string, optional): "in" or "out".
+#'   - **bizType** (string, optional): e.g., "DEPOSIT", "WITHDRAW", "TRANSFER", "SUB_TRANSFER", "TRADE_EXCHANGE", etc.
+#'   - **startAt** (integer, optional): Start time in milliseconds.
+#'   - **endAt** (integer, optional): End time in milliseconds.
+#'   - **currentPage** (integer, optional): The page number (default is 1).
+#'   - **pageSize** (integer, optional): Number of results per page (minimum 10, maximum 500; default is 50).
+#'
+#' @return A promise that resolves to a data.table containing the ledger information. The returned object includes:
+#'         - currentPage, pageSize, totalNum, totalPage, and items (an array of ledger records).
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/ledgers`
+#'
+#' For further details, refer to the
+#' [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
+#'     coro::run(function() {
+#'         dt <- await(get_spot_ledger_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_spot_ledger_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v1/accounts/ledgers"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        # Build authentication headers using the full endpoint (including query string)
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        response <- GET(url, headers, timeout(3))
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_spot_ledger_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get High-Frequency (HF) Ledger Implementation
+#'
+#' This asynchronous function retrieves the ledger records for high-frequency trading
+#' accounts (hf ledgers) from the KuCoin API. It sends a GET request to the
+#' `/api/v1/hf/accounts/ledgers` endpoint with optional query parameters.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A named list of query parameters to filter the ledger records. Supported parameters include:
+#'   - **currency** (string, optional): One or more currencies (up to 10) to filter by.
+#'   - **direction** (string, optional): "in" or "out".
+#'   - **bizType** (string, optional): Transaction type (e.g., "TRADE_EXCHANGE", "TRANSFER", etc.).
+#'   - **lastId** (integer, optional): The last record ID from the previous page.
+#'   - **limit** (integer, optional): Number of results per page (default is 100; min 1, max 200).
+#'   - **startAt** (integer, optional): Start time (in milliseconds).
+#'   - **endAt** (integer, optional): End time (in milliseconds).
+#'
+#' @return A promise that resolves to a data.table containing an array of ledger records.
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v1/hf/accounts/ledgers`
+#'
+#' For further details, refer to the
+#' [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-tradehf).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", lastId = 254062248624417, limit = 100, startAt = 1728663338000, endAt = 1728692138000)
+#'     coro::run(function() {
+#'         dt <- await(get_spot_hf_ledger_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_spot_hf_ledger_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v1/hf/accounts/ledgers"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        # Build headers over the full endpoint (including query string)
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL for HF ledger: ", url, "\n")  # Debug print
+        response <- GET(url, headers, timeout(3))
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_spot_hf_ledger_impl:", conditionMessage(e)))
+    })
+})
 # ./helpers_api.R
 
 box::use(./utils[get_base_url])
