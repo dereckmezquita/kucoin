@@ -4,9 +4,7 @@
 build_query <- function(params) {
     params <- params[!sapply(params, is.null)]
     if (length(params) == 0) return("")
-    query <- paste0("?", paste0(names(params), "=", params, collapse = "&"))
-    cat("BUILD_QUERY: ", query, "\n")
-    return(query)
+    return(paste0("?", paste0(names(params), "=", params, collapse = "&")))
 }
 
 #' @export
