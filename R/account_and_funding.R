@@ -67,7 +67,7 @@ get_account_summary_info_impl <- coro::async(function(config) {
         
         # Check that the HTTP status code is 200 (OK).
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         
         # Retrieve and parse the response content.
@@ -139,7 +139,7 @@ get_apikey_info_impl <- coro::async(function(config) {
         url <- paste0(base_url, endpoint)
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         response_text <- content(response, as = "text", encoding = "UTF-8")
         parsed_response <- fromJSON(response_text)
@@ -210,7 +210,7 @@ get_spot_account_type_impl <- coro::async(function(config) {
         
         # Check that the HTTP status code is 200 (OK).
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         
         # Retrieve and parse the response content.
@@ -284,7 +284,7 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         url <- paste0(base_url, endpoint, qs)
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         response_text <- content(response, as = "text", encoding = "UTF-8")
         parsed_response <- fromJSON(response_text)
@@ -362,7 +362,7 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
         
         # Check that the HTTP status code is 200 (OK).
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         
         # Retrieve and parse the response content.
@@ -446,7 +446,7 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         url <- paste0(base_url, endpoint, qs)
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         response_text <- content(response, as = "text", encoding = "UTF-8")
         parsed_response <- fromJSON(response_text)
@@ -517,7 +517,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         url <- paste0(base_url, endpoint, qs)
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response)))
+            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
         }
         response_text <- content(response, as = "text", encoding = "UTF-8")
         parsed_response <- fromJSON(response_text)
