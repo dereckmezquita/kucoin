@@ -434,3 +434,66 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
     })
 })
+
+#' Get Futures Account Implementation
+#'
+#' This asynchronous function retrieves the futures account information from the KuCoin Futures API.
+#' It sends a GET request to the `/api/v1/account-overview` endpoint with optional query parameters.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the account information. Supported parameter:
+#'        - **currency** (string, optional): The account currency. The default is "XBT", but you may specify others (e.g., "USDT", "ETH").
+#'
+#' @return A promise that resolves to a data.table containing the futures account information. The table includes:
+#'         - **currency** (string): The account currency.
+#'         - **accountEquity** (number): Account equity (margin balance plus unrealised PNL).
+#'         - **unrealisedPNL** (number): Unrealised profit and loss.
+#'         - **marginBalance** (number): Margin balance.
+#'         - **positionMargin** (number): Position margin.
+#'         - **orderMargin** (number): Order margin.
+#'         - **frozenFunds** (number): Frozen funds for out-transfer.
+#'         - **availableBalance** (number): Available balance.
+#'         - **riskRatio** (number): The cross margin risk ratio.
+#'
+#' @details
+#' **Endpoint:** `GET https://api-futures.kucoin.com/api/v1/account-overview`
+#'
+#' For further details, please refer to the
+#' [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-futures).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(currency = "USDT")
+#'     coro::run(function() {
+#'         dt <- await(get_futures_account_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_futures_account_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        # Use the futures base URL (either from config or default)
+        base_url <- if (!is.null(config$futures_base_url)) {
+            config$futures_base_url
+        } else {
+            "https://api-futures.kucoin.com"
+        }
+        endpoint <- "/api/v1/account-overview"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        # Build authentication headers using the full endpoint (which includes the query string)
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL for futures account: ", url, "\n")  # Debug print
+        response <- GET(url, headers, timeout(3))
+        # Use the new helper function to process and validate the response.
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_futures_account_impl:", conditionMessage(e)))
+    })
+})

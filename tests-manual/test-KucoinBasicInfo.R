@@ -53,22 +53,22 @@ async_main <- coro::async(function() {
     }
 
     # Retrieve cross margin account info using the new method.
-    # Optional query parameters can be passed (e.g., quoteCurrency = "USDT", queryType = "MARGIN")
-    query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
-    dt_cross_margin <- await(account$get_cross_margin_account(query))
+    query_cm <- list(quoteCurrency = "USDT", queryType = "MARGIN")
+    dt_cross_margin <- await(account$get_cross_margin_account(query_cm))
     cat("Cross Margin Account Info (data.table):\n")
     print(dt_cross_margin)
 
     # Retrieve isolated margin account info with optional query parameters
-    query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
-    dt_isolated <- await(account$get_isolated_margin_account(query))
+    query_im <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
+    dt_isolated <- await(account$get_isolated_margin_account(query_im))
     cat("Isolated Margin Account Info (data.table):\n")
     print(dt_isolated)
 
     # Retrieve futures account info using the new method.
-    # dt_futures <- await(account$get_futures_account(list(currency = "USDT")))
-    # cat("Futures Account Info (data.table):\n")
-    # print(dt_futures)
+    query_futures <- list(currency = "USDT")
+    dt_futures <- await(account$get_futures_account(query_futures))
+    cat("Futures Account Info (data.table):\n")
+    print(dt_futures)
 })
 
 async_main()
