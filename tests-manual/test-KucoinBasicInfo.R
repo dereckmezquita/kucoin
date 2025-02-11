@@ -11,20 +11,11 @@ box::use(
     ./R/KucoinBasicInfo[ KucoinAccountsBasicInfo ]
 )   
 
-# Create configuration (or source from environment variables)
-config <- list(
-    api_key = Sys.getenv("KC-API-KEY"),
-    api_secret = Sys.getenv("KC-API-SECRET"),
-    api_passphrase = Sys.getenv("KC-API-PASSPHRASE"),
-    base_url = Sys.getenv("KC-API-ENDPOINT"),
-    key_version = "2"
-)
-
 # Create a new instance of the class
-api <- KucoinAccountsBasicInfo$new(config)
+basic_info <- KucoinAccountsBasicInfo$new()
 
 cat("Testing: Get Account Summary Info\n")
-api$getAccountSummaryInfo()$
+basic_info$getAccountSummaryInfo()$
     then(function(dt) {
         cat("Account Summary Info (data.table):\n")
         print(dt)
