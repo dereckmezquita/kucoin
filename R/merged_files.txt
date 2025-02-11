@@ -7,7 +7,7 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_list_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl
     ],
     ./utils[get_api_keys]
 )
@@ -190,8 +190,42 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'       print(dt)
         #'   })
         #' }
-        get_spot_account_list = function(query = list()) {
-            get_spot_account_list_impl(self$config, query)
+        get_spot_account_dt = function(query = list()) {
+            get_spot_account_dt_impl(self$config, query)
+        },
+
+        #' Get Spot Account Detail from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously retrieves detailed information for a single spot account by sending a GET request to the
+        #' `/api/v1/accounts/{accountId}` endpoint. This endpoint is used when the account ID is known.
+        #' The returned JSON object is converted to a data.table.
+        #'
+        #' @param accountId A string representing the account ID.
+        #'
+        #' @return A promise that resolves to a data.table containing the account detail for the specified account.
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/{accountId}`
+        #' 
+        #' **Response Schema:**
+        #' - **code** (string): `"200000"` indicates success.
+        #' - **data** (object): Contains the following fields:
+        #'     - **currency** (string): The currency of the account.
+        #'     - **balance** (string): Total funds in the account.
+        #'     - **available** (string): Funds available for withdrawal or trading.
+        #'     - **holds** (string): Funds on hold (not available for use).
+        #'
+        #' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot).
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   coro::run(function() {
+        #'       dt <- await(account$get_spot_account_detail("548674591753"))
+        #'       print(dt)
+        #'   })
+        #' }
+        get_spot_account_detail = function(accountId) {
+            get_spot_account_detail_impl(self$config, accountId)
         }
     )
 )
@@ -437,11 +471,11 @@ get_spot_account_type_impl <- coro::async(function(config) {
     })
 })
 
-#' Get Spot Account List Implementation
+#' Get Spot Account DT Implementation
 #'
 #' This asynchronous function retrieves a list of spot accounts from the KuCoin API.
-#' It sends a GET request to the `/api/v1/accounts` endpoint with optional query parameters
-#' (such as `currency` and `type`) and returns the account list as a data.table.
+#' It sends a GET request to the `/api/v1/accounts` endpoint with optional query parameters,
+#' and returns the account list as a data.table.
 #'
 #' @param config A list containing API configuration parameters.
 #' @param query A list of query parameters to filter the account list.
@@ -462,9 +496,73 @@ get_spot_account_type_impl <- coro::async(function(config) {
 #'     - **type** (string): Account type (e.g., "main", "trade", "balance").
 #'     - **balance** (string): Total funds in the account.
 #'     - **available** (string): Funds available for withdrawal or trading.
+#'     - **holds** (string): Funds on hold.
+#'
+#' The returned JSON array is converted to a data.table.
+#'
+#' @examples
+#' \dontrun{
+#'   query <- list(currency = "USDT", type = "main")
+#'   coro::run(function() {
+#'       dt <- await(get_spot_account_dt_impl(config, query))
+#'       print(dt)
+#'   })
+#' }
+#'
+#' @export
+get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v1/accounts"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        headers <- await(build_headers(method, endpoint, body, config))
+        url <- paste0(base_url, endpoint, qs)
+        response <- GET(url, headers, timeout(3))
+        if (status_code(response) != 200) {
+            abort(paste("Request failed with status code", status_code(response)))
+        }
+        response_text <- content(response, as = "text", encoding = "UTF-8")
+        parsed_response <- fromJSON(response_text)
+        if (!all(c("code", "data") %in% names(parsed_response))) {
+            abort("Invalid API response structure.")
+        }
+        if (parsed_response$code != "200000") {
+            abort(paste("KuCoin API returned an error:", parsed_response$code))
+        }
+        dt <- as.data.table(parsed_response$data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get Spot Account Detail Implementation
+#'
+#' This asynchronous function retrieves detailed information for a single spot account
+#' from the KuCoin API. It requires the account ID as a path parameter. The function
+#' constructs the full URL by embedding the provided `accountId` into the endpoint, builds
+#' the authentication headers, sends the GET request, and returns the parsed response data
+#' as a data.table.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param accountId A string representing the account ID for which details are requested.
+#'
+#' @return A promise that resolves to a data.table containing the spot account detail.
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/{accountId}`
+#'
+#' **Response Schema:**
+#' - **code** (string): `"200000"` indicates success.
+#' - **data** (object): Contains the following fields:
+#'     - **currency** (string): The currency of the account.
+#'     - **balance** (string): Total funds in the account.
+#'     - **available** (string): Funds available for withdrawal or trading.
 #'     - **holds** (string): Funds on hold (not available for use).
 #'
-#' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot).
+#' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot).
 #'
 #' @examples
 #' \dontrun{
@@ -475,31 +573,28 @@ get_spot_account_type_impl <- coro::async(function(config) {
 #'       base_url = "https://api.kucoin.com",
 #'       key_version = "2"
 #'   )
-#'   # Optionally filter by currency and account type:
-#'   query <- list(currency = "USDT", type = "main")
+#'   # Suppose you want to retrieve details for account "548674591753":
 #'   coro::run(function() {
-#'       dt <- await(get_spot_account_list_impl(config, query))
+#'       dt <- await(get_spot_account_detail_impl(config, "548674591753"))
 #'       print(dt)
 #'   })
 #' }
 #'
 #' @export
-get_spot_account_list_impl <- coro::async(function(config, query = list()) {
+get_spot_account_detail_impl <- coro::async(function(config, accountId) {
     tryCatch({
         # Retrieve the base URL from the configuration.
         base_url <- get_base_url(config)
-        # Define the endpoint for spot accounts.
-        endpoint <- "/api/v1/accounts"
+        # Construct the endpoint by embedding the accountId.
+        endpoint <- paste0("/api/v1/accounts/", accountId)
         method <- "GET"
         body <- ""
-        # Build the query string using the provided query parameters.
-        qs <- build_query(query)
         # Build the authentication headers asynchronously.
         headers <- await(build_headers(method, endpoint, body, config))
-        # Construct the full URL (including the query string).
-        url <- paste0(base_url, endpoint, qs)
+        # Construct the full URL.
+        url <- paste0(base_url, endpoint)
         
-        # Send the GET request to the KuCoin API using the headers directly.
+        # Send the GET request using the headers directly.
         response <- GET(url, headers, timeout(3))
         
         # Check that the HTTP status code is 200 (OK).
@@ -521,11 +616,12 @@ get_spot_account_list_impl <- coro::async(function(config, query = list()) {
             abort(paste("KuCoin API returned an error:", parsed_response$code))
         }
         
-        # Convert the returned data into a data.table.
+        # Convert the returned account detail into a data.table.
+        # Since the API returns an object, we convert it to a one-row data.table.
         dt <- as.data.table(parsed_response$data)
         return(dt)
     }, error = function(e) {
-        abort(paste("Error in get_spot_account_list_impl:", conditionMessage(e)))
+        abort(paste("Error in get_spot_account_detail_impl:", conditionMessage(e)))
     })
 })
 # ./helpers_api.R
