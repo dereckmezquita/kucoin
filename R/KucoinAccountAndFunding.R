@@ -5,7 +5,7 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl, get_spot_ledger_impl
     ],
     ./utils[get_api_keys]
 )
@@ -303,6 +303,34 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_futures_account = function(query = list()) {
             get_futures_account_impl(self$config, query)
+        },
+
+        #' Get Spot Ledger from KuCoin
+        #'
+        #' @description
+        #' Asynchronously retrieves the spot (and margin) ledger records by querying the `/api/v1/accounts/ledgers` endpoint.
+        #'
+        #' @param query A list of query parameters to filter the ledger records.
+        #'              Supported parameters include:
+        #'              - **currency** (string, optional): One or more currencies (up to 10).
+        #'              - **direction** (string, optional): "in" or "out".
+        #'              - **bizType** (string, optional): The business type (e.g., "TRANSFER").
+        #'              - **startAt** (integer, optional): Start time in milliseconds.
+        #'              - **endAt** (integer, optional): End time in milliseconds.
+        #'              - **currentPage** (integer, optional): The page number (default is 1).
+        #'              - **pageSize** (integer, optional): Number of results per page (default is 50).
+        #'
+        #' @return A promise that resolves to a data.table containing the ledger records.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'     coro::run(function() {
+        #'         dt <- await(account$get_spot_ledger(list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)))
+        #'         print(dt)
+        #'     })
+        #' }
+        get_spot_ledger = function(query = list()) {
+            get_spot_ledger_impl(self$config, query)
         }
     )
 )

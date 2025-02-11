@@ -58,7 +58,7 @@ async_main <- coro::async(function() {
     cat("Cross Margin Account Info (data.table):\n")
     print(dt_cross_margin)
 
-    # Retrieve isolated margin account info with optional query parameters
+    # Retrieve isolated margin account info with optional query parameters.
     query_im <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
     dt_isolated <- await(account$get_isolated_margin_account(query_im))
     cat("Isolated Margin Account Info (data.table):\n")
@@ -69,6 +69,12 @@ async_main <- coro::async(function() {
     dt_futures <- await(account$get_futures_account(query_futures))
     cat("Futures Account Info (data.table):\n")
     print(dt_futures)
+
+    # Retrieve spot ledger info (account ledgers for spot/margin)
+    query_ledgers <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
+    dt_ledgers <- await(account$get_spot_ledger(query_ledgers))
+    cat("Spot Ledger Info (data.table):\n")
+    print(dt_ledgers)
 })
 
 async_main()

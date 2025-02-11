@@ -480,3 +480,57 @@ get_futures_account_impl <- coro::async(function(config, query = list()) {
         abort(paste("Error in get_futures_account_impl:", conditionMessage(e)))
     })
 })
+
+#' Get Spot Ledger Implementation
+#'
+#' This asynchronous function retrieves transaction records (ledgers) for spot/margin accounts from the KuCoin API.
+#' It sends a GET request to the `/api/v1/accounts/ledgers` endpoint with optional query parameters.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the ledger records. Supported parameters include:
+#'   - **currency** (string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.
+#'   - **direction** (string, optional): "in" or "out".
+#'   - **bizType** (string, optional): e.g., "DEPOSIT", "WITHDRAW", "TRANSFER", "SUB_TRANSFER", "TRADE_EXCHANGE", etc.
+#'   - **startAt** (integer, optional): Start time in milliseconds.
+#'   - **endAt** (integer, optional): End time in milliseconds.
+#'   - **currentPage** (integer, optional): The page number (default is 1).
+#'   - **pageSize** (integer, optional): Number of results per page (minimum 10, maximum 500; default is 50).
+#'
+#' @return A promise that resolves to a data.table containing the ledger information. The returned object includes:
+#'         - currentPage, pageSize, totalNum, totalPage, and items (an array of ledger records).
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/ledgers`
+#'
+#' For further details, refer to the
+#' [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
+#'     coro::run(function() {
+#'         dt <- await(get_spot_ledger_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_spot_ledger_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v1/accounts/ledgers"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        # Build authentication headers using the full endpoint (including query string)
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        response <- GET(url, headers, timeout(3))
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_spot_ledger_impl:", conditionMessage(e)))
+    })
+})
