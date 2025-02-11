@@ -91,3 +91,67 @@ get_account_summary_info_impl <- coro::async(function(config) {
         abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
     })
 })
+
+#' Get API Key Information Implementation
+#'
+#' This asynchronous function implements the logic for retrieving API key information
+#' from the KuCoin API. It constructs the full URL, builds the authentication headers, sends the
+#' GET request, and returns the parsed response data as a data.table.
+#'
+#' @param config A list containing API configuration parameters.
+#'
+#' @return A promise that resolves to a data.table containing the API key information.
+#'
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v1/user/api-key`
+#'
+#' **Response Schema:**
+#' - **code** (string): `"200000"` indicates success.
+#' - **data** (object): Contains fields such as:
+#'     - **uid** (integer): Account UID.
+#'     - **subName** (string, optional): Sub account name (if applicable).
+#'     - **remark** (string): Remarks.
+#'     - **apiKey** (string): The API key.
+#'     - **apiVersion** (integer): API version.
+#'     - **permission** (string): Comma-separated list of permissions.
+#'     - **ipWhitelist** (string, optional): IP whitelist.
+#'     - **isMaster** (boolean): Whether it is the master account.
+#'     - **createdAt** (integer): API key creation time in milliseconds.
+#'
+#' The returned data is converted to a data.table before resolving the promise.
+#'
+#' @examples
+#' \dontrun{
+#'   coro::run(function() {
+#'       dt <- await(get_apikey_info_impl(config))
+#'       print(dt)
+#'   })
+#' }
+#'
+#' @export
+get_apikey_info_impl <- coro::async(function(config) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- "/api/v1/user/api-key"
+        method <- "GET"
+        body <- ""
+        headers <- await(build_headers(method, endpoint, body, config))
+        url <- paste0(base_url, endpoint)
+        response <- GET(url, headers, timeout(3))
+        if (status_code(response) != 200) {
+            abort(paste("Request failed with status code", status_code(response)))
+        }
+        response_text <- content(response, as = "text", encoding = "UTF-8")
+        parsed_response <- fromJSON(response_text)
+        if (!all(c("code", "data") %in% names(parsed_response))) {
+            abort("Invalid API response structure.")
+        }
+        if (parsed_response$code != "200000") {
+            abort(paste("KuCoin API returned an error:", parsed_response$code))
+        }
+        dt <- as.data.table(parsed_response$data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
+    })
+})

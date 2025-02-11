@@ -28,6 +28,16 @@ basic_info$get_account_summary_info()$
         rlang::last_error()
     })
 
+basic_info$get_apikey_info()$
+    then(function(dt) {
+        cat("API Key Info:\n")
+        print(dt)
+    })$
+    catch(function(e) {
+        message("Error: ", conditionMessage(e))
+        rlang::last_error()
+    })
+
 while (!later::loop_empty()) {
     later::run_now(timeoutSecs = Inf, all = TRUE)
 }
