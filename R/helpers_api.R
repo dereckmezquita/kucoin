@@ -182,3 +182,59 @@ build_headers <- coro::async(function(method, endpoint, body, config) {
         )
     })
 })
+
+
+# File: helpers_response.R
+
+box::use(
+  httr[status_code, content],
+  jsonlite[fromJSON],
+  rlang[abort]
+)
+
+#' Process and Validate KuCoin API Response
+#'
+#' This function processes an HTTP response from a KuCoin API request, validating its structure and
+#' checking for errors. It is designed to catch cases where the HTTP request returns status 200 but the
+#' API response indicates an error (for example, if the API “code” is not the expected success value).
+#'
+#' @param response An HTTP response object (from httr::GET).
+#' @param url A character string representing the requested URL (used in error messages).
+#'
+#' @return The value of the "data" field from the parsed JSON response.
+#'
+#' @examples
+#' \dontrun{
+#'   response <- httr::GET("https://api.kucoin.com/api/v2/user-info", headers)
+#'   data <- process_kucoin_response(response, "https://api.kucoin.com/api/v2/user-info")
+#'   print(data)
+#' }
+#'
+#' @export
+process_kucoin_response <- function(response, url = "") {
+    status_code <- httr::status_code(response)
+    if (status_code != 200) {
+        abort(paste("HTTP request failed with status code", status_code, "for URL:", url))
+    }
+
+    response_text <- httr::content(response, as = "text", encoding = "UTF-8")
+    parsed_response <- jsonlite::fromJSON(response_text)
+
+    if (!"code" %in% names(parsed_response)) {
+        rlang::abort("Invalid API response structure: missing 'code' field.")
+    }
+
+    if (as.character(parsed_response$code) != "200000") {
+        error_msg <- "No error message provided."
+        if ("msg" %in% names(parsed_response)) {
+            error_msg <- parsed_response$msg
+        }
+        rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
+    }
+
+    if (!"data" %in% names(parsed_response)) {
+        rlang::abort("Invalid API response structure: missing 'data' field despite success code.")
+    }
+
+    return(parsed_response$data)
+}

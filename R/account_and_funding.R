@@ -7,7 +7,7 @@ box::use(
     coro,
     promises,
     data.table[as.data.table],
-    ./helpers_api[build_headers],
+    ./helpers_api[build_headers, process_kucoin_response],
     ./utils[get_base_url, build_query]
 )
 
@@ -51,41 +51,19 @@ box::use(
 #' @export
 get_account_summary_info_impl <- coro::async(function(config) {
     tryCatch({
-        # Retrieve the base URL from the configuration.
         base_url <- get_base_url(config)
-        # Define the endpoint for account summary information.
         endpoint <- "/api/v2/user-info"
         method <- "GET"
         body <- ""
-        # Build the authentication headers asynchronously.
         headers <- await(build_headers(method, endpoint, body, config))
-        # Construct the full URL.
         url <- paste0(base_url, endpoint)
         
-        # Send the GET request to the KuCoin API using the headers directly.
         response <- GET(url, headers, timeout(3))
         
-        # Check that the HTTP status code is 200 (OK).
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
+        # Use the helper to check the response and extract the data.
+        data <- process_kucoin_response(response, url)
         
-        # Retrieve and parse the response content.
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        
-        # Validate the structure of the API response.
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        
-        # Check for a successful API response code.
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        
-        # Convert the returned data into a data.table.
-        dt <- as.data.table(parsed_response$data)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
@@ -137,19 +115,10 @@ get_apikey_info_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
+        
         response <- GET(url, headers, timeout(3))
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        dt <- as.data.table(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
@@ -194,45 +163,22 @@ get_apikey_info_impl <- coro::async(function(config) {
 #' @export
 get_spot_account_type_impl <- coro::async(function(config) {
     tryCatch({
-        # Retrieve the base URL from the configuration.
         base_url <- get_base_url(config)
-        # Define the endpoint for spot account type.
         endpoint <- "/api/v1/hf/accounts/opened"
         method <- "GET"
         body <- ""
-        # Build the authentication headers asynchronously.
         headers <- await(build_headers(method, endpoint, body, config))
-        # Construct the full URL.
         url <- paste0(base_url, endpoint)
         
-        # Send the GET request using the headers directly.
         response <- GET(url, headers, timeout(3))
-        
-        # Check that the HTTP status code is 200 (OK).
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        
-        # Retrieve and parse the response content.
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        
-        # Validate the structure of the API response.
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        
-        # Check for a successful API response code.
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        
-        # Return the boolean result from the API.
-        return(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        # data is expected to be a boolean value.
+        return(data)
     }, error = function(e) {
         abort(paste("Error in get_spot_account_type_impl:", conditionMessage(e)))
     })
 })
+
 
 #' Get Spot Account DT Implementation
 #'
@@ -281,23 +227,14 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")  # Debug print
+        cat("Final URL: ", url, "\n")
+        
         response <- GET(url, headers, timeout(3))
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        dt <- as.data.table(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
@@ -349,42 +286,16 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
 #' @export
 get_spot_account_detail_impl <- coro::async(function(config, accountId) {
     tryCatch({
-        # Retrieve the base URL from the configuration.
         base_url <- get_base_url(config)
-        # Construct the endpoint by embedding the accountId.
         endpoint <- paste0("/api/v1/accounts/", accountId)
         method <- "GET"
         body <- ""
-        # Build the authentication headers asynchronously.
         headers <- await(build_headers(method, endpoint, body, config))
-        # Construct the full URL.
         url <- paste0(base_url, endpoint)
         
-        # Send the GET request using the headers directly.
         response <- GET(url, headers, timeout(3))
-        
-        # Check that the HTTP status code is 200 (OK).
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        
-        # Retrieve and parse the response content.
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        
-        # Validate the structure of the API response.
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        
-        # Check for a successful API response code.
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        
-        # Convert the returned account detail into a data.table.
-        # Since the API returns an object, we convert it to a one-row data.table.
-        dt <- as.data.table(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_spot_account_detail_impl:", conditionMessage(e)))
@@ -446,29 +357,19 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")  # Debug print
+        cat("Final URL: ", url, "\n")
+        
         response <- GET(url, headers, timeout(3))
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        dt <- as.data.table(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
     })
 })
-
 #' Get Isolated Margin Account Implementation
 #'
 #' This asynchronous function retrieves information about the isolated margin account from the KuCoin API.
@@ -520,23 +421,14 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")  # Debug print
+        cat("Final URL: ", url, "\n")
+        
         response <- GET(url, headers, timeout(3))
-        if (status_code(response) != 200) {
-            abort(paste("Request failed with status code", status_code(response), "for URL:", url))
-        }
-        response_text <- content(response, as = "text", encoding = "UTF-8")
-        parsed_response <- fromJSON(response_text)
-        if (!all(c("code", "data") %in% names(parsed_response))) {
-            abort("Invalid API response structure.")
-        }
-        if (parsed_response$code != "200000") {
-            abort(paste("KuCoin API returned an error:", parsed_response$code))
-        }
-        dt <- as.data.table(parsed_response$data)
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
