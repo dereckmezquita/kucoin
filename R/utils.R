@@ -1,5 +1,33 @@
 # File: utils.R
 
+#' Build Query String for KuCoin API Request
+#'
+#' This function constructs a query string from a named list of parameters.
+#' It removes any parameters with \code{NULL} values and concatenates the remaining
+#' key-value pairs into a properly formatted query string.
+#'
+#' **Usage:**
+#'
+#' 1. Provide a named list of query parameters (e.g., \code{list(currency = "USDT", type = "main")}).
+#' 2. The function removes any parameters whose value is \code{NULL}.
+#' 3. It then concatenates the names and values into a query string that starts with a question mark
+#'    (e.g., \code{"?currency=USDT&type=main"}).
+#'
+#' **Important:** This function should be called before generating the authentication headers.
+#' The complete endpoint (i.e., base endpoint plus the query string) must be passed to the header builder
+#' so that the signature is computed over the full path.
+#'
+#' @param params A named list of query parameters to be appended to the URL.
+#'
+#' @return A string representing the query part of the URL, beginning with \code{"?"}.
+#'
+#' @examples
+#' \dontrun{
+#'     # Example usage:
+#'     query <- list(currency = "USDT", type = "main")
+#'     qs <- build_query(query)
+#'     # qs will be "?currency=USDT&type=main"
+#' }
 #' @export
 build_query <- function(params) {
     params <- params[!sapply(params, is.null)]
