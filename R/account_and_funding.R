@@ -280,8 +280,11 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         method <- "GET"
         body <- ""
         qs <- build_query(query)
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint, qs)
+        full_endpoint <- paste0(endpoint, qs)
+        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL: ", url, "\n")  # Debug print
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
             abort(paste("Request failed with status code", status_code(response), "for URL:", url))
@@ -442,8 +445,11 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         method <- "GET"
         body <- ""
         qs <- build_query(query)
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint, qs)
+        full_endpoint <- paste0(endpoint, qs)
+        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL: ", url, "\n")  # Debug print
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
             abort(paste("Request failed with status code", status_code(response), "for URL:", url))
@@ -513,8 +519,11 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         method <- "GET"
         body <- ""
         qs <- build_query(query)
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint, qs)
+        full_endpoint <- paste0(endpoint, qs)
+        cat("Final endpoint for signing: ", full_endpoint, "\n")  # Debug print
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL: ", url, "\n")  # Debug print
         response <- GET(url, headers, timeout(3))
         if (status_code(response) != 200) {
             abort(paste("Request failed with status code", status_code(response), "for URL:", url))
