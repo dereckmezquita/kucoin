@@ -17,8 +17,8 @@ box::use(
 #' @section Methods:
 #' - **initialize(config)**: Creates a new instance of the class. If no configuration is provided,
 #'   `get_api_keys()` is used to load API credentials from environment variables.
-#' - **get_account_summary_info()**: Returns a promise that resolves to the account summary data by calling
-#'   the external implementation.
+#' - **get_account_summary_info()**: Returns a promise that resolves to a data.table containing the account summary data
+#'   by calling the external implementation.
 #'
 #' @examples
 #' \dontrun{
@@ -29,8 +29,8 @@ box::use(
 #'
 #'   # Run the asynchronous request using coro::run
 #'   coro::run(function() {
-#'       summary_info <- await(account$get_account_summary_info())
-#'       print(summary_info)
+#'       dt <- await(account$get_account_summary_info())
+#'       print(dt)
 #'   })
 #' }
 #'
@@ -67,19 +67,21 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' 
         #' **Response Schema:**
         #' - **code** (string): `"200000"` indicates success.
-        #' - **data** (object): Contains various fields including `level`, `subQuantity`, `spotSubQuantity`,
+        #' - **data** (object): Contains various fields such as `level`, `subQuantity`, `spotSubQuantity`,
         #'   `marginSubQuantity`, `futuresSubQuantity`, `optionSubQuantity`, `maxSubQuantity`,
         #'   `maxDefaultSubQuantity`, `maxSpotSubQuantity`, `maxMarginSubQuantity`, `maxFuturesSubQuantity`, and `maxOptionSubQuantity`.
+        #' 
+        #' The returned data is converted to a data.table.
         #'
-        #' @return A promise that resolves to a list containing the account summary data.
+        #' @return A promise that resolves to a data.table containing the account summary data.
         #'
         #' @examples
         #' \dontrun{
         #'   library(coro)
         #'   account <- KucoinAccountAndFunding$new()
         #'   coro::run(function() {
-        #'       summary_info <- await(account$get_account_summary_info())
-        #'       print(summary_info)
+        #'       dt <- await(account$get_account_summary_info())
+        #'       print(dt)
         #'   })
         #' }
         get_account_summary_info = function() {

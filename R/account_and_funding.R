@@ -1,11 +1,12 @@
-# File: account_methods.R
+# File: account_and_funding.R
 
 box::use(
-    httr[GET, status_code, content, add_headers, timeout],
+    httr[GET, status_code, content, timeout, add_headers],
     jsonlite[fromJSON],
     rlang[abort],
     coro,
     promises,
+    data.table[as.data.table],
     ./helpers_api[build_headers],
     ./utils[get_base_url]
 )
@@ -14,11 +15,11 @@ box::use(
 #'
 #' This asynchronous function implements the logic for retrieving account summary information
 #' from the KuCoin API. It constructs the full URL, builds the authentication headers, sends the
-#' GET request, and returns the parsed response data.
+#' GET request, and returns the parsed response data as a data.table.
 #'
 #' @param config A list containing API configuration parameters.
 #'
-#' @return A promise that resolves to a list containing the account summary data.
+#' @return A promise that resolves to a data.table containing the account summary data.
 #'
 #' @details
 #' **Endpoint:** `GET https://api.kucoin.com/api/v2/user-info`
@@ -29,7 +30,7 @@ box::use(
 #'   `marginSubQuantity`, `futuresSubQuantity`, `optionSubQuantity`, `maxSubQuantity`,
 #'   `maxDefaultSubQuantity`, `maxSpotSubQuantity`, `maxMarginSubQuantity`, `maxFuturesSubQuantity`, and `maxOptionSubQuantity`.
 #'
-#' For full endpoint details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info).
+#' The returned data is converted to a data.table before resolving the promise.
 #'
 #' @examples
 #' \dontrun{
@@ -42,8 +43,8 @@ box::use(
 #'   )
 #'   # Run the asynchronous request using coro::run
 #'   coro::run(function() {
-#'       data <- await(get_account_summary_info_impl(config))
-#'       print(data)
+#'       dt <- await(get_account_summary_info_impl(config))
+#'       print(dt)
 #'   })
 #' }
 #'
@@ -83,8 +84,9 @@ get_account_summary_info_impl <- coro::async(function(config) {
             abort(paste("KuCoin API returned an error:", parsed_response$code))
         }
         
-        # Return the account summary data.
-        return(parsed_response$data)
+        # Convert the returned data into a data.table.
+        dt <- as.data.table(parsed_response$data)
+        return(dt)
     }, error = function(e) {
         abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
     })
