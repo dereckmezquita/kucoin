@@ -4,7 +4,8 @@ box::use(
     R6,
     rlang[abort],
     ./account_and_funding[
-        get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl
+        get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
+        get_spot_account_list_impl
     ],
     ./utils[get_api_keys]
 )
@@ -151,6 +152,44 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_spot_account_type = function() {
             get_spot_account_type_impl(self$config)
+        },
+
+        #' Get Spot Account List from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously retrieves a list of spot accounts by sending a GET request to the
+        #' `/api/v1/accounts` endpoint with optional query parameters.
+        #' Query parameters may include:
+        #'   - **currency** (string, optional): e.g., "USDT".
+        #'   - **type** (string, optional): Allowed values are "main" or "trade".
+        #' The returned JSON data is converted to a data.table.
+        #'
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts`
+        #' 
+        #' **Response Schema:**
+        #' - **code** (string): `"200000"` indicates success.
+        #' - **data** (array of objects): Each object contains:
+        #'     - **id** (string): Account ID.
+        #'     - **currency** (string): Currency code.
+        #'     - **type** (string): Account type (e.g., "main", "trade", "balance").
+        #'     - **balance** (string): Total funds in the account.
+        #'     - **available** (string): Funds available for withdrawal or trading.
+        #'     - **holds** (string): Funds on hold.
+        #'
+        #' @param query A list of query parameters to filter the account list.
+        #'              For example: list(currency = "USDT", type = "main").
+        #'
+        #' @return A promise that resolves to a data.table containing the spot account list.
+        #' @examples
+        #' \dontrun{
+        #'   coro::run(function() {
+        #'       dt <- await(account$get_spot_account_list(list(currency = "USDT", type = "main")))
+        #'       print(dt)
+        #'   })
+        #' }
+        get_spot_account_list = function(query = list()) {
+            get_spot_account_list_impl(self$config, query)
         }
     )
 )

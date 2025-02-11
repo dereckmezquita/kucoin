@@ -50,6 +50,17 @@ basic_info$get_spot_account_type()$
         rlang::last_error()
     })
 
+cat("Testing: Get spot account list\n")
+basic_info$get_spot_account_list()$
+    then(function(data) {
+        cat("Spot Account List:\n")
+        print(data)
+    })$
+    catch(function(e) {
+        message("Error: ", conditionMessage(e))
+        rlang::last_error()
+    })
+
 while (!later::loop_empty()) {
     later::run_now(timeoutSecs = Inf, all = TRUE)
 }
