@@ -1,0 +1,90 @@
+# File: KucoinAccountAndFunding.R
+
+box::use(
+    R6,
+    rlang[abort],
+    ./account_and_funding[get_account_summary_info_impl],
+    ./utils[get_api_keys]
+)
+
+#' KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints
+#'
+#' The `KucoinAccountAndFunding` class provides an interface to interact with the KuCoin API's
+#' **Get Account Summary Info** endpoint. It leverages asynchronous programming to send HTTP requests and handle
+#' responses. Configuration parameters (such as API key, secret, passphrase, base URL, and key version) are
+#' loaded from the environment or can be passed in directly.
+#'
+#' @section Methods:
+#' - **initialize(config)**: Creates a new instance of the class. If no configuration is provided,
+#'   `get_api_keys()` is used to load API credentials from environment variables.
+#' - **get_account_summary_info()**: Returns a promise that resolves to the account summary data by calling
+#'   the external implementation.
+#'
+#' @examples
+#' \dontrun{
+#'   library(coro)
+#'
+#'   # Create an instance of KucoinAccountAndFunding (using API keys from environment variables)
+#'   account <- KucoinAccountAndFunding$new()
+#'
+#'   # Run the asynchronous request using coro::run
+#'   coro::run(function() {
+#'       summary_info <- await(account$get_account_summary_info())
+#'       print(summary_info)
+#'   })
+#' }
+#'
+#' @export
+KucoinAccountAndFunding <- R6::R6Class(
+    "KucoinAccountAndFunding",
+    public = list(
+        #' @field config A list containing API configuration parameters such as
+        #' `api_key`, `api_secret`, `api_passphrase`, `base_url`, and `key_version`.
+        config = NULL,
+        
+        #' Initialize a new KucoinAccountAndFunding object.
+        #'
+        #' @description
+        #' Sets up the configuration for making authenticated API requests. If no configuration is provided,
+        #' `get_api_keys()` is invoked to load the necessary credentials from environment variables.
+        #'
+        #' @param config A list containing API configuration parameters. Defaults to the output of `get_api_keys()`.
+        #' @return A new instance of the `KucoinAccountAndFunding` class.
+        initialize = function(config = get_api_keys()) {
+            self$config <- config
+        },
+        
+        #' Get Account Summary Information from KuCoin
+        #'
+        #' @description
+        #' Asynchronously retrieves account summary information by sending a GET request to the
+        #' `/api/v2/user-info` endpoint of the KuCoin API.
+        #' 
+        #' For full endpoint details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info).
+        #'
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v2/user-info`
+        #' 
+        #' **Response Schema:**
+        #' - **code** (string): `"200000"` indicates success.
+        #' - **data** (object): Contains various fields including `level`, `subQuantity`, `spotSubQuantity`,
+        #'   `marginSubQuantity`, `futuresSubQuantity`, `optionSubQuantity`, `maxSubQuantity`,
+        #'   `maxDefaultSubQuantity`, `maxSpotSubQuantity`, `maxMarginSubQuantity`, `maxFuturesSubQuantity`, and `maxOptionSubQuantity`.
+        #'
+        #' @return A promise that resolves to a list containing the account summary data.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   library(coro)
+        #'   account <- KucoinAccountAndFunding$new()
+        #'   coro::run(function() {
+        #'       summary_info <- await(account$get_account_summary_info())
+        #'       print(summary_info)
+        #'   })
+        #' }
+        get_account_summary_info = function() {
+            # Call the external implementation with the current configuration.
+            get_account_summary_info_impl(self$config)
+        }
+    )
+)
