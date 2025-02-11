@@ -1,23 +1,26 @@
 #!/usr/bin/env Rscript
+if (interactive()) {
+    setwd("./tests-manual")
+}
+
 options(error = function() {
     rlang::entrace()
     rlang::last_trace()
+    traceback()
 })
 
-# Import modules and local packages using box.
 box::use(
     rlang,
     later,
-    ./R/KucoinBasicInfo[ KucoinAccountsBasicInfo ]
-)   
+    ../R/KucoinAccountAndFunding[ KucoinAccountAndFunding ]
+)
 
-# Create a new instance of the class
-basic_info <- KucoinAccountsBasicInfo$new()
+basic_info <- KucoinAccountAndFunding$new()
 
 cat("Testing: Get Account Summary Info\n")
-basic_info$getAccountSummaryInfo()$
+basic_info$get_account_summary_info()$
     then(function(dt) {
-        cat("Account Summary Info (data.table):\n")
+        cat("Account Summary Info:\n")
         print(dt)
     })$
     catch(function(e) {
@@ -25,7 +28,6 @@ basic_info$getAccountSummaryInfo()$
         rlang::last_error()
     })
 
-# Run the later event loop until all async tasks are processed
 while (!later::loop_empty()) {
     later::run_now(timeoutSecs = Inf, all = TRUE)
 }
