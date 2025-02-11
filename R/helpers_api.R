@@ -74,23 +74,23 @@ get_server_time <- function(base_url = get_base_url()) {
 #' The function performs the following steps:
 #'
 #' \enumerate{
-#'   \item **Retrieve the Server Time:**  
+#'     \item **Retrieve the Server Time:**  
 #'         Calls \code{get_server_time()} (using the base URL from \code{get_base_url()}) to obtain the current
 #'         server timestamp (in milliseconds). This timestamp is required in every request.
 #'
-#'   \item **Construct the Prehash String:**  
+#'     \item **Construct the Prehash String:**  
 #'         The prehash is constructed by concatenating the timestamp, the HTTP method (in uppercase),
 #'         the API endpoint, and the request body. Note that the \code{body} parameter must be provided even if
 #'         it is empty (e.g., for GET requests) to ensure that the signature reflects all parts of the request.
 #'
-#'   \item **Generate the Signature:**  
+#'     \item **Generate the Signature:**  
 #'         Computes an HMAC-SHA256 signature of the prehash string using the API secret. The raw signature is
 #'         then encoded in base64.
 #'
-#'   \item **Encrypt the Passphrase:**  
+#'     \item **Encrypt the Passphrase:**  
 #'         Similarly, the API passphrase is HMAC-signed (using the API secret) and the result is encoded in base64.
 #'
-#'   \item **Build the Headers:**  
+#'     \item **Build the Headers:**  
 #'         Returns a list of HTTP headers (via \code{httr::add_headers()}) that includes all the required authentication
 #'         fields.
 #' }
@@ -101,11 +101,11 @@ get_server_time <- function(base_url = get_base_url()) {
 #'   pass an empty string (`""`). This parameter is included in the signature calculation.
 #' @param config A list containing configuration settings for the API. The list must include:
 #'   \describe{
-#'     \item{api_key}{Your KuCoin API key.}
-#'     \item{api_secret}{Your KuCoin API secret used for signing requests.}
-#'     \item{api_passphrase}{Your KuCoin API passphrase.}
-#'     \item{key_version}{The API key version (e.g., "2").}
-#'     \item{base_url}{(Optional) The base URL for the API; if not provided, \code{get_base_url()} is used.}
+#'       \item{api_key}{Your KuCoin API key.}
+#'       \item{api_secret}{Your KuCoin API secret used for signing requests.}
+#'       \item{api_passphrase}{Your KuCoin API passphrase.}
+#'       \item{key_version}{The API key version (e.g., "2").}
+#'       \item{base_url}{(Optional) The base URL for the API; if not provided, \code{get_base_url()} is used.}
 #'   }
 #'
 #' @return A list of HTTP headers (created by \code{httr::add_headers()}) that contains the authentication fields
@@ -116,20 +116,20 @@ get_server_time <- function(base_url = get_base_url()) {
 #'
 #' @examples
 #' \dontrun{
-#'   config <- list(
-#'     api_key = "your_api_key",
-#'     api_secret = "your_api_secret",
-#'     api_passphrase = "your_api_passphrase",
-#'     key_version = "2",
-#'     base_url = "https://api.kucoin.com"
-#'   )
+#'     config <- list(
+#'         api_key = "your_api_key",
+#'         api_secret = "your_api_secret",
+#'         api_passphrase = "your_api_passphrase",
+#'         key_version = "2",
+#'         base_url = "https://api.kucoin.com"
+#'     )
 #'
-#'   # Build headers for a POST request with a JSON body.
-#'   headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', config))
-#'   print(headers)
+#'     # Build headers for a POST request with a JSON body.
+#'     headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', config))
+#'     print(headers)
 #'
-#'   # For a GET request with no payload, pass an empty string:
-#'   headers <- coro::await(build_headers("GET", "/api/v1/orders", "", config))
+#'     # For a GET request with no payload, pass an empty string:
+#'     headers <- coro::await(build_headers("GET", "/api/v1/orders", "", config))
 #' }
 #'
 #' @importFrom httr add_headers
