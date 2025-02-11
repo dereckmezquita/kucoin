@@ -5,7 +5,7 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_list_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl
     ],
     ./utils[get_api_keys]
 )
@@ -188,8 +188,42 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'       print(dt)
         #'   })
         #' }
-        get_spot_account_list = function(query = list()) {
-            get_spot_account_list_impl(self$config, query)
+        get_spot_account_dt = function(query = list()) {
+            get_spot_account_dt_impl(self$config, query)
+        },
+
+        #' Get Spot Account Detail from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously retrieves detailed information for a single spot account by sending a GET request to the
+        #' `/api/v1/accounts/{accountId}` endpoint. This endpoint is used when the account ID is known.
+        #' The returned JSON object is converted to a data.table.
+        #'
+        #' @param accountId A string representing the account ID.
+        #'
+        #' @return A promise that resolves to a data.table containing the account detail for the specified account.
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/{accountId}`
+        #' 
+        #' **Response Schema:**
+        #' - **code** (string): `"200000"` indicates success.
+        #' - **data** (object): Contains the following fields:
+        #'     - **currency** (string): The currency of the account.
+        #'     - **balance** (string): Total funds in the account.
+        #'     - **available** (string): Funds available for withdrawal or trading.
+        #'     - **holds** (string): Funds on hold (not available for use).
+        #'
+        #' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot).
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   coro::run(function() {
+        #'       dt <- await(account$get_spot_account_detail("548674591753"))
+        #'       print(dt)
+        #'   })
+        #' }
+        get_spot_account_detail = function(accountId) {
+            get_spot_account_detail_impl(self$config, accountId)
         }
     )
 )
