@@ -227,10 +227,8 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -357,10 +355,8 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -421,10 +417,8 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -444,16 +438,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' @param query A list of query parameters to filter the account information. Supported parameter:
 #'        - **currency** (string, optional): The account currency. The default is "XBT", but you may specify others (e.g., "USDT", "ETH").
 #'
-#' @return A promise that resolves to a data.table containing the futures account information. The table includes:
-#'         - **currency** (string): The account currency.
-#'         - **accountEquity** (number): Account equity (margin balance plus unrealised PNL).
-#'         - **unrealisedPNL** (number): Unrealised profit and loss.
-#'         - **marginBalance** (number): Margin balance.
-#'         - **positionMargin** (number): Position margin.
-#'         - **orderMargin** (number): Order margin.
-#'         - **frozenFunds** (number): Frozen funds for out-transfer.
-#'         - **availableBalance** (number): Available balance.
-#'         - **riskRatio** (number): The cross margin risk ratio.
+#' @return A promise that resolves to a data.table containing the futures account information.
 #'
 #' @details
 #' **Endpoint:** `GET https://api-futures.kucoin.com/api/v1/account-overview`
@@ -473,23 +458,21 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' @export
 get_futures_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        # Use the futures base URL (either from config or default)
-        base_url <- if (!is.null(config$futures_base_url)) {
-            config$futures_base_url
+        # Use the futures base URL if provided in config; otherwise, use the default.
+        if (!is.null(config$futures_base_url)) {
+            base_url <- config$futures_base_url
         } else {
-            "https://api-futures.kucoin.com"
+            base_url <- "https://api-futures.kucoin.com"
         }
         endpoint <- "/api/v1/account-overview"
         method <- "GET"
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        # Build authentication headers using the full endpoint (which includes the query string)
+        # Build authentication headers using the full endpoint (including query string)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL for futures account: ", url, "\n")  # Debug print
         response <- GET(url, headers, timeout(3))
-        # Use the new helper function to process and validate the response.
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
         return(dt)

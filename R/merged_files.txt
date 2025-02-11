@@ -7,7 +7,7 @@ box::use(
     rlang[abort],
     ./account_and_funding[
         get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl
+        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl
     ],
     ./utils[get_api_keys]
 )
@@ -284,6 +284,27 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_isolated_margin_account = function(query = list()) {
             get_isolated_margin_account_impl(self$config, query)
+        },
+
+        #' Get Futures Account from KuCoin Futures API
+        #'
+        #' @description
+        #' Asynchronously retrieves the futures account information by calling the futures endpoint.
+        #'
+        #' @param query A list of query parameters to filter the account information.
+        #'              Supported parameter: **currency** (string, optional) – the account currency (default is "XBT").
+        #'
+        #' @return A promise that resolves to a data.table containing the futures account information.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'     coro::run(function() {
+        #'         dt <- await(account$get_futures_account(list(currency = "USDT")))
+        #'         print(dt)
+        #'     })
+        #' }
+        get_futures_account = function(query = list()) {
+            get_futures_account_impl(self$config, query)
         }
     )
 )
@@ -522,10 +543,8 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -652,10 +671,8 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -716,10 +733,8 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        cat("Final endpoint for signing: ", full_endpoint, "\n")
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        cat("Final URL: ", url, "\n")
         
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
@@ -727,6 +742,69 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         return(dt)
     }, error = function(e) {
         abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get Futures Account Implementation
+#'
+#' This asynchronous function retrieves the futures account information from the KuCoin Futures API.
+#' It sends a GET request to the `/api/v1/account-overview` endpoint with optional query parameters.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param query A list of query parameters to filter the account information. Supported parameter:
+#'        - **currency** (string, optional): The account currency. The default is "XBT", but you may specify others (e.g., "USDT", "ETH").
+#'
+#' @return A promise that resolves to a data.table containing the futures account information. The table includes:
+#'         - **currency** (string): The account currency.
+#'         - **accountEquity** (number): Account equity (margin balance plus unrealised PNL).
+#'         - **unrealisedPNL** (number): Unrealised profit and loss.
+#'         - **marginBalance** (number): Margin balance.
+#'         - **positionMargin** (number): Position margin.
+#'         - **orderMargin** (number): Order margin.
+#'         - **frozenFunds** (number): Frozen funds for out-transfer.
+#'         - **availableBalance** (number): Available balance.
+#'         - **riskRatio** (number): The cross margin risk ratio.
+#'
+#' @details
+#' **Endpoint:** `GET https://api-futures.kucoin.com/api/v1/account-overview`
+#'
+#' For further details, please refer to the
+#' [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-futures).
+#'
+#' @examples
+#' \dontrun{
+#'     query <- list(currency = "USDT")
+#'     coro::run(function() {
+#'         dt <- await(get_futures_account_impl(config, query))
+#'         print(dt)
+#'     })
+#' }
+#'
+#' @export
+get_futures_account_impl <- coro::async(function(config, query = list()) {
+    tryCatch({
+        # For futures endpoints, use the futures base URL from config if available, else default.
+        base_url <- if (!is.null(config$futures_base_url)) {
+            config$futures_base_url
+        } else {
+            "https://api-futures.kucoin.com"
+        }
+        endpoint <- "/api/v1/account-overview"
+        method <- "GET"
+        body <- ""
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        # Build authentication headers using the full endpoint (including query string)
+        headers <- await(build_headers(method, full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        cat("Final URL for futures account: ", url, "\n")  # Debug print
+        response <- GET(url, headers, timeout(3))
+        # Process the response using the helper function.
+        data <- process_kucoin_response(response, url)
+        dt <- as.data.table(data)
+        return(dt)
+    }, error = function(e) {
+        abort(paste("Error in get_futures_account_impl:", conditionMessage(e)))
     })
 })
 
