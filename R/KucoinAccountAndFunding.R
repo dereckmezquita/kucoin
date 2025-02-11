@@ -3,7 +3,9 @@
 box::use(
     R6,
     rlang[abort],
-    ./account_and_funding[get_account_summary_info_impl, get_apikey_info_impl],
+    ./account_and_funding[
+        get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl
+    ],
     ./utils[get_api_keys]
 )
 
@@ -121,6 +123,34 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_apikey_info = function() {
             get_apikey_info_impl(self$config)
+        },
+
+        #' Get Spot Account Type from KuCoin.
+        #'
+        #' @description
+        #' Asynchronously determines whether the current user is a high-frequency or low-frequency spot user
+        #' by sending a GET request to the `/api/v1/hf/accounts/opened` endpoint.
+        #' The response is a boolean value: TRUE indicates a high-frequency spot user, FALSE indicates a low-frequency spot user.
+        #'
+        #' @details
+        #' **Endpoint:** `GET https://api.kucoin.com/api/v1/hf/accounts/opened`
+        #' 
+        #' **Response Schema:**
+        #' - **code** (string): `"200000"` indicates success.
+        #' - **data** (boolean): The spot account type. TRUE means the user is high-frequency, FALSE means low-frequency.
+        #'
+        #' For more details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot).
+        #'
+        #' @return A promise that resolves to a boolean indicating the spot account type.
+        #' @examples
+        #' \dontrun{
+        #'   coro::run(function() {
+        #'       is_high_freq <- await(account$get_spot_account_type())
+        #'       print(is_high_freq)
+        #'   })
+        #' }
+        get_spot_account_type = function() {
+            get_spot_account_type_impl(self$config)
         }
     )
 )
