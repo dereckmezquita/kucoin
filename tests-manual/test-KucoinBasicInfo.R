@@ -12,55 +12,50 @@ options(error = function() {
 box::use(
     rlang,
     later,
+    coro,
     ../R/KucoinAccountAndFunding[ KucoinAccountAndFunding ]
 )
 
-basic_info <- KucoinAccountAndFunding$new()
+# Create an instance of the class (credentials are loaded from the environment by default)
+account <- KucoinAccountAndFunding$new()
 
-cat("Testing: Get Account Summary Info\n")
-basic_info$get_account_summary_info()$
-    then(function(dt) {
-        cat("Account Summary Info:\n")
-        print(dt)
-    })$
-    catch(function(e) {
-        message("Error: ", conditionMessage(e))
-        rlang::last_error()
-    })
+# Define a main asynchronous function that calls all endpoints
+async_main <- coro::async(function() {
+    # Retrieve account summary info
+    dt_summary <- await(account$get_account_summary_info())
+    cat("Account Summary Info (data.table):\n")
+    print(dt_summary)
 
-cat("Testing: Get API Key Info\n")
-basic_info$get_apikey_info()$
-    then(function(dt) {
-        cat("API Key Info:\n")
-        print(dt)
-    })$
-    catch(function(e) {
-        message("Error: ", conditionMessage(e))
-        rlang::last_error()
-    })
+    # Retrieve API key info
+    dt_apikey <- await(account$get_apikey_info())
+    cat("API Key Info (data.table):\n")
+    print(dt_apikey)
 
-cat("Testing: Get Spot Account Summary Info\n")
-basic_info$get_spot_account_type()$
-    then(function(data) {
-        cat("Spot Account Summary Info:\n")
-        print(data)
-    })$
-    catch(function(e) {
-        message("Error: ", conditionMessage(e))
-        rlang::last_error()
-    })
+    # Retrieve spot account type (a boolean)
+    is_high_freq <- await(account$get_spot_account_type())
+    cat("Spot Account Type (boolean):\n")
+    print(is_high_freq)
 
-cat("Testing: Get spot account list\n")
-basic_info$get_spot_account_list()$
-    then(function(data) {
-        cat("Spot Account List:\n")
-        print(data)
-    })$
-    catch(function(e) {
-        message("Error: ", conditionMessage(e))
-        rlang::last_error()
-    })
+    dt_spot <- await(account$get_spot_account_dt())
+    cat("Spot Account DT (data.table):\n")
+    print(dt_spot)
 
+    # Optionally, if you want to retrieve account details for a specific account,
+    # extract an account ID from dt_spot (assuming the table has an 'id' column)
+    if (nrow(dt_spot) > 0) {
+        account_id <- dt_spot$id[1]
+        cat("Retrieving spot account detail for account", account_id, "...\n")
+        dt_detail <- await(account$get_spot_account_detail(account_id))
+        cat("Spot Account Detail (data.table) for account", account_id, ":\n")
+        print(dt_detail)
+    } else {
+        cat("No spot accounts available for detail retrieval.\n")
+    }
+})
+
+async_main()
+
+# Keep the event loop running until all asynchronous tasks have completed.
 while (!later::loop_empty()) {
     later::run_now(timeoutSecs = Inf, all = TRUE)
 }
