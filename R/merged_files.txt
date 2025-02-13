@@ -334,35 +334,87 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_spot_ledger = function(query = list()) {
             get_spot_ledger_impl(self$config, query)
-        },
+        }
+    )
+)
 
-        #' Get High-Frequency Ledger from KuCoin
+# ./KucoinSubAccount.R
+
+box::use(
+    R6,
+    rlang[abort],
+    ./accounts_sub_account[ add_subaccount_impl ],
+    ./utils[get_api_keys, get_subaccount]
+)
+
+#' KuCoin SubAccount Class
+#'
+#' This class provides an interface to interact with KuCoin SubAccount endpoints.
+#' It uses asynchronous programming to send HTTP requests and handle responses.
+#' API configuration parameters are loaded from the environment by default,
+#' and sub‐account–specific parameters can also be loaded via the helper function.
+#'
+#' @section Methods:
+#' - **initialize(config, sub_account)**: Creates a new instance with API and sub‐account configuration.
+#' - **add_subaccount(password, subName, access, remarks)**: Creates a new sub‐account on KuCoin.
+#'
+#' @examples
+#' \dontrun{
+#'   library(coro)
+#'   subAcc <- KuCoinSubAccount$new()
+#'   coro::run(function() {
+#'       result <- await(subAcc$add_subaccount(
+#'           password = "1234567",
+#'           subName  = "Name1234567",
+#'           access   = "Spot",
+#'           remarks  = "Test sub-account"
+#'       ))
+#'       print(result)
+#'   })
+#' }
+#'
+#' @export
+KuCoinSubAccount <- R6::R6Class(
+    "KuCoinSubAccount",
+    public = list(
+        config = NULL,
+        sub_account = NULL,
+        
+        #' Initialize a new KuCoinSubAccount object.
+        #'
+        #' @param config A list containing API configuration parameters. Defaults to the output of `get_api_keys()`.
+        #' @param sub_account A list containing sub‐account configuration parameters. Defaults to the output of `get_subaccount()`.
+        #' @return A new instance of the `KuCoinSubAccount` class.
+        initialize = function(config = get_api_keys(), sub_account = get_subaccount()) {
+            self$config <- config
+            self$sub_account <- sub_account
+        },
+        
+        #' Add SubAccount
         #'
         #' @description
-        #' Asynchronously retrieves the high-frequency trading ledger records by querying the
-        #' `/api/v1/hf/accounts/ledgers` endpoint. This endpoint returns all transfer records (both in and out)
-        #' for your high-frequency trading account.
+        #' Creates a new sub‐account on KuCoin by sending a POST request to the appropriate endpoint.
         #'
-        #' @param query A named list of query parameters to filter the ledger records. Supported parameters include:
-        #'   - **currency** (string, optional): One or more currencies (up to 10); if omitted, all currencies are returned.
-        #'   - **direction** (string, optional): "in" or "out".
-        #'   - **bizType** (string, optional): Transaction type (e.g., "TRADE_EXCHANGE", "TRANSFER", "RETURNED_FEES", "DEDUCTION_FEES", "OTHER").
-        #'   - **lastId** (integer, optional): The last record ID from a previous batch.
-        #'   - **limit** (integer, optional): Number of results per page (default 100; maximum 200).
-        #'   - **startAt** (POSIXct or numeric, optional): Start time; if given as a POSIXct, it will be converted to milliseconds.
-        #'   - **endAt** (POSIXct or numeric, optional): End time; if given as a POSIXct, it will be converted to milliseconds.
+        #' @param password A string representing the sub‐account password (7–24 characters, must contain letters and numbers).
+        #' @param subName A string representing the sub‐account name (7–32 characters, must contain at least one letter and one number, with no spaces).
+        #' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
+        #' @param remarks An optional string for remarks (1–24 characters).
         #'
-        #' @return A promise that resolves to a data.table containing the HF ledger records.
-        #'
+        #' @return A promise that resolves to a list containing sub‐account details (uid, subName, remarks, access).
         #' @examples
         #' \dontrun{
-        #'     coro::run(function() {
-        #'         dt <- await(account$get_spot_hf_ledger(list(currency = "BTC", direction = "in", bizType = "TRANSFER", lastId = 254062248624417, limit = 100, startAt = 1728663338000, endAt = 1728692138000)))
-        #'         print(dt)
-        #'     })
+        #'   coro::run(function() {
+        #'       result <- await(subAcc$add_subaccount(
+        #'           password = "1234567",
+        #'           subName  = "Name1234567",
+        #'           access   = "Spot",
+        #'           remarks  = "Test sub-account"
+        #'       ))
+        #'       print(result)
+        #'   })
         #' }
-        get_spot_hf_ledger = function(query = list()) {
-            get_spot_hf_ledger_impl(self$config, query)
+        add_subaccount = function(password, subName, access, remarks = NULL) {
+            add_subaccount_impl(self$config, password, subName, access, remarks)
         }
     )
 )
@@ -382,7 +434,7 @@ box::use(
     promises,
     data.table[as.data.table],
     ./helpers_api[build_headers, process_kucoin_response],
-    ./utils[get_base_url, build_query, convert_datetime_range_to_ms]
+    ./utils[convert_datetime_range_to_ms, build_query, get_base_url]
 )
 
 #' Get Account Summary Information Implementation
@@ -431,12 +483,12 @@ get_account_summary_info_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
-        
+
         # Use the helper to check the response and extract the data.
         data <- process_kucoin_response(response, url)
-        
+
         dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
@@ -489,7 +541,7 @@ get_apikey_info_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -543,7 +595,7 @@ get_spot_account_type_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         # data is expected to be a boolean value.
@@ -603,7 +655,7 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -664,7 +716,7 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -731,7 +783,7 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -793,7 +845,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -909,82 +961,67 @@ get_spot_ledger_impl <- coro::async(function(config, query = list()) {
     })
 })
 
-# Then the updated HF ledger implementation:
-#' Get High-Frequency (HF) Ledger Implementation
+
+# ./accounts_sub_account.R
+
+box::use(
+    httr[POST, timeout],
+    jsonlite[toJSON],
+    rlang[abort],
+    coro,
+    ./utils[ get_base_url, get_api_keys ],
+    ./helpers_api[process_kucoin_response, build_headers]
+)
+
+#' Add SubAccount Implementation
 #'
-#' This asynchronous function retrieves ledger records for high-frequency trading accounts
-#' from the KuCoin API. It sends a GET request to the `/api/v1/hf/accounts/ledgers` endpoint with optional
-#' query parameters. If the query list contains time parameters (`startAt` and/or `endAt`) provided as POSIXct
-#' objects, they are automatically converted to milliseconds.
+#' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request
+#' to the `/api/v2/sub/user/created` endpoint.
 #'
 #' @param config A list containing API configuration parameters.
-#' @param query A named list of query parameters to filter the ledger records. Supported parameters include:
-#'   - **currency** (string, optional): One or more currencies (up to 10); if omitted, all currencies are returned.
-#'   - **direction** (string, optional): "in" or "out".
-#'   - **bizType** (string, optional): Transaction type (e.g., "TRADE_EXCHANGE", "TRANSFER", "RETURNED_FEES", "DEDUCTION_FEES", "OTHER").
-#'   - **lastId** (integer, optional): The last record ID from a previous batch.
-#'   - **limit** (integer, optional): Number of results per page (default 100; maximum 200).
-#'   - **startAt** (POSIXct or numeric, optional): Start time; if given as a POSIXct, it will be converted to milliseconds.
-#'   - **endAt** (POSIXct or numeric, optional): End time; if given as a POSIXct, it will be converted to milliseconds.
+#' @param password A string representing the sub‐account password (7–24 characters, must contain letters and numbers).
+#' @param subName A string representing the sub‐account name (7–32 characters, must contain at least one letter and one number, with no spaces).
+#' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
+#' @param remarks An optional string for remarks (1–24 characters).
 #'
-#' @return A promise that resolves to a data.table containing the HF ledger records.
+#' @return A promise that resolves to a list containing sub‐account details (e.g. uid, subName, remarks, access).
 #'
 #' @examples
 #' \dontrun{
-#'     library(lubridate)
-#'     query <- list(
-#'         currency  = "BTC",
-#'         direction = "in",
-#'         bizType   = "TRANSFER",
-#'         lastId    = 254062248624417,
-#'         limit     = 100,
-#'         startAt   = as_datetime("2023-04-01 00:00:00", tz = "UTC"),
-#'         endAt     = as_datetime("2023-04-01 23:59:59", tz = "UTC")
-#'     )
-#'     dt_hf_ledgers <- await(get_spot_hf_ledger_impl(config, query))
-#'     print(dt_hf_ledgers)
+#'   coro::run(function() {
+#'       result <- await(add_subaccount_impl(
+#'           config,
+#'           password = "1234567",
+#'           subName = "Name1234567",
+#'           access = "Spot",
+#'           remarks = "Test sub-account"
+#'       ))
+#'       print(result)
+#'   })
 #' }
 #'
 #' @export
-get_spot_hf_ledger_impl <- coro::async(function(config, query = list()) {
+add_subaccount_impl <- coro::async(function(config, password, subName, access, remarks = NULL) {
     tryCatch({
         base_url <- get_base_url(config)
-        endpoint <- "/api/v1/hf/accounts/ledgers"
-        method <- "GET"
-        body <- ""
-        
-        # Process time parameters if provided as POSIXct objects.
-        if ("startAt" %in% names(query) || "endAt" %in% names(query)) {
-            if ("startAt" %in% names(query)) {
-                start_time <- query$startAt
-            } else {
-                start_time <- NULL
-            }
-            if ("endAt" %in% names(query)) {
-                end_time <- query$endAt
-            } else {
-                end_time <- NULL
-            }
-            if ((!is.null(start_time) && inherits(start_time, "POSIXct")) ||
-                (!is.null(end_time) && inherits(end_time, "POSIXct"))) {
-                time_range <- convert_datetime_range_to_ms(start_time, end_time)
-                query$startAt <- time_range$startAt
-                query$endAt   <- time_range$endAt
-            }
+        endpoint <- "/api/v2/sub/user/created"
+        method <- "POST"
+        body_list <- list(
+            password = password,
+            subName = subName,
+            access = access
+        )
+        if (!is.null(remarks)) {
+            body_list$remarks <- remarks
         }
-        
-        qs <- build_query(query)
-        full_endpoint <- paste0(endpoint, qs)
-        headers <- await(build_headers(method, full_endpoint, body, config))
-        url <- paste0(base_url, full_endpoint)
-        cat("Final URL for HF ledger: ", url, "\n")
-        
-        response <- GET(url, headers, timeout(3))
+        body <- jsonlite::toJSON(body_list, auto_unbox = TRUE)
+        headers <- await(build_headers(method, endpoint, body, config))
+        url <- paste0(base_url, endpoint)
+        response <- POST(url, headers, body = body, encode = "raw", timeout(3))
         data <- process_kucoin_response(response, url)
-        dt <- as.data.table(data)
-        return(dt)
+        return(data)
     }, error = function(e) {
-        abort(paste("Error in get_spot_hf_ledger_impl:", conditionMessage(e)))
+        rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
     })
 })
 # ./helpers_api.R
@@ -1299,59 +1336,14 @@ get_api_keys <- function(
     ))
 }
 
-#' Convert a POSIXct DateTime to Milliseconds
-#'
-#' This function converts a POSIXct datetime into milliseconds since the Unix epoch.
-#'
-#' @param datetime A POSIXct object.
-#'
-#' @return A numeric value (milliseconds).
 #' @export
-convert_datetime_to_ms <- function(datetime) {
-    if (!inherits(datetime, "POSIXt")) {
-        rlang::abort("Input must be a POSIXct object.")
-    }
-    return(as.numeric(datetime) * 1000)
-}
-
-#' Convert a Datetime Range to Milliseconds
-#'
-#' This function accepts a start time and an end time as separate POSIXct inputs.
-#' If one is missing, it defaults to a 24‐hour window (if both are missing, end_time defaults to now()).
-#'
-#' @param start_time A POSIXct object for the start time. If NULL, defaults to end_time minus 24 hours.
-#' @param end_time A POSIXct object for the end time. If NULL, defaults to start_time plus 24 hours.
-#'
-#' @return A list with two elements: \code{startAt} and \code{endAt} (in milliseconds).
-#'
-#' @examples
-#' \dontrun{
-#'     library(lubridate)
-#'     times <- convert_datetime_range_to_ms(
-#'       as_datetime("2023-04-01 00:00:00", tz = "UTC"),
-#'       as_datetime("2023-04-01 23:59:59", tz = "UTC")
-#'     )
-#'     # times$startAt and times$endAt are in milliseconds.
-#' }
-#' @export
-convert_datetime_range_to_ms <- function(start_time, end_time) {
-    local_now <- lubridate::now(tzone = "UTC")
-
-    if (is.null(start_time) && is.null(end_time)) {
-        end_time <- local_now
-        start_time <- end_time - lubridate::dhours(24)
-    } else if (is.null(start_time)) {
-        start_time <- lubridate::as_datetime(end_time) - lubridate::dhours(24)
-    } else if (is.null(end_time)) {
-        end_time <- lubridate::as_datetime(start_time) + lubridate::dhours(24)
-    }
-
-    if (start_time > end_time) {
-        rlang::abort("start_time must be before end_time.")
-    }
-
+get_subaccount <- function(
+    sub_account_name = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),
+    sub_account_password = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")
+) {
     return(list(
-        startAt = convert_datetime_to_ms(start_time),
-        endAt   = convert_datetime_to_ms(end_time)
+        sub_account_name = sub_account_name,
+        sub_account_password = sub_account_password
     ))
 }
+
