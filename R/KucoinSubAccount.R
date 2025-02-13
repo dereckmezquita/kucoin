@@ -86,7 +86,8 @@ KuCoinSubAccount <- R6::R6Class(
         #' @param page_size An integer specifying the number of results per page (default is 100).
         #' @param max_pages The maximum number of pages to fetch (default is Inf to fetch all pages).
         #'
-        #' @return A promise that resolves to a data.table containing the aggregated sub-account summary information.
+        #' @return A promise that resolves to a data.table containing the aggregated sub-account summary information,
+        #'         with the "createdAt" column converted to a datetime object if present.
         get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
             get_subaccount_list_summary_impl(self$config, page_size, max_pages)
         }

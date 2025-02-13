@@ -94,12 +94,14 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
 #'
 #' This asynchronous function retrieves a paginated list of sub-accounts from KuCoin using the generic pagination helper.
 #' Users can specify the page size and the maximum number of pages to fetch. By default, it fetches all pages with a page size of 100.
+#' After aggregation, if a "createdAt" column is present, its values (in milliseconds) are converted to POSIXct datetime objects.
 #'
 #' @param config A list containing API configuration parameters.
 #' @param page_size An integer specifying the number of results per page (default is 100).
 #' @param max_pages The maximum number of pages to fetch. Use Inf to fetch all pages (default is Inf).
 #'
-#' @return A promise that resolves to a data.table containing the aggregated sub-account summary information.
+#' @return A promise that resolves to a data.table containing the aggregated sub-account summary information,
+#'         with the "createdAt" column converted to datetime (if present).
 #'
 #' @examples
 #' \dontrun{
@@ -136,6 +138,10 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
             },
             max_pages = max_pages
         ))
+        # Convert "createdAt" from milliseconds to POSIXct datetime if the column exists.
+        if ("createdAt" %in% colnames(dt)) {
+            dt[, createdDatetime := lubridate::as_datetime(createdAt / 1000, origin = "1970-01-01", tz = "UTC")]
+        }
         return(dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
