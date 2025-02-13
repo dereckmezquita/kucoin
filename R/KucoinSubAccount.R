@@ -1,7 +1,9 @@
 box::use(
     R6,
     rlang[abort],
-    ./accounts_sub_account[add_subaccount_impl, get_subaccount_list_summary_impl],
+    ./accounts_sub_account[
+        add_subaccount_impl, get_subaccount_list_summary_impl, get_subaccount_detail_balance_impl
+    ],
     ./utils[get_api_keys, get_subaccount]
 )
 
@@ -90,6 +92,21 @@ KuCoinSubAccount <- R6::R6Class(
         #'         with the "createdAt" column converted to a datetime object if present.
         get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
             get_subaccount_list_summary_impl(self$config, page_size, max_pages)
+        },
+
+        #' Get SubAccount Detail - Balance
+        #'
+        #' 
+        #' https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance
+        #' 
+        #' Retrieves the balance details for a sub-account identified by its subUserId.
+        #'
+        #' @param subUserId A string representing the sub-account user ID.
+        #' @param includeBaseAmount A boolean indicating whether to include currencies with zero balance (default is FALSE).
+        #'
+        #' @return A promise that resolves to a data.table containing the sub-account detail.
+        get_subaccount_detail_balance = function(subUserId, includeBaseAmount = FALSE) {
+            get_subaccount_detail_balance_impl(self$config, subUserId, includeBaseAmount)
         }
     )
 )

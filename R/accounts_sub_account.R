@@ -147,3 +147,75 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
     })
 })
+
+#' Get SubAccount Detail - Balance Implementation
+#'
+#' This asynchronous function retrieves the balance details for a sub-account specified by its user ID.
+#' It sends a GET request to the endpoint `/api/v1/sub-accounts/{subUserId}` with a query parameter
+#' `includeBaseAmount` (set to FALSE by default) and processes the returned object. The response contains
+#' separate arrays for each account type (mainAccounts, tradeAccounts, marginAccounts, tradeHFAccounts).
+#' This function converts each non-empty array to a data.table, adds an "accountType" column, and then
+#' combines them. It also adds the subUserId and subName to every row.
+#'
+#' @param config A list containing API configuration parameters.
+#' @param subUserId A string representing the sub-account user ID.
+#' @param includeBaseAmount A boolean indicating whether to include currencies with zero balance (default is FALSE).
+#'
+#' @return A promise that resolves to a data.table containing the sub-account detail.
+#'
+#' @examples
+#' \dontrun{
+#'   dt <- await(get_subaccount_detail_balance_impl(config, "63743f07e0c5230001761d08", includeBaseAmount = FALSE))
+#'   print(dt)
+#' }
+#'
+#' @export
+get_subaccount_detail_balance_impl <- coro::async(function(config, subUserId, includeBaseAmount = FALSE) {
+    tryCatch({
+        base_url <- get_base_url(config)
+        endpoint <- paste0("/api/v1/sub-accounts/", subUserId)
+        query <- list(includeBaseAmount = includeBaseAmount)
+        qs <- build_query(query)
+        full_endpoint <- paste0(endpoint, qs)
+        method <- "GET"
+        body <- ""
+        headers <- coro::await(build_headers("GET", full_endpoint, body, config))
+        url <- paste0(base_url, full_endpoint)
+        response <- httr::GET(url, headers, httr::timeout(3))
+        data <- process_kucoin_response(response, url)
+        
+        # Process each account type into a data.table and add an accountType column.
+        result_list <- list()
+        if (!is.null(data$mainAccounts) && length(data$mainAccounts) > 0) {
+            dt_main <- data.table::as.data.table(data$mainAccounts)
+            dt_main[, accountType := "mainAccounts"]
+            result_list[[length(result_list) + 1]] <- dt_main
+        }
+        if (!is.null(data$tradeAccounts) && length(data$tradeAccounts) > 0) {
+            dt_trade <- data.table::as.data.table(data$tradeAccounts)
+            dt_trade[, accountType := "tradeAccounts"]
+            result_list[[length(result_list) + 1]] <- dt_trade
+        }
+        if (!is.null(data$marginAccounts) && length(data$marginAccounts) > 0) {
+            dt_margin <- data.table::as.data.table(data$marginAccounts)
+            dt_margin[, accountType := "marginAccounts"]
+            result_list[[length(result_list) + 1]] <- dt_margin
+        }
+        if (!is.null(data$tradeHFAccounts) && length(data$tradeHFAccounts) > 0) {
+            dt_tradeHF <- data.table::as.data.table(data$tradeHFAccounts)
+            dt_tradeHF[, accountType := "tradeHFAccounts"]
+            result_list[[length(result_list) + 1]] <- dt_tradeHF
+        }
+        if (length(result_list) == 0) {
+            dt <- data.table::data.table()
+        } else {
+            dt <- data.table::rbindlist(result_list, fill = TRUE)
+        }
+        # Add subUserId and subName from the parent object.
+        dt[, subUserId := data$subUserId]
+        dt[, subName := data$subName]
+        return(dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_subaccount_detail_balance_impl:", conditionMessage(e)))
+    })
+})
