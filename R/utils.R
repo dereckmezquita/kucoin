@@ -64,3 +64,14 @@ get_api_keys <- function(
         key_version    = key_version
     ))
 }
+
+#' @export
+get_subaccount <- function(
+    sub_account_name = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),
+    sub_account_password = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")
+) {
+    return(list(
+        sub_account_name = sub_account_name,
+        sub_account_password = sub_account_password
+    ))
+}
