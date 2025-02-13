@@ -184,7 +184,7 @@ get_subaccount_detail_balance_impl <- coro::async(function(config, subUserId, in
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
         data <- process_kucoin_response(response, url)
-        
+
         # Process each account type into a data.table and add an accountType column.
         result_list <- list()
         if (!is.null(data$mainAccounts) && length(data$mainAccounts) > 0) {
