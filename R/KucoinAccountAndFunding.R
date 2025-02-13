@@ -332,36 +332,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' }
         get_spot_ledger = function(query = list()) {
             get_spot_ledger_impl(self$config, query)
-        },
-
-        #' Get High-Frequency Ledger from KuCoin
-        #'
-        #' @description
-        #' Asynchronously retrieves the high-frequency trading ledger records by querying the
-        #' `/api/v1/hf/accounts/ledgers` endpoint. This endpoint returns all transfer records (both in and out)
-        #' for your high-frequency trading account.
-        #'
-        #' @param query A named list of query parameters to filter the ledger records.
-        #'              Supported parameters include:
-        #'              - **currency** (string, optional): One or more currencies (up to 10).
-        #'              - **direction** (string, optional): "in" or "out".
-        #'              - **bizType** (string, optional): Transaction type (e.g., "TRADE_EXCHANGE", "TRANSFER", etc.).
-        #'              - **lastId** (integer, optional): The last record ID from the previous page.
-        #'              - **limit** (integer, optional): Number of results per page (default 100, max 200).
-        #'              - **startAt** (integer, optional): Start time in milliseconds.
-        #'              - **endAt** (integer, optional): End time in milliseconds.
-        #'
-        #' @return A promise that resolves to a data.table containing the HF ledger records.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'     coro::run(function() {
-        #'         dt <- await(account$get_spot_hf_ledger(list(currency = "BTC", direction = "in", bizType = "TRANSFER", lastId = 254062248624417, limit = 100, startAt = 1728663338000, endAt = 1728692138000)))
-        #'         print(dt)
-        #'     })
-        #' }
-        get_spot_hf_ledger = function(query = list()) {
-            get_spot_hf_ledger_impl(self$config, query)
         }
     )
 )

@@ -8,7 +8,7 @@ box::use(
     promises,
     data.table[as.data.table],
     ./helpers_api[build_headers, process_kucoin_response],
-    ./utils[get_base_url, build_query]
+    ./utils[convert_datetime_range_to_ms, build_query, get_base_url]
 )
 
 #' Get Account Summary Information Implementation
@@ -57,12 +57,12 @@ get_account_summary_info_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
-        
+
         # Use the helper to check the response and extract the data.
         data <- process_kucoin_response(response, url)
-        
+
         dt <- as.data.table(data)
         return(dt)
     }, error = function(e) {
@@ -115,7 +115,7 @@ get_apikey_info_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -169,7 +169,7 @@ get_spot_account_type_impl <- coro::async(function(config) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         # data is expected to be a boolean value.
@@ -229,7 +229,7 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -290,7 +290,7 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
         body <- ""
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -357,7 +357,7 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
@@ -419,7 +419,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
         full_endpoint <- paste0(endpoint, qs)
         headers <- await(build_headers(method, full_endpoint, body, config))
         url <- paste0(base_url, full_endpoint)
-        
+
         response <- GET(url, headers, timeout(3))
         data <- process_kucoin_response(response, url)
         dt <- as.data.table(data)
