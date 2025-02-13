@@ -11,15 +11,28 @@ box::use(
 #' Add SubAccount Implementation
 #'
 #' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request
-#' to the `/api/v2/sub/user/created` endpoint.
+#' to the `/api/v2/sub/user/created` endpoint. On success, it returns a data.table with the sub‐account details.
 #'
 #' @param config A list containing API configuration parameters.
-#' @param password A string representing the sub‐account password (7–24 characters, must contain letters and numbers).
-#' @param subName A string representing the sub‐account name (7–32 characters, must contain at least one letter and one number, with no spaces).
+#' @param password A string representing the sub‐account password (7–24 characters; must contain letters and numbers).
+#' @param subName A string representing the sub‐account name (7–32 characters; must contain at least one letter and one number; no spaces).
 #' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
 #' @param remarks An optional string for remarks (1–24 characters).
 #'
-#' @return A promise that resolves to a list containing the sub‐account creation result.
+#' @return A promise that resolves to a data.table containing the sub‐account details. The returned table
+#'         includes at least the following columns: uid, subName, remarks, and access.
+#'
+#' @details
+#' **Endpoint:** POST `https://api.kucoin.com/api/v2/sub/user/created`
+#'
+#' The expected response on success is similar to:
+#'
+#'     data.table(
+#'         uid = 237231855,
+#'         subName = "Name12345678",
+#'         remarks = "Test sub-account",
+#'         access = "Spot"
+#'     )
 #'
 #' @examples
 #' \dontrun{
@@ -65,13 +78,14 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
             }
             rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
         }
-        # For this endpoint, if a "data" field exists, return it; otherwise, return the full parsed response.
+        result <- NULL
         if ("data" %in% names(parsed_response)) {
-            return(data.table::as.data.table(parsed_response$data))
+            result <- data.table::as.data.table(parsed_response$data)
         } else {
-            return(parsed_response)
+            result <- parsed_response
         }
+        return(result)
     }, error = function(e) {
-        rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
+        abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
     })
 })

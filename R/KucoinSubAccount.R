@@ -52,13 +52,17 @@ KuCoinSubAccount <- R6::R6Class(
         #'
         #' @description
         #' Creates a new sub‐account on KuCoin by sending a POST request to the appropriate endpoint.
+        #' On success, the function returns a data.table with sub‐account details.
+        #'         uid      subName          remarks access
+        #'     <int>       <char>           <char> <char>
+        #' 1: 237231855 Name12345678 Test sub-account   Spot
         #'
         #' @param password A string representing the sub‐account password (7–24 characters, must contain letters and numbers).
         #' @param subName A string representing the sub‐account name (7–32 characters, must contain at least one letter and one number, with no spaces).
         #' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
         #' @param remarks An optional string for remarks (1–24 characters).
         #'
-        #' @return A promise that resolves to a list containing sub‐account details (uid, subName, remarks, access).
+        #' @return A promise that resolves to a data.table containing sub‐account details (e.g., uid, subName, remarks, access).
         #' @examples
         #' \dontrun{
         #'   coro::run(function() {
