@@ -1,7 +1,7 @@
 box::use(
     R6,
     rlang[abort],
-    ./accounts_sub_account[ add_subaccount_impl ],
+    ./accounts_sub_account[add_subaccount_impl, get_subaccount_list_summary_impl],
     ./utils[get_api_keys, get_subaccount]
 )
 
@@ -77,6 +77,18 @@ KuCoinSubAccount <- R6::R6Class(
         #' }
         add_subaccount = function(password, subName, access, remarks = NULL) {
             add_subaccount_impl(self$config, password, subName, access, remarks)
+        },
+
+        #' Get SubAccount List Summary (Paginated)
+        #'
+        #' Retrieves sub-account summary information with pagination. Users can specify the page size and the maximum number of pages to fetch.
+        #'
+        #' @param page_size An integer specifying the number of results per page (default is 100).
+        #' @param max_pages The maximum number of pages to fetch (default is Inf to fetch all pages).
+        #'
+        #' @return A promise that resolves to a data.table containing the aggregated sub-account summary information.
+        get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
+            get_subaccount_list_summary_impl(self$config, page_size, max_pages)
         }
     )
 )

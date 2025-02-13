@@ -4,8 +4,8 @@ box::use(
     jsonlite[toJSON, fromJSON],
     rlang[abort],
     coro,
-    ./utils[get_base_url],
-    ./helpers_api[build_headers]
+    ./utils[get_base_url, build_query],
+    ./helpers_api[build_headers, paginate_api_generic, process_kucoin_response]
 )
 
 #' Add SubAccount Implementation
@@ -92,49 +92,52 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
 
 #' Get SubAccount List - Summary Info Implementation
 #'
-#' This asynchronous function retrieves a paginated list of sub-accounts from KuCoin.
-#' It sends a GET request to the `/api/v2/sub/user` endpoint with optional query parameters.
+#' This asynchronous function retrieves a paginated list of sub-accounts from KuCoin using the generic pagination helper.
+#' Users can specify the page size and the maximum number of pages to fetch. By default, it fetches all pages with a page size of 100.
 #'
 #' @param config A list containing API configuration parameters.
-#' @param query A list of query parameters to filter the sub-account list.
-#'              Supported parameters include:
-#'              - **currentPage** (integer, optional): Current request page. Default is 1.
-#'              - **pageSize** (integer, optional): Number of results per request. Default is 10.
+#' @param page_size An integer specifying the number of results per page (default is 100).
+#' @param max_pages The maximum number of pages to fetch. Use Inf to fetch all pages (default is Inf).
 #'
-#' @return A promise that resolves to a data.table containing the sub-account summary information.
-#'
-#' @details
-#' **Endpoint:** `GET https://api.kucoin.com/api/v2/sub/user`
-#'
-#' The response data includes fields such as `currentPage`, `pageSize`, `totalNum`, `totalPage`,
-#' and `items` (an array of sub-account objects).
+#' @return A promise that resolves to a data.table containing the aggregated sub-account summary information.
 #'
 #' @examples
 #' \dontrun{
-#'   query <- list(currentPage = 1, pageSize = 10)
-#'   coro::run(function() {
-#'       dt <- await(get_subaccount_list_summary_impl(config, query))
-#'       print(dt)
-#'   })
+#'   # Fetch all sub-account summaries with page size 100:
+#'   dt <- await(get_subaccount_list_summary_impl(config))
+#'
+#'   # Fetch only 3 pages with a page size of 50:
+#'   dt <- await(get_subaccount_list_summary_impl(config, page_size = 50, max_pages = 3))
 #' }
 #'
 #' @export
-get_subaccount_list_summary_impl <- coro::async(function(config, query = list()) {
+get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100, max_pages = Inf) {
     tryCatch({
-        base_url <- get_base_url(config)
-        endpoint <- "/api/v2/sub/user"
-        method <- "GET"
-        body <- ""
-        qs <- build_query(query)
-        full_endpoint <- paste0(endpoint, qs)
-        headers <- await(build_headers(method, full_endpoint, body, config))
-        url <- paste0(base_url, full_endpoint)
-        
-        response <- GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- as.data.table(data)
+        fetch_page <- coro::async(function(query) {
+            base_url <- get_base_url(config)
+            endpoint <- "/api/v2/sub/user"
+            method <- "GET"
+            body <- ""
+            qs <- build_query(query)
+            full_endpoint <- paste0(endpoint, qs)
+            headers <- await(build_headers(method, full_endpoint, body, config))
+            url <- paste0(base_url, full_endpoint)
+            response <- httr::GET(url, headers, timeout(3))
+            data <- process_kucoin_response(response, url)
+            return(data)
+        })
+        initial_query <- list(currentPage = 1, pageSize = page_size)
+        dt <- await(paginate_api_generic(
+            fetch_page = fetch_page,
+            query = initial_query,
+            items_field = "items",
+            aggregate_fn = function(acc) {
+                data.table::rbindlist(acc, fill = TRUE)
+            },
+            max_pages = max_pages
+        ))
         return(dt)
     }, error = function(e) {
-        abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
+        rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
     })
 })

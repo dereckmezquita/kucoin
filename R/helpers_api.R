@@ -233,14 +233,14 @@ process_kucoin_response <- function(response, url = "") {
 #' Generic Pagination Helper for KuCoin API Endpoints (Generic)
 #'
 #' This asynchronous helper function automatically paginates through endpoints and aggregates results
-#' using a user-supplied aggregation function.
+#' using a user-supplied aggregation function. Users can also specify the maximum number of pages to fetch.
 #'
 #' @param fetch_page A function that takes a query list and returns a promise resolving to a response.
 #' @param query A named list of query parameters for the first page (default is list(currentPage = 1, pageSize = 50)).
-#' @param items_field The field in the response that contains the items (default "items").
-#' @param accumulator Internal accumulator for recursive calls.
-#' @param aggregate_fn A function to aggregate the accumulator into a final result.
-#'        By default, it returns the accumulator list as is.
+#' @param items_field The field in the response that contains the items (default is "items").
+#' @param accumulator An internal accumulator for recursive calls (do not supply).
+#' @param aggregate_fn A function to aggregate the accumulator into a final result (default returns the accumulator list as is).
+#' @param max_pages The maximum number of pages to fetch. Use Inf to fetch all pages (default is Inf).
 #'
 #' @return A promise that resolves to the aggregated result.
 #' @export
@@ -249,7 +249,8 @@ paginate_api_generic <- coro::async(function(
     query = list(currentPage = 1, pageSize = 50),
     items_field = "items",
     accumulator = list(),
-    aggregate_fn = function(acc) { acc }
+    aggregate_fn = function(acc) { acc },
+    max_pages = Inf
 ) {
     tryCatch({
         response <- await(fetch_page(query))
@@ -261,9 +262,11 @@ paginate_api_generic <- coro::async(function(
         accumulator[[length(accumulator) + 1]] <- page_items
         currentPage <- response$currentPage
         totalPage   <- response$totalPage
-        if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {
+        if (is.finite(max_pages) && currentPage >= max_pages) {
+            return(aggregate_fn(accumulator))
+        } else if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {
             query$currentPage <- currentPage + 1
-            return(await(paginate_api_generic(fetch_page, query, items_field, accumulator, aggregate_fn)))
+            return(await(paginate_api_generic(fetch_page, query, items_field, accumulator, aggregate_fn, max_pages)))
         } else {
             return(aggregate_fn(accumulator))
         }
