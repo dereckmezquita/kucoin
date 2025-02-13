@@ -965,12 +965,13 @@ get_spot_ledger_impl <- coro::async(function(config, query = list()) {
 # ./accounts_sub_account.R
 
 box::use(
-    httr[POST, timeout],
-    jsonlite[toJSON],
+    data.table,
+    httr[POST, timeout, content, status_code],
+    jsonlite[toJSON, fromJSON],
     rlang[abort],
     coro,
-    ./utils[ get_base_url, get_api_keys ],
-    ./helpers_api[process_kucoin_response, build_headers]
+    ./utils[get_base_url],
+    ./helpers_api[build_headers]
 )
 
 #' Add SubAccount Implementation
@@ -984,7 +985,7 @@ box::use(
 #' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
 #' @param remarks An optional string for remarks (1–24 characters).
 #'
-#' @return A promise that resolves to a list containing sub‐account details (e.g. uid, subName, remarks, access).
+#' @return A promise that resolves to a list containing the sub‐account creation result.
 #'
 #' @examples
 #' \dontrun{
@@ -1018,8 +1019,24 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
         headers <- await(build_headers(method, endpoint, body, config))
         url <- paste0(base_url, endpoint)
         response <- POST(url, headers, body = body, encode = "raw", timeout(3))
-        data <- process_kucoin_response(response, url)
-        return(data)
+        response_text <- httr::content(response, as = "text", encoding = "UTF-8")
+        parsed_response <- jsonlite::fromJSON(response_text)
+        if (httr::status_code(response) != 200) {
+            rlang::abort(paste("HTTP request failed with status code", httr::status_code(response), "for URL:", url))
+        }
+        if (as.character(parsed_response$code) != "200000") {
+            error_msg <- "No error message provided."
+            if ("msg" %in% names(parsed_response)) {
+                error_msg <- parsed_response$msg
+            }
+            rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
+        }
+        # For this endpoint, if a "data" field exists, return it; otherwise, return the full parsed response.
+        if ("data" %in% names(parsed_response)) {
+            return(data.table::as.data.table(parsed_response$data))
+        } else {
+            return(parsed_response)
+        }
     }, error = function(e) {
         rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
     })
