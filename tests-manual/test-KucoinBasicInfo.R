@@ -78,15 +78,15 @@ async_main <- coro::async(function() {
 
     # Retrieve high-frequency (hf) ledger info using the new endpoint.
     query_hf <- list(
-        currency  = "BTC",          # You may specify up to 10 currencies
-        direction = "in",           # Allowed values: "in", "out"
-        bizType   = "TRANSFER",     # Allowed values include: TRADE_EXCHANGE, TRANSFER, RETURNED_FEES, DEDUCTION_FEES, OTHER
-        lastId    = 254062248624417, # Example lastId from a previous batch (optional)
-        limit     = 100,            # Default is 100; maximum is 200
-        startAt   = 1728663338000,    # Example start time in ms
-        endAt     = 1728692138000     # Example end time in ms
+        currency  = "BTC",
+        direction = "in",
+        bizType   = "TRANSFER",
+        lastId    = 254062248624417,
+        limit     = 100
     )
-    dt_hf_ledgers <- await(account$get_spot_hf_ledger(query_hf))
+    start_time <- as_datetime("2023-02-01 00:00:00", tz = "UTC")
+    end_time   <- as_datetime("2023-02-02 00:00:00", tz = "UTC")
+    dt_hf_ledgers <- await(account$get_spot_hf_ledger(query = query_hf, start_time = start_time, end_time = end_time))
     cat("High-Frequency Ledger Info (data.table):\n")
     print(dt_hf_ledgers)
 })
