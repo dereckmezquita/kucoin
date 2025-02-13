@@ -159,6 +159,7 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
 #'
 #' @param config A list containing API configuration parameters.
 #' @param subUserId A string representing the sub-account user ID.
+# TODO: confusing name of argument. Should be something like include null values or something.
 #' @param includeBaseAmount A boolean indicating whether to include currencies with zero balance (default is FALSE).
 #'
 #' @return A promise that resolves to a data.table containing the sub-account detail.
