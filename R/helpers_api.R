@@ -183,15 +183,6 @@ build_headers <- coro::async(function(method, endpoint, body, config) {
     })
 })
 
-
-# File: helpers_response.R
-
-box::use(
-  httr[status_code, content],
-  jsonlite[fromJSON],
-  rlang[abort]
-)
-
 #' Process and Validate KuCoin API Response
 #'
 #' This function processes an HTTP response from a KuCoin API request, validating its structure and
@@ -238,3 +229,45 @@ process_kucoin_response <- function(response, url = "") {
 
     return(parsed_response$data)
 }
+
+#' Generic Pagination Helper for KuCoin API Endpoints (Generic)
+#'
+#' This asynchronous helper function automatically paginates through endpoints and aggregates results
+#' using a user-supplied aggregation function.
+#'
+#' @param fetch_page A function that takes a query list and returns a promise resolving to a response.
+#' @param query A named list of query parameters for the first page (default is list(currentPage = 1, pageSize = 50)).
+#' @param items_field The field in the response that contains the items (default "items").
+#' @param accumulator Internal accumulator for recursive calls.
+#' @param aggregate_fn A function to aggregate the accumulator into a final result.
+#'        By default, it returns the accumulator list as is.
+#'
+#' @return A promise that resolves to the aggregated result.
+#' @export
+paginate_api_generic <- coro::async(function(
+    fetch_page,
+    query = list(currentPage = 1, pageSize = 50),
+    items_field = "items",
+    accumulator = list(),
+    aggregate_fn = function(acc) { acc }
+) {
+    tryCatch({
+        response <- await(fetch_page(query))
+        if (!is.null(response[[items_field]])) {
+            page_items <- response[[items_field]]
+        } else {
+            page_items <- response
+        }
+        accumulator[[length(accumulator) + 1]] <- page_items
+        currentPage <- response$currentPage
+        totalPage   <- response$totalPage
+        if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {
+            query$currentPage <- currentPage + 1
+            return(await(paginate_api_generic(fetch_page, query, items_field, accumulator, aggregate_fn)))
+        } else {
+            return(aggregate_fn(accumulator))
+        }
+    }, error = function(e) {
+        rlang::abort(paste("Error in paginate_api_generic:", conditionMessage(e)))
+    })
+})
