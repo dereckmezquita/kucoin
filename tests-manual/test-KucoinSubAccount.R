@@ -20,7 +20,7 @@ subAcc <- KuCoinSubAccount$new()
 
 async_main <- coro::async(function() {
     # result <- await(subAcc$add_subaccount(
-    #     password = "Thmydoes1@",
+    #     password = "SomeStrongPass12345",
     #     subName  = "Name12345678",
     #     access   = "Spot",
     #     remarks  = "Test sub-account"
@@ -38,8 +38,7 @@ async_main <- coro::async(function() {
     print(dt_summary)
 
     # Example: Retrieve sub-account detail (balance) for a given subUserId.
-    # Replace "67a6f1acfe40530001b5bc4a" with a valid sub-user ID.
-    dt_balance <- await(subAcc$get_subaccount_detail_balance("67a6f1acfe40530001b5bc4a", includeBaseAmount = FALSE))
+    dt_balance <- await(subAcc$get_subaccount_detail_balance("some-accout-num", includeBaseAmount = FALSE))
     cat("SubAccount Detail - Balance:\n")
     print(dt_balance)
 })
