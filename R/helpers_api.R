@@ -199,20 +199,23 @@ build_headers <- coro::async(function(method, endpoint, body, keys) {
 #'
 #' This function processes an HTTP response from a KuCoin API request. It validates that the response
 #' has a successful HTTP status and that the API-specific response code indicates success. If the response is
-#' valid, it returns the "data" field from the parsed JSON. Otherwise, it raises an error.
+#' valid, it returns the parsed JSON object.
+#' The actual data is often in the `$data` field or `$data$items` etc. especially if the end point is paginated.
+#' as needed.
 #'
 #' **Response Validation Workflow:**  
 #' 1. Checks if the HTTP status code is 200.
 #' 2. Parses the JSON response.
-#' 3. Validates that the response contains the "code" field.
-#' 4. Ensures the "code" is "200000" (success); if not, retrieves the error message from the "msg" field if available.
-#' 5. Verifies the presence of the "data" field.
+#' 3. Validates that the response contains the `"code"` field.
+#' 4. Ensures the `"code"` is `"200000"` (success); if not, retrieves the error message from the `"msg"` field if available.
 #'
 #' **Usage Example:**
 #' ```r
 #' \dontrun{
 #'   response <- httr::GET("https://api.kucoin.com/api/v2/user-info", headers)
-#'   data <- process_kucoin_response(response, "https://api.kucoin.com/api/v2/user-info")
+#'   parsed_response <- process_kucoin_response(response, "https://api.kucoin.com/api/v2/user-info")
+#'   # Extract the "data" field if desired:
+#'   data <- parsed_response$data
 #'   print(data)
 #' }
 #' ```
@@ -220,14 +223,14 @@ build_headers <- coro::async(function(method, endpoint, body, keys) {
 #' @param response An HTTP response object (e.g., from \code{httr::GET()}).
 #' @param url A character string representing the requested URL (used for error messages).
 #'
-#' @return The "data" field from the parsed JSON response.
+#' @return A list representing the parsed JSON response. Users are responsible for extracting specific fields (e.g., the `"data"` field) as needed.
 #'
 #' @md
 #' @export
 process_kucoin_response <- function(response, url = "") {
     status_code <- httr::status_code(response)
     if (status_code != 200) {
-        abort(paste("HTTP request failed with status code", status_code, "for URL:", url))
+        rlang::abort(paste("HTTP request failed with status code", status_code, "for URL:", url))
     }
 
     response_text <- httr::content(response, as = "text", encoding = "UTF-8")
@@ -245,11 +248,7 @@ process_kucoin_response <- function(response, url = "") {
         rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
     }
 
-    if (!"data" %in% names(parsed_response)) {
-        rlang::abort("Invalid API response structure: missing 'data' field despite success code.")
-    }
-
-    return(parsed_response$data)
+    return(parsed_response)
 }
 
 #' Generic Pagination Helper for KuCoin API Endpoints
