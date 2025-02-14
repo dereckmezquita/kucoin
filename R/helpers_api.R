@@ -81,26 +81,29 @@ get_server_time <- function(base_url = get_base_url()) {
 #' Build Request Headers for KuCoin API
 #'
 #' Asynchronously constructs the HTTP request headers required for making authenticated requests to the KuCoin API.
-#' These headers include the API key, a signature computed using HMAC-SHA256, a timestamp, an encrypted passphrase,
-#' the API key version, and the content type. The generated headers are essential for the security and integrity of API
-#' requests.
+#' These headers include your API key, an HMAC-SHA256 signature computed over a prehash string, a timestamp,
+#' an encrypted passphrase, the API key version, and the content type. The headers ensure both the security and
+#' integrity of API requests.
 #'
-#' ## Detailed Workflow:
+#' ## Workflow Overview:
 #'
-#' 1. **Retrieve the Server Time:**  
-#'    Calls \code{get_server_time()} (using the base URL from the configuration) to obtain the current server timestamp in milliseconds.
+#' 1. **Retrieve Server Time:**  
+#'    Calls \code{get_server_time()} with the base URL (obtained via \code{get_base_url()}) to fetch the current
+#'    server timestamp in milliseconds.
 #'
 #' 2. **Construct the Prehash String:**  
-#'    Concatenates the timestamp, the uppercase HTTP method, the API endpoint, and the request body to form the prehash string.
+#'    Concatenates the timestamp, the uppercase HTTP method, the API endpoint, and the request body to form a string
+#'    that will be used for signing.
 #'
 #' 3. **Generate the Signature:**  
-#'    Computes an HMAC-SHA256 signature using the API secret and the prehash string. The raw signature is then encoded in base64.
+#'    Computes an HMAC-SHA256 signature using your API secret and the prehash string. The raw signature is then
+#'    encoded in base64.
 #'
 #' 4. **Encrypt the Passphrase:**  
-#'    Signs the API passphrase with the API secret using HMAC-SHA256 and encodes the result in base64.
+#'    Signs your API passphrase with the API secret (also via HMAC-SHA256) and encodes the result in base64.
 #'
-#' 5. **Build the Headers:**  
-#'    Returns a list of headers (via \code{httr::add_headers()}) that include:
+#' 5. **Assemble the Headers:**  
+#'    Returns a list of headers (using \code{httr::add_headers()}) that includes:
 #'    - \code{KC-API-KEY}
 #'    - \code{KC-API-SIGN}
 #'    - \code{KC-API-TIMESTAMP}
@@ -111,9 +114,13 @@ get_server_time <- function(base_url = get_base_url()) {
 #' **Parameters:**
 #' - **method:** A character string specifying the HTTP method (e.g., "GET", "POST").
 #' - **endpoint:** A character string representing the API endpoint (e.g., "/api/v1/orders").
-#' - **body:** A character string containing the JSON-formatted request body. Use an empty string (`""`) if no payload is required.
-#' - **config:** A list of configuration parameters; must include \code{api_key}, \code{api_secret}, \code{api_passphrase},
-#'   \code{key_version}, and optionally \code{base_url}.
+#' - **body:** A character string containing the JSON-formatted request body; use an empty string (`""`) if no payload is required.
+#' - **keys:** A list of API credentials and configuration parameters. It must include:
+#'    - \code{api_key}: Your KuCoin API key.
+#'    - \code{api_secret}: Your KuCoin API secret.
+#'    - \code{api_passphrase}: Your KuCoin API passphrase.
+#'    - \code{key_version}: The API key version (e.g., "2").
+#'    Optionally, a \code{base_url} may be provided, though this function relies on \code{get_base_url()} to determine the base URL.
 #'
 #' **Return Value:**  
 #' Returns a list of HTTP headers created using \code{httr::add_headers()}.
@@ -121,25 +128,26 @@ get_server_time <- function(base_url = get_base_url()) {
 #' **Usage Example:**
 #' ```r
 #' \dontrun{
-#'   config <- list(
+#'   keys <- list(
 #'       api_key = "your_api_key",
 #'       api_secret = "your_api_secret",
 #'       api_passphrase = "your_api_passphrase",
-#'       key_version = "2",
-#'       base_url = "https://api.kucoin.com"
+#'       key_version = "2"
+#'       # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
 #'   )
 #'
-#'   # Build headers for a POST request with a JSON body.
-#'   headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', config))
+#'   # Build headers for a POST request with a JSON payload.
+#'   headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
 #'   print(headers)
 #'
-#'   # For a GET request with no payload:
-#'   headers <- coro::await(build_headers("GET", "/api/v1/orders", "", config))
+#'   # Build headers for a GET request with no payload:
+#'   headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
 #'   print(headers)
 #' }
 #' ```
+#'
 #' @md
-#' 
+#'
 #' @importFrom httr add_headers
 #' @importFrom digest hmac
 #' @importFrom base64enc base64encode
@@ -147,9 +155,9 @@ get_server_time <- function(base_url = get_base_url()) {
 #' @export
 build_headers <- coro::async(function(method, endpoint, body, keys) {
     tryCatch({
-        # Retrieve the current server time.
+        # Retrieve the current server time using the base URL.
         timestamp <- await(get_server_time(get_base_url()))
-        # Construct the prehash string.
+        # Construct the prehash string from timestamp, method, endpoint, and body.
         prehash <- paste0(timestamp, toupper(method), endpoint, body)
         # Compute the HMAC-SHA256 signature.
         sig_raw <- digest::hmac(
