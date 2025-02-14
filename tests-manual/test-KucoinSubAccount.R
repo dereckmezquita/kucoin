@@ -20,8 +20,8 @@ subAcc <- KuCoinSubAccount$new()
 
 async_main <- coro::async(function() {
     # result <- await(subAcc$add_subaccount(
-    #     password = "SomeStrongPass12345",
-    #     subName  = "Name12345678",
+    #     password = "SomeStrongPass123456789",
+    #     subName  = "Name6969696969696",
     #     access   = "Spot",
     #     remarks  = "Test sub-account"
     # ))
