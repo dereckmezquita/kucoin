@@ -71,7 +71,7 @@ box::use(
 #' @export
 get_account_summary_info_impl <- coro::async(function(config) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v2/user-info"
         method <- "GET"
         body <- ""
@@ -151,7 +151,7 @@ get_account_summary_info_impl <- coro::async(function(config) {
 #' @export
 get_apikey_info_impl <- coro::async(function(config) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v1/user/api-key"
         method <- "GET"
         body <- ""
@@ -226,7 +226,7 @@ get_apikey_info_impl <- coro::async(function(config) {
 #' @export
 get_spot_account_type_impl <- coro::async(function(config) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v1/hf/accounts/opened"
         method <- "GET"
         body <- ""
@@ -299,7 +299,7 @@ get_spot_account_type_impl <- coro::async(function(config) {
 #' @export
 get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v1/accounts"
         method <- "GET"
         body <- ""
@@ -387,7 +387,7 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
 #' @export
 get_spot_account_detail_impl <- coro::async(function(config, accountId) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- paste0("/api/v1/accounts/", accountId)
         method <- "GET"
         body <- ""
@@ -466,7 +466,7 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
 #' @export
 get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v3/margin/accounts"
         method <- "GET"
         body <- ""
@@ -542,7 +542,7 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
 #' @export
 get_isolated_margin_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v3/isolated/accounts"
         method <- "GET"
         body <- ""
@@ -614,7 +614,7 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' @export
 get_spot_ledger_impl <- coro::async(function(config, query = list()) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v1/accounts/ledgers"
         method <- "GET"
         body <- ""

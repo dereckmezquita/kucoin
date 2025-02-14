@@ -36,28 +36,16 @@ build_query <- function(params) {
 
 #' Get Base URL for KuCoin API
 #'
-#' This function returns the base URL for the KuCoin API. It checks if a configuration list is provided
-#' and contains a \code{base_url} field; if so, it returns that value. Otherwise, it defaults to 
-#' \code{"https://api.kucoin.com"}.
+#' This function returns the base URL for the KuCoin API.
+#' One can override the default base URL by providing a url.
 #'
-#' @param config (Optional) A list containing API configuration parameters.
+#' @param url (Optional) A character string representing the base URL. Defaults to "https://api.kucoin.com".
 #'
 #' @return A character string representing the base URL.
 #'
-#' @examples
-#' \dontrun{
-#'   config <- list(base_url = "https://api.kucoin.com")
-#'   url <- get_base_url(config)  # Returns "https://api.kucoin.com"
-#'
-#'   url <- get_base_url()  # Returns the default "https://api.kucoin.com"
-#' }
-#'
 #' @export
-get_base_url <- function(config = NULL) {
-    if (!is.null(config$base_url)) {
-        return(config$base_url)
-    }
-    return("https://api.kucoin.com")
+get_base_url <- function(url = "https://api.kucoin.com") {
+    return(url)
 }
 
 #' Retrieve KuCoin API Keys from Environment Variables

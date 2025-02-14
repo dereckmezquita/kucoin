@@ -125,7 +125,7 @@ box::use(
 #' @export
 add_subaccount_impl <- coro::async(function(config, password, subName, access, remarks = NULL) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v2/sub/user/created"
         method <- "POST"
         body_list <- list(
@@ -264,7 +264,7 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
 get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100, max_pages = Inf) {
     tryCatch({
         fetch_page <- coro::async(function(query) {
-            base_url <- get_base_url(config)
+            base_url <- get_base_url()
             endpoint <- "/api/v2/sub/user"
             method <- "GET"
             body <- ""
@@ -398,7 +398,7 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
 #' @export
 get_subaccount_detail_balance_impl <- coro::async(function(config, subUserId, includeBaseAmount = FALSE) {
     tryCatch({
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- paste0("/api/v1/sub-accounts/", subUserId)
         query <- list(includeBaseAmount = includeBaseAmount)
         qs <- build_query(query)

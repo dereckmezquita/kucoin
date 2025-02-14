@@ -120,7 +120,7 @@ get_klines_impl <- coro::async(function(symbol, frequency, startAt, endAt, confi
         end_seconds   <- as.integer(as.numeric(lubridate::as_datetime(endAt)))
         
         # Use default configuration if not provided.
-        base_url <- get_base_url(config)
+        base_url <- get_base_url()
         endpoint <- "/api/v1/market/candles"
         
         # Build query parameters.
