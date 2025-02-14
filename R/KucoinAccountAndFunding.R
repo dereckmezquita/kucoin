@@ -279,27 +279,6 @@ KucoinAccountAndFunding <- R6::R6Class(
             return(impl$get_isolated_margin_account_impl(self$config, query))
         },
 
-        #' Get Futures Account from KuCoin Futures API
-        #'
-        #' @description
-        #' Asynchronously retrieves the futures account information by calling the futures endpoint.
-        #'
-        #' @param query A list of query parameters to filter the account information.
-        #'              Supported parameter: **currency** (string, optional) – the account currency (default is "XBT").
-        #'
-        #' @return A promise that resolves to a data.table containing the futures account information.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'     coro::run(function() {
-        #'         dt <- await(account$get_futures_account(list(currency = "USDT")))
-        #'         print(dt)
-        #'     })
-        #' }
-        get_futures_account = function(query = list()) {
-            return(impl$get_futures_account_impl(self$config, query))
-        },
-
         #' Get Spot Ledger from KuCoin
         #'
         #' @description
