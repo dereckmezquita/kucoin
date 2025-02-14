@@ -209,17 +209,6 @@ build_headers <- coro::async(function(method, endpoint, body, keys) {
 #' 3. Validates that the response contains the `"code"` field.
 #' 4. Ensures the `"code"` is `"200000"` (success); if not, retrieves the error message from the `"msg"` field if available.
 #'
-#' **Usage Example:**
-#' ```r
-#' \dontrun{
-#'   response <- httr::GET("https://api.kucoin.com/api/v2/user-info", headers)
-#'   parsed_response <- process_kucoin_response(response, "https://api.kucoin.com/api/v2/user-info")
-#'   # Extract the "data" field if desired:
-#'   data <- parsed_response$data
-#'   print(data)
-#' }
-#' ```
-#'
 #' @param response An HTTP response object (e.g., from \code{httr::GET()}).
 #' @param url A character string representing the requested URL (used for error messages).
 #'
