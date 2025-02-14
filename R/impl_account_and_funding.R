@@ -67,8 +67,8 @@ box::use(
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_account_summary_info_impl <- coro::async(function(config) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -147,8 +147,8 @@ get_account_summary_info_impl <- coro::async(function(config) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_apikey_info_impl <- coro::async(function(config) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -222,8 +222,8 @@ get_apikey_info_impl <- coro::async(function(config) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_spot_account_type_impl <- coro::async(function(config) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -295,8 +295,8 @@ get_spot_account_type_impl <- coro::async(function(config) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -383,8 +383,8 @@ get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_spot_account_detail_impl <- coro::async(function(config, accountId) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -462,8 +462,8 @@ get_spot_account_detail_impl <- coro::async(function(config, accountId) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -538,8 +538,8 @@ get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_isolated_margin_account_impl <- coro::async(function(config, query = list()) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -610,8 +610,8 @@ get_isolated_margin_account_impl <- coro::async(function(config, query = list())
 #' })
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_spot_ledger_impl <- coro::async(function(config, query = list()) {
     tryCatch({
         base_url <- get_base_url(config)

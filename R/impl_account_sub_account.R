@@ -121,8 +121,8 @@ box::use(
 #' }
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 add_subaccount_impl <- coro::async(function(config, password, subName, access, remarks = NULL) {
     tryCatch({
         base_url <- get_base_url(config)
@@ -259,8 +259,8 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
 #' }
 #' ```
 #'
-#' @export
 #' @md
+#' @export
 get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100, max_pages = Inf) {
     tryCatch({
         fetch_page <- coro::async(function(query) {
@@ -298,26 +298,103 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
 
 #' Get SubAccount Detail - Balance Implementation
 #'
-#' This asynchronous function retrieves the balance details for a sub-account specified by its user ID.
-#' It sends a GET request to the endpoint `/api/v1/sub-accounts/{subUserId}` with a query parameter
-#' `includeBaseAmount` (set to FALSE by default) and processes the returned object. The response contains
-#' separate arrays for each account type (mainAccounts, tradeAccounts, marginAccounts, tradeHFAccounts).
-#' This function converts each non-empty array to a data.table, adds an "accountType" column, and then
-#' combines them. It also adds the subUserId and subName to every row.
+#' This asynchronous function retrieves the balance details for a sub-account specified by its user ID. It sends a 
+#' GET request to the KuCoin API endpoint for sub-account details and processes the returned JSON response. The 
+#' endpoint provides separate arrays for each account type under the sub-account – typically including mainAccounts, 
+#' tradeAccounts, marginAccounts, and tradeHFAccounts. Each non-empty array is converted into a `data.table`, an 
+#' "accountType" column is added to indicate the type of account, and all the tables are combined into one aggregated 
+#' `data.table`. Additionally, the function appends the sub-account's user ID and name to every row.
 #'
-#' @param config A list containing API configuration parameters.
-#' @param subUserId A string representing the sub-account user ID.
-# TODO: confusing name of argument. Should be something like include null values or something.
-#' @param includeBaseAmount A boolean indicating whether to include currencies with zero balance (default is FALSE).
+#' ## Endpoint Overview
 #'
-#' @return A promise that resolves to a data.table containing the sub-account detail.
+#' **API Endpoint:**  
+#' `GET https://api.kucoin.com/api/v1/sub-accounts/{subUserId}?includeBaseAmount={includeBaseAmount}`
 #'
-#' @examples
+#' **Purpose:**  
+#' This endpoint is used to obtain detailed balance information for a specific sub-account. The response is structured 
+#' to provide separate balance details for various account categories (e.g., funding, spot, margin) within the sub-account.
+#'
+#' **Query Parameter:**  
+#' - `includeBaseAmount` (boolean): Determines whether currencies with a zero balance should be included in the response.  
+#'   - **Default:** `FALSE` (only non-zero balances are returned)
+#'
+#' **Response Schema:**  
+#' On a successful request, the API returns a JSON object with a `code` of `"200000"` and a `data` field that contains:
+#' - `subUserId`: The sub-account's user ID.
+#' - `subName`: The sub-account name.
+#' - `mainAccounts`: An array of objects detailing the funding account balances.
+#' - `tradeAccounts`: An array of objects detailing the spot account balances.
+#' - `marginAccounts`: An array of objects detailing the margin account balances.
+#' - `tradeHFAccounts`: An array (often deprecated) for high-frequency trading accounts.
+#'
+#' Each account object within these arrays contains fields such as:
+#' - `currency`: The currency code.
+#' - `balance`: The total balance.
+#' - `available`: The amount available for trading or withdrawal.
+#' - `holds`: The amount currently locked or held.
+#' - Additional fields like `baseCurrency`, `baseCurrencyPrice`, `baseAmount`, and `tag`.
+#'
+#' For more detailed information, refer to the 
+#' [KuCoin Sub-Account Detail Balance Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance).
+#'
+#' ## Function Workflow
+#'
+#' 1. **URL and Query String Construction:**  
+#'    The function constructs the endpoint URL by appending the `subUserId` to `/api/v1/sub-accounts/` and 
+#'    adding the query parameter `includeBaseAmount` (defaulting to `FALSE` unless otherwise specified).
+#'
+#' 2. **Header Generation:**  
+#'    It then asynchronously generates the necessary authentication headers by calling the `build_headers()` function.
+#'
+#' 3. **HTTP Request:**  
+#'    A GET request is sent to the constructed URL using the `httr::GET()` function with a timeout of 3 seconds.
+#'
+#' 4. **Response Processing:**  
+#'    The response is parsed from JSON into an R object using `process_kucoin_response()`. The function checks for 
+#'    the presence of various account type arrays (e.g., mainAccounts, tradeAccounts). For each non-empty array:
+#'    - The array is converted into a `data.table`.
+#'    - An "accountType" column is added to identify the type (e.g., "mainAccounts", "tradeAccounts").
+#'
+#' 5. **Aggregation:**  
+#'    All the individual `data.table` objects are combined using `data.table::rbindlist()`.
+#'
+#' 6. **Metadata Addition:**  
+#'    Finally, the function adds the `subUserId` and `subName` (from the parent JSON object) as new columns in the final table.
+#'
+#' ## Parameters
+#'
+#' - **config**:  
+#'   A list containing the API configuration parameters. This list must include:
+#'   - `api_key`: Your KuCoin API key.
+#'   - `api_secret`: Your KuCoin API secret.
+#'   - `api_passphrase`: Your KuCoin API passphrase.
+#'   - `base_url`: The base URL for the API (e.g., "https://api.kucoin.com").
+#'   - `key_version`: The API key version (commonly "2").
+#'
+#' - **subUserId**:  
+#'   A string representing the user ID of the sub-account for which the balance details are to be retrieved.
+#'
+#' - **includeBaseAmount**:  
+#'   A boolean flag indicating whether to include currencies with a zero balance in the response.  
+#'   **Default:** `FALSE`
+#'
+#' ## Return Value
+#'
+#' Returns a promise that resolves to a `data.table` containing the detailed balance information for the specified 
+#' sub-account. Each row of the data.table represents a currency in one of the account types, with an additional 
+#' column "accountType" indicating the source array, as well as the sub-account's `subUserId` and `subName`.
+#'
+#' ## Example Usage
+#'
+#' ```r
 #' \dontrun{
+#'   # Retrieve sub-account balance details for a specific sub-user ID, excluding zero-balance currencies.
 #'   dt <- await(get_subaccount_detail_balance_impl(config, "63743f07e0c5230001761d08", includeBaseAmount = FALSE))
 #'   print(dt)
 #' }
+#' ```
 #'
+#' @md
 #' @export
 get_subaccount_detail_balance_impl <- coro::async(function(config, subUserId, includeBaseAmount = FALSE) {
     tryCatch({
