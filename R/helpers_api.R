@@ -257,27 +257,30 @@ process_kucoin_response <- function(response, url = "") {
 #' 4. **Aggregate and Return:**  
 #'    Once all pages have been fetched, the accumulator is passed to the \code{aggregate_fn} to produce the final result.
 #'
-#' **Parameters:**
-#' - **fetch_page:** A function that takes a query list and returns a promise resolving to the page's response.
-#' - **query:** A named list of query parameters for the first page (default is \code{list(currentPage = 1, pageSize = 50)}).
-#' - **items_field:** The field in the response that contains the items to be aggregated (default is "items").
-#' - **accumulator:** An internal accumulator for recursive calls (do not supply this parameter).
-#' - **aggregate_fn:** A function to combine the accumulated results into the final output (default returns the accumulator list as is).
-#' - **max_pages:** The maximum number of pages to fetch (default is \code{Inf} to fetch all available pages).
-#'
-#' **Return Value:**  
-#' Returns a promise that resolves to the aggregated result as defined by the \code{aggregate_fn}.
+#' @param fetch_page A function that fetches a page of results and returns a promise resolving to the response.
+#' @param query A named list of query parameters for the first page (default is \code{list(currentPage = 1, pageSize = 50)}).
+#' @param items_field The field in the response that contains the items to be aggregated (default is "items").
+#' @param paginate_fields A named list of fields in the response that contain the current and total page numbers.
+#'    - \code{currentPage}: The field containing the current page number.
+#'    - \code{totalPage}: The field containing the total number of pages.
+#' @param aggregate_fn A function to combine the accumulated results into the final output (default returns the accumulator list as is).
+#' @param accumulator An internal accumulator for recursive calls (do not supply this parameter).
+#' @param max_pages The maximum number of pages to fetch (default is \code{Inf} to fetch all available pages).
+#' @return A promise that resolves to the aggregated result as defined by the \code{aggregate_fn}.
 #'
 #' @md
-#'
 #' @export
 auto_paginate <- coro::async(function(
     fetch_page,
     query = list(currentPage = 1, pageSize = 50),
     items_field = "items",
-    accumulator = list(),
+    paginate_fields = list(
+        currentPage = "currentPage",
+        totalPage = "totalPage"
+    ),
     aggregate_fn = function(acc) { acc },
-    max_pages = Inf
+    max_pages = Inf,
+    accumulator = list()
 ) {
     tryCatch({
         response <- await(fetch_page(query))
@@ -287,8 +290,8 @@ auto_paginate <- coro::async(function(
             page_items <- response
         }
         accumulator[[length(accumulator) + 1]] <- page_items
-        currentPage <- response$currentPage
-        totalPage   <- response$totalPage
+        currentPage <- response[[paginate_fields$currentPage]]
+        totalPage   <- response[[paginate_fields$totalPage]]
         if (is.finite(max_pages) && currentPage >= max_pages) {
             return(aggregate_fn(accumulator))
         } else if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {

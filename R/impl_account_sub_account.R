@@ -2,7 +2,8 @@
 
 box::use(
     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-    ./utils[ build_query, get_base_url ]
+    ./utils[ build_query, get_base_url ],
+    ./utils2[ time_convert_from_kucoin ]
 )
 
 #' Add SubAccount Implementation
@@ -125,21 +126,21 @@ add_subaccount_impl <- coro::async(function(
 
 #' Get SubAccount Summary Information Implementation
 #'
-#' This asynchronous function retrieves a paginated summary of sub-accounts from KuCoin and aggregates the
-#' results into a single `data.table`. It sends HTTP GET requests to the KuCoin sub-account endpoint and
-#' automatically handles pagination. In the final aggregated `data.table`, each row represents the summary
-#' information for one sub-account. Additionally, if the response contains a "createdAt" column (with timestamps
-#' in milliseconds), those values are converted into human-readable POSIXct datetime objects.
+#' This asynchronous function retrieves a paginated summary of sub-accounts from KuCoin and aggregates 
+#' the results into a single `data.table`. It sends HTTP GET requests to the KuCoin sub-account summary 
+#' endpoint and automatically handles pagination. In the final aggregated `data.table`, each row represents 
+#' the summary information for one sub-account. Additionally, if the response contains a `createdAt` column 
+#' (with timestamps in milliseconds), these values are converted into human-readable POSIXct datetime objects.
 #'
-#' ## Endpoint Details
+#' ## Endpoint Overview
 #'
 #' **API Endpoint:**  
 #' `GET https://api.kucoin.com/api/v2/sub/user`
 #'
 #' **Purpose:**  
-#' This endpoint is used to retrieve a summary of sub-accounts associated with your KuCoin account. The response
-#' is paginated and includes metadata such as the current page number, page size, total number of sub-accounts,
-#' and total pages.
+#' This endpoint is used to retrieve a summary of all sub-accounts associated with your KuCoin account. 
+#' The response is paginated and includes metadata such as the current page number, page size, total number 
+#' of sub-accounts, and total pages.
 #'
 #' **Response Schema:**  
 #' The API returns a JSON object with the following structure:
@@ -150,105 +151,137 @@ add_subaccount_impl <- coro::async(function(
 #'   - `totalNum` (integer): The total number of sub-accounts.
 #'   - `totalPage` (integer): The total number of pages.
 #'   - `items`: An array where each element corresponds to a sub-account summary with fields such as:
-#'     - `userId`: The unique identifier of the master account.
-#'     - `uid`: The unique identifier of the sub-account.
-#'     - `subName`: The sub-account name.
-#'     - `status`: The current status of the sub-account.
-#'     - `type`: The type of sub-account.
-#'     - `access`: The permission type granted (e.g., "All", "Spot", "Futures", "Margin").
-#'     - `createdAt`: The timestamp (in milliseconds) when the sub-account was created.
-#'     - `remarks`: Remarks or notes associated with the sub-account.
+#'       - `userId`: The unique identifier of the master account.
+#'       - `uid`: The unique identifier of the sub-account.
+#'       - `subName`: The sub-account name.
+#'       - `status`: The current status of the sub-account.
+#'       - `type`: The type of sub-account.
+#'       - `access`: The permission type granted (e.g., "All", "Spot", "Futures", "Margin").
+#'       - `createdAt`: The timestamp (in milliseconds) when the sub-account was created.
+#'       - `remarks`: Remarks or notes associated with the sub-account.
 #'
-#' For more details, please refer to the 
-#' [KuCoin Sub-Account Summary Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
+#' For more details, please refer to the [KuCoin Sub-Account Summary Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
 #'
 #' ## Function Workflow
 #'
 #' 1. **Pagination Initialization:**  
-#'    The function begins by setting an initial query with `currentPage = 1` and the specified `page_size`.
+#'    - The function begins by setting an initial query with `currentPage = 1` and the specified `page_size`.
 #'
 #' 2. **Page Fetching:**  
-#'    An asynchronous helper function (`fetch_page`) is defined to send a GET request for a given page. It constructs
-#'    the URL with query parameters and sends the request with the required authentication headers.
+#'    - An asynchronous helper function (`fetch_page`) is defined to send a GET request for a given page.
+#'    - It constructs the URL with the current query parameters and sends the request with the required authentication headers.
 #'
 #' 3. **Automatic Pagination:**  
-#'    The function uses an `auto_paginate` utility to repeatedly call the `fetch_page` helper. It aggregates results from
-#'    each page until all available pages are fetched or the specified maximum number of pages (`max_pages`) is reached.
+#'    - The function leverages the `auto_paginate` utility to repeatedly call `fetch_page`.
+#'    - Results from each page are aggregated until all pages have been retrieved or the specified maximum number of pages (`max_pages`) is reached.
 #'
-#' 4. **Aggregation:**  
-#'    The responses from all pages are combined into a single `data.table` using `data.table::rbindlist()`, where each row
-#'    represents one sub-account's summary information.
-#'
-#' 5. **Datetime Conversion:**  
-#'    If a `createdAt` column is present, its millisecond timestamps are converted to POSIXct datetime objects and stored in a
-#'    new column named `createdDatetime`.
+#' 4. **Aggregation and Datetime Conversion:**  
+#'    - The responses from all pages are combined into a single `data.table` using `data.table::rbindlist()`.
+#'    - If the resulting table contains a `createdAt` column, its millisecond timestamps are converted to POSIXct datetime objects 
+#'      (stored in a new column named `createdDatetime`).
 #'
 #' ## Parameters
 #'
-#' - **config**:  
-#'   A list of API configuration parameters. This list should include:
+#' @param keys A list containing API configuration parameters, as returned by `get_api_keys()`. This list must include:
 #'   - `api_key`: Your KuCoin API key.
 #'   - `api_secret`: Your KuCoin API secret.
 #'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the KuCoin API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The API key version (commonly `"2"`).
+#'   - `key_version`: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. Defaults to the value from `get_base_url()`.
+#' @param page_size An integer specifying the number of results per page. Default is 100 (minimum 1, maximum 100).
+#' @param max_pages An integer specifying the maximum number of pages to fetch. Default is `Inf` (fetch all available pages).
 #'
-#' - **page_size**:  
-#'   An integer specifying the number of results per page. The default is 100 (minimum 1, maximum 100).
+#' @return A promise that resolves to a single `data.table` containing the aggregated sub-account summary information.
+#' The resulting table includes:
+#'   - **currentPage** (integer): The current page number.
+#'   - **pageSize** (integer): The number of results per page.
+#'   - **totalNum** (integer): The total number of sub-accounts.
+#'   - **totalPage** (integer): The total number of pages.
+#'   - **items**: An array of sub-account summary objects, where each row includes fields such as:
+#'       - `userId`, `uid`, `subName`, `status`, `type`, `access`, `createdAt`, and `remarks`.
+#'   - If a `createdAt` column is present, a new column `createdDatetime` is added with human-readable POSIXct datetime values.
 #'
-#' - **max_pages**:  
-#'   An integer specifying the maximum number of pages to fetch. The default is `Inf`, meaning that all available pages will be retrieved.
+#' @details
+#' **Endpoint:** `GET https://api.kucoin.com/api/v2/sub/user`  
 #'
-#' ## Return Value
+#' **Raw Response Schema:**  
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains the pagination metadata and an `items` array with sub-account summary details.
 #'
-#' Returns a promise that resolves to a single `data.table` containing the aggregated sub-account summary information.
-#' If the data contains a `createdAt` column, a new column `createdDatetime` is included with human-readable datetime values.
+#' For further details, please see the [KuCoin Sub-Account Summary API Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
 #'
-#' ## Example Usage
-#'
-#' ```r
+#' @examples
 #' \dontrun{
-#'   # Fetch all sub-account summaries using the default page size (100):
-#'   dt_all <- await(get_subaccount_list_summary_impl(config))
-#'   print(dt_all)
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
+#'   base_url <- get_base_url()
 #'
-#'   # Fetch only 3 pages of results with a page size of 50:
-#'   dt_partial <- await(get_subaccount_list_summary_impl(config, page_size = 50, max_pages = 3))
-#'   print(dt_partial)
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     # Fetch all sub-account summaries using the default page size (100)
+#'     dt_all <- await(get_subaccount_list_summary_impl(keys, base_url))
+#'     print(dt_all)
+#'
+#'     # Fetch only 3 pages of results with a page size of 50
+#'     dt_partial <- await(get_subaccount_list_summary_impl(keys, page_size = 50, max_pages = 3))
+#'     print(dt_partial)
+#'   })
+#'
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now(timeoutSecs = Inf, all = TRUE)
+#'   }
 #' }
-#' ```
 #'
 #' @md
 #' @export
-get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100, max_pages = Inf) {
+get_subaccount_list_summary_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    page_size = 100,
+    max_pages = Inf
+) {
     tryCatch({
         fetch_page <- coro::async(function(query) {
-            base_url <- get_base_url()
             endpoint <- "/api/v2/sub/user"
             method <- "GET"
             body <- ""
             qs <- build_query(query)
             full_endpoint <- paste0(endpoint, qs)
-            headers <- await(build_headers(method, full_endpoint, body, config))
+            headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
-            response <- httr::GET(url, headers, timeout(3))
-            data <- process_kucoin_response(response, url)
-            return(data)
+            response <- httr::GET(url, headers, httr::timeout(3))
+            parsed_response <- process_kucoin_response(response, url)
+            return(parsed_response$data)
         })
+
+        # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
+
+        # Automatically paginate through all pages using the auto_paginate helper.
         dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
+            paginate_fields = list(
+                currentPage = "currentPage",
+                totalPage = "totalPage"
+            ),
             aggregate_fn = function(acc) {
-                data.table::rbindlist(acc, fill = TRUE)
+                els <- lapply(acc, function(el) {
+                    # collapse certain fields into a single string
+                    el$tradeTypes <- paste(el$tradeTypes, collapse = ";")
+                    el$openTradeTypes <- paste(el$openTradeTypes, collapse = ";")
+                    return(el)
+                })
+                # rbindlist can conver list of list to data.table
+                return(data.table::rbindlist(els, fill = TRUE))
             },
             max_pages = max_pages
         ))
-        # Convert "createdAt" from milliseconds to POSIXct datetime if the column exists.
-        if ("createdAt" %in% colnames(dt)) {
-            dt[, createdDatetime := lubridate::as_datetime(createdAt / 1000, origin = "1970-01-01", tz = "UTC")]
-        }
+
+        dt[, createdDatetime := time_convert_from_kucoin(createdAt)]
+
         return(dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
