@@ -430,75 +430,90 @@ get_spot_account_detail_impl <- coro::async(function(
 #' returns the parsed response data as a `data.table`. This function is intended for internal use within an R6 class
 #' and is **not** meant for direct end-user consumption.
 #'
-#' **Parameters**
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
+#'    and appending the endpoint and query string.
+#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, full endpoint, and request body.
+#' 3. **API Request:** Sends a `GET` request to the endpoint.
+#' 4. **Response Processing:** Processes the API response using a helper function and converts the result to a `data.table`.
 #'
-#' - `config`: A list containing API configuration parameters. This list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.
+#' @param query A named list of query parameters to filter the account information. Supported parameters include:
+#'   - \code{quoteCurrency} (string, optional): The quote currency. Allowed values are "USDT", "KCS", or "BTC". Defaults to "USDT" if not provided.
+#'   - \code{queryType} (string, optional): The type of account query. Allowed values are:
+#'       - "MARGIN": Only query low-frequency cross margin accounts.
+#'       - "MARGIN_V2": Only query high-frequency cross margin accounts.
+#'       - "ALL": Aggregate query, as seen on the website.
+#'     Defaults to "MARGIN".
 #'
-#' - `query`: A list of query parameters to filter the account information. Supported parameters include:
-#'   - `quoteCurrency` (string, optional): The quote currency. Allowed values are `"USDT"`, `"KCS"`, or `"BTC"`.
-#'     Defaults to `"USDT"` if not provided.
-#'   - `queryType` (string, optional): The type of account query. Allowed values are:
-#'       - `"MARGIN"`: Only query low-frequency cross margin accounts.
-#'       - `"MARGIN_V2"`: Only query high-frequency cross margin accounts.
-#'       - `"ALL"`: Aggregate query, as seen on the website.
-#'     Defaults to `"MARGIN"`.
+#' @return A promise that resolves to a \code{data.table} containing the cross margin account information.
+#' The returned data table includes the following fields:
+#'   - \strong{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
+#'   - \strong{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
+#'   - \strong{debtRatio} (string): The debt ratio.
+#'   - \strong{status} (string): The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").
+#'   - \strong{accounts} (list): A list of margin account details. Each element is an object containing:
+#'       - \code{currency} (string): Currency code.
+#'       - \code{total} (string): Total funds in the account.
+#'       - \code{available} (string): Funds available for withdrawal or trading.
+#'       - \code{hold} (string): Funds on hold.
+#'       - \code{liability} (string): Current liabilities.
+#'       - \code{maxBorrowSize} (string): Maximum borrowable amount.
+#'       - \code{borrowEnabled} (boolean): Whether borrowing is enabled.
+#'       - \code{transferInEnabled} (boolean): Whether transfers into the account are enabled.
 #'
-#' **Returns**
-#'
-#' A promise that resolves to a `data.table` containing the cross margin account information. The returned
-#' `data.table` includes the following fields:
-#'
-#' - `totalAssetOfQuoteCurrency` (string): Total assets in the quote currency.
-#' - `totalLiabilityOfQuoteCurrency` (string): Total liabilities in the quote currency.
-#' - `debtRatio` (string): The debt ratio.
-#' - `status` (string): The position status. Possible values include `"EFFECTIVE"`, `"BANKRUPTCY"`, `"LIQUIDATION"`, `"REPAY"`, or `"BORROW"`.
-#' - `accounts` (list): A list of margin account details. Each element is an object containing:
-#'     - `currency` (string): Currency code.
-#'     - `total` (string): Total funds in the account.
-#'     - `available` (string): Funds available for withdrawal or trading.
-#'     - `hold` (string): Funds on hold.
-#'     - `liability` (string): Current liabilities.
-#'     - `maxBorrowSize` (string): Maximum borrowable amount.
-#'     - `borrowEnabled` (boolean): Whether borrowing is enabled.
-#'     - `transferInEnabled` (boolean): Whether transfers into the account are enabled.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v3/margin/accounts`
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/margin/accounts}
 #'
 #' For further details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
-#' coro::run(function() {
-#'   dt <- await(get_cross_margin_account_impl(config, query))
-#'   print(dt)
-#' })
-#' ```
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
+#'
+#'   # Define query parameters to filter the account information
+#'   query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
+#'
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_cross_margin_account_impl(keys, base_url, query))
+#'     print(dt)
+#'   })
+#'
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_cross_margin_account_impl <- coro::async(function(config, query = list()) {
+get_cross_margin_account_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v3/margin/accounts"
         method <- "GET"
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        headers <- await(build_headers(method, full_endpoint, body, config))
-        url <- paste0(base_url, full_endpoint)
+        headers <- await(build_headers(method, full_endpoint, body, keys))
 
+        url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- data.table::as.data.table(data)
+
+        parsed_response <- process_kucoin_response(response, url)
+        dt <- data.table::as.data.table(parsed_response$data)
         return(dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
