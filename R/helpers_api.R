@@ -145,15 +145,15 @@ get_server_time <- function(base_url = get_base_url()) {
 #' @importFrom base64enc base64encode
 #' @importFrom rlang abort
 #' @export
-build_headers <- coro::async(function(method, endpoint, body, config) {
+build_headers <- coro::async(function(method, endpoint, body, keys) {
     tryCatch({
         # Retrieve the current server time.
-        timestamp <- await(get_server_time(get_base_url(config)))
+        timestamp <- await(get_server_time(get_base_url()))
         # Construct the prehash string.
         prehash <- paste0(timestamp, toupper(method), endpoint, body)
         # Compute the HMAC-SHA256 signature.
         sig_raw <- digest::hmac(
-            key = config$api_secret,
+            key = keys$api_secret,
             object = prehash,
             algo = "sha256",
             serialize = FALSE,
@@ -163,8 +163,8 @@ build_headers <- coro::async(function(method, endpoint, body, config) {
         signature <- base64enc::base64encode(sig_raw)
         # Encrypt the API passphrase.
         passphrase_raw <- digest::hmac(
-            key = config$api_secret,
-            object = config$api_passphrase,
+            key = keys$api_secret,
+            object = keys$api_passphrase,
             algo = "sha256",
             serialize = FALSE,
             raw = TRUE
@@ -172,11 +172,11 @@ build_headers <- coro::async(function(method, endpoint, body, config) {
         encrypted_passphrase <- base64enc::base64encode(passphrase_raw)
         # Build and return the headers.
         httr::add_headers(
-            `KC-API-KEY` = config$api_key,
+            `KC-API-KEY` = keys$api_key,
             `KC-API-SIGN` = signature,
             `KC-API-TIMESTAMP` = timestamp,
             `KC-API-PASSPHRASE` = encrypted_passphrase,
-            `KC-API-KEY-VERSION` = config$key_version,
+            `KC-API-KEY-VERSION` = keys$key_version,
             `Content-Type` = "application/json"
         )
     }, error = function(e) {
