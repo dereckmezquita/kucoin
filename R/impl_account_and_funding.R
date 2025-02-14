@@ -174,75 +174,75 @@ get_apikey_info_impl <- coro::async(function(
 
 #' Get Spot Account Type Implementation
 #'
-#' This asynchronous function retrieves spot account type information from the KuCoin API. It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
-#'
+#' This asynchronous function retrieves spot account type information from the KuCoin API.
+#' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
 #' The function performs the following operations:
 #'
-#' 1. **URL Construction:** Constructs the full API URL using the `base_url` provided in the configuration.
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
+#'    and appending the endpoint.
 #' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, endpoint, and request body.
-#' 3. **API Request:** Sends a `GET` request to the `/api/v1/hf/accounts/opened` endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function, returning a boolean that indicates whether the current user is a high-frequency spot user (`TRUE`) or a low-frequency spot user (`FALSE`).
+#' 3. **API Request:** Sends a \code{GET} request to the \code{/api/v1/hf/accounts/opened} endpoint.
+#' 4. **Response Processing:** Processes the API response using a helper function and extracts the \code{"data"} field,
+#'    which is expected to be a boolean value indicating the spot account type.
 #'
-#' **Parameters**
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
 #'
-#' - `config`: A list containing API configuration parameters. This list should include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @return A promise that resolves to a boolean value:
+#'   - \code{TRUE} indicates that the current user is a high-frequency spot user.
+#'   - \code{FALSE} indicates that the current user is a low-frequency spot user.
 #'
-#' **Returns**
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/hf/accounts/opened}  
 #'
-#' A promise that resolves to a boolean value:
-#'
-#' - `TRUE` indicates that the current user is a high-frequency spot user.
-#' - `FALSE` indicates that the current user is a low-frequency spot user.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v1/hf/accounts/opened`
-#'
-#' - **Response Schema:**
-#'   - `code` (string): Status code, where `"200000"` indicates success.
-#'   - `data` (boolean): Indicates the spot account type.
+#' **Raw Response Schema:**  
+#' - \code{code} (string): Status code, where "200000" indicates success.  
+#' - \code{data} (boolean): Spot account type; \code{TRUE} means high-frequency and \code{FALSE} means low-frequency.
 #'
 #' For more information, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' config <- list(
-#'   api_key = "your_api_key",
-#'   api_secret = "your_api_secret",
-#'   api_passphrase = "your_api_passphrase",
-#'   base_url = "https://api.kucoin.com",
-#'   key_version = "2"
-#' )
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
 #'
-#' # Execute the asynchronous request using coro::run:
-#' coro::run(function() {
-#'   is_high_freq <- await(get_spot_account_type_impl(config))
-#'   print(is_high_freq)
-#' })
-#' ```
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     is_high_freq <- await(get_spot_account_type_impl(keys, base_url))
+#'     print(is_high_freq)
+#'   })
+#'
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_spot_account_type_impl <- coro::async(function(config) {
+get_spot_account_type_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v1/hf/accounts/opened"
         method <- "GET"
         body <- ""
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint)
+        headers <- await(build_headers(method, endpoint, body, keys))
 
+        url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        # Process the response using a helper function; the returned data is expected to be a boolean.
-        data <- process_kucoin_response(response, url)
-        # data is expected to be a boolean value.
-        return(data)
+
+        # Process the response and extract the "data" field, expected to be boolean.
+        parsed_response <- process_kucoin_response(response, url)
+        return(parsed_response$data)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_type_impl:", conditionMessage(e)))
     })
