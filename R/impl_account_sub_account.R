@@ -164,29 +164,103 @@ add_subaccount_impl <- coro::async(function(config, password, subName, access, r
     })
 })
 
-#' Get SubAccount List - Summary Info Implementation
+#' Get SubAccount Summary Information Implementation
 #'
-#' This asynchronous function retrieves a paginated list of sub-accounts from KuCoin using the generic pagination helper.
-#' Users can specify the page size and the maximum number of pages to fetch. By default, it fetches all pages with a page size of 100.
-#' After aggregation, if a "createdAt" column is present, its values (in milliseconds) are converted to POSIXct datetime objects.
+#' This asynchronous function retrieves a paginated summary of sub-accounts from KuCoin and aggregates the
+#' results into a single `data.table`. It sends HTTP GET requests to the KuCoin sub-account endpoint and
+#' automatically handles pagination. In the final aggregated `data.table`, each row represents the summary
+#' information for one sub-account. Additionally, if the response contains a "createdAt" column (with timestamps
+#' in milliseconds), those values are converted into human-readable POSIXct datetime objects.
 #'
-#' @param config A list containing API configuration parameters.
-#' @param page_size An integer specifying the number of results per page (default is 100).
-#' @param max_pages The maximum number of pages to fetch. Use Inf to fetch all pages (default is Inf).
+#' ## Endpoint Details
 #'
-#' @return A promise that resolves to a data.table containing the aggregated sub-account summary information,
-#'         with the "createdAt" column converted to datetime (if present).
+#' **API Endpoint:**  
+#' `GET https://api.kucoin.com/api/v2/sub/user`
 #'
-#' @examples
+#' **Purpose:**  
+#' This endpoint is used to retrieve a summary of sub-accounts associated with your KuCoin account. The response
+#' is paginated and includes metadata such as the current page number, page size, total number of sub-accounts,
+#' and total pages.
+#'
+#' **Response Schema:**  
+#' The API returns a JSON object with the following structure:
+#' - **code**: A string status code; `"200000"` indicates success.
+#' - **data**: An object containing:
+#'   - `currentPage` (integer): The current page number.
+#'   - `pageSize` (integer): The number of results per page.
+#'   - `totalNum` (integer): The total number of sub-accounts.
+#'   - `totalPage` (integer): The total number of pages.
+#'   - `items`: An array where each element corresponds to a sub-account summary with fields such as:
+#'     - `userId`: The unique identifier of the master account.
+#'     - `uid`: The unique identifier of the sub-account.
+#'     - `subName`: The sub-account name.
+#'     - `status`: The current status of the sub-account.
+#'     - `type`: The type of sub-account.
+#'     - `access`: The permission type granted (e.g., "All", "Spot", "Futures", "Margin").
+#'     - `createdAt`: The timestamp (in milliseconds) when the sub-account was created.
+#'     - `remarks`: Remarks or notes associated with the sub-account.
+#'
+#' For more details, please refer to the 
+#' [KuCoin Sub-Account Summary Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
+#'
+#' ## Function Workflow
+#'
+#' 1. **Pagination Initialization:**  
+#'    The function begins by setting an initial query with `currentPage = 1` and the specified `page_size`.
+#'
+#' 2. **Page Fetching:**  
+#'    An asynchronous helper function (`fetch_page`) is defined to send a GET request for a given page. It constructs
+#'    the URL with query parameters and sends the request with the required authentication headers.
+#'
+#' 3. **Automatic Pagination:**  
+#'    The function uses an `auto_paginate` utility to repeatedly call the `fetch_page` helper. It aggregates results from
+#'    each page until all available pages are fetched or the specified maximum number of pages (`max_pages`) is reached.
+#'
+#' 4. **Aggregation:**  
+#'    The responses from all pages are combined into a single `data.table` using `data.table::rbindlist()`, where each row
+#'    represents one sub-account's summary information.
+#'
+#' 5. **Datetime Conversion:**  
+#'    If a `createdAt` column is present, its millisecond timestamps are converted to POSIXct datetime objects and stored in a
+#'    new column named `createdDatetime`.
+#'
+#' ## Parameters
+#'
+#' - **config**:  
+#'   A list of API configuration parameters. This list should include:
+#'   - `api_key`: Your KuCoin API key.
+#'   - `api_secret`: Your KuCoin API secret.
+#'   - `api_passphrase`: Your KuCoin API passphrase.
+#'   - `base_url`: The base URL for the KuCoin API (e.g., `"https://api.kucoin.com"`).
+#'   - `key_version`: The API key version (commonly `"2"`).
+#'
+#' - **page_size**:  
+#'   An integer specifying the number of results per page. The default is 100 (minimum 1, maximum 100).
+#'
+#' - **max_pages**:  
+#'   An integer specifying the maximum number of pages to fetch. The default is `Inf`, meaning that all available pages will be retrieved.
+#'
+#' ## Return Value
+#'
+#' Returns a promise that resolves to a single `data.table` containing the aggregated sub-account summary information.
+#' If the data contains a `createdAt` column, a new column `createdDatetime` is included with human-readable datetime values.
+#'
+#' ## Example Usage
+#'
+#' ```r
 #' \dontrun{
-#'   # Fetch all sub-account summaries with page size 100:
-#'   dt <- await(get_subaccount_list_summary_impl(config))
+#'   # Fetch all sub-account summaries using the default page size (100):
+#'   dt_all <- await(get_subaccount_list_summary_impl(config))
+#'   print(dt_all)
 #'
-#'   # Fetch only 3 pages with a page size of 50:
-#'   dt <- await(get_subaccount_list_summary_impl(config, page_size = 50, max_pages = 3))
+#'   # Fetch only 3 pages of results with a page size of 50:
+#'   dt_partial <- await(get_subaccount_list_summary_impl(config, page_size = 50, max_pages = 3))
+#'   print(dt_partial)
 #' }
+#' ```
 #'
 #' @export
+#' @md
 get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100, max_pages = Inf) {
     tryCatch({
         fetch_page <- coro::async(function(query) {
