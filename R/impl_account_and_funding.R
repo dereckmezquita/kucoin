@@ -2,89 +2,91 @@
 
 box::use(
     ./helpers_api[ build_headers, process_kucoin_response ],
-    ./utils[ build_query, convert_datetime_range_to_ms, get_base_url ]
+    ./utils[ build_query, convert_datetime_range_to_ms, get_api_keys, get_base_url ]
 )
 
 #' Get Account Summary Information (Implementation)
 #'
-#' This asynchronous function implements the retrieval of account summary information from the KuCoin API. It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users. The function performs the following operations:
+#' This asynchronous function implements the retrieval of account summary information from the KuCoin API.
+#' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
+#' The function performs the following operations:
 #'
-#' 1. **URL Construction:** Constructs the full API URL using the `base_url` provided in the configuration.
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
+#'    and appending the endpoint.
 #' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, endpoint, and request body.
-#' 3. **API Request:** Sends a `GET` request to the KuCoin API endpoint for account summary information.
-#' 4. **Response Processing:** Processes the API response using a helper function and converts the result to a `data.table`.
+#' 3. **API Request:** Sends a \code{GET} request to the KuCoin API endpoint for account summary information.
+#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
 #'
-#' **Parameters**
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
 #'
-#' - `config`: A list containing API configuration parameters. The list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @return A promise that resolves to a \code{data.table} containing the account summary data. The resulting data table is constructed from the raw API response and includes the following columns:
+#'   - \strong{level} (integer): The user's VIP level.
+#'   - \strong{subQuantity} (integer): Total number of sub-accounts.
+#'   - \strong{spotSubQuantity} (integer): Number of sub-accounts with spot trading permissions.
+#'   - \strong{marginSubQuantity} (integer): Number of sub-accounts with margin trading permissions.
+#'   - \strong{futuresSubQuantity} (integer): Number of sub-accounts with futures trading permissions.
+#'   - \strong{optionSubQuantity} (integer): Number of sub-accounts with option trading permissions.
+#'   - \strong{maxSubQuantity} (integer): Maximum allowed sub-accounts (calculated as the sum of 
+#'     \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
+#'   - \strong{maxDefaultSubQuantity} (integer): Maximum default open sub-accounts based on VIP level.
+#'   - \strong{maxSpotSubQuantity} (integer): Maximum additional sub-accounts with spot trading permissions.
+#'   - \strong{maxMarginSubQuantity} (integer): Maximum additional sub-accounts with margin trading permissions.
+#'   - \strong{maxFuturesSubQuantity} (integer): Maximum additional sub-accounts with futures trading permissions.
+#'   - \strong{maxOptionSubQuantity} (integer): Maximum additional sub-accounts with option trading permissions.
 #'
-#' **Returns**
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/user-info}  
 #'
-#' A promise that resolves to a `data.table` containing the account summary data.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v2/user-info`
-#'
-#' - **Response Schema:**
-#'   - `code` (string): Status code, where `"200000"` indicates success.
-#'   - `data` (object): Contains the account summary details, including:
-#'     - `level` (integer): The user's VIP level.
-#'     - `subQuantity` (integer): Total number of sub-accounts.
-#'     - `spotSubQuantity` (integer): Number of sub-accounts with spot trading permissions.
-#'     - `marginSubQuantity` (integer): Number of sub-accounts with margin trading permissions.
-#'     - `futuresSubQuantity` (integer): Number of sub-accounts with futures trading permissions.
-#'     - `optionSubQuantity` (integer): Number of sub-accounts with option trading permissions.
-#'     - `maxSubQuantity` (integer): Maximum allowed sub-accounts, calculated as the sum of `maxDefaultSubQuantity` and `maxSpotSubQuantity`.
-#'     - `maxDefaultSubQuantity` (integer): Maximum default open sub-accounts based on VIP level.
-#'     - `maxSpotSubQuantity` (integer): Maximum additional sub-accounts with spot trading permissions.
-#'     - `maxMarginSubQuantity` (integer): Maximum additional sub-accounts with margin trading permissions.
-#'     - `maxFuturesSubQuantity` (integer): Maximum additional sub-accounts with futures trading permissions.
-#'     - `maxOptionSubQuantity` (integer): Maximum additional sub-accounts with option trading permissions.
+#' **Raw Response Schema:**  
+#' - \code{code} (string): Status code, where "200000" indicates success.  
+#' - \code{data} (object): Contains the account summary details as described above.
 #'
 #' For more detailed information, please see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' config <- list(
-#'   api_key = "your_api_key",
-#'   api_secret = "your_api_secret",
-#'   api_passphrase = "your_api_passphrase",
-#'   base_url = "https://api.kucoin.com",
-#'   key_version = "2"
-#' )
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
 #'
-#' # Execute the asynchronous request using coro::run:
-#' coro::run(function() {
-#'   dt <- await(get_account_summary_info_impl(config))
-#'   print(dt)
-#' })
-#' ```
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_account_summary_info_impl(keys, base_url))
+#'     print(dt)
+#'   })
+#' 
+#´   main_async()
+#'   while(!later::loop_empty()) {
+#'     later::run_now()
+#    }
+#' }
 #'
 #' @md
 #' @export
-get_account_summary_info_impl <- coro::async(function(config) {
+get_account_summary_info_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v2/user-info"
         method <- "GET"
         body <- ""
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint)
+        headers <- await(build_headers(method, endpoint, body, keys))
 
+        url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, timeout(3))
 
-        # Use the helper to check the response and extract the data.
-        data <- process_kucoin_response(response, url)
+        # Process the response and extract the "data" field.
+        parsed_response <- process_kucoin_response(response, url)
 
-        dt <- data.table::as.data.table(data)
-        return(dt)
+        return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
     })
