@@ -36,16 +36,35 @@ build_query <- function(params) {
 
 #' Get Base URL for KuCoin API
 #'
-#' This function returns the base URL for the KuCoin API.
-#' One can override the default base URL by providing a url.
+#' @description
+#' Returns the base URL for the KuCoin API. The URL is determined using the following priority:
+#' 1. User-provided URL parameter (if not NULL)
+#' 2. Environment variable "KC-API-ENDPOINT" (if set)
+#' 3. Default value "https://api.kucoin.com"
 #'
-#' @param url (Optional) A character string representing the base URL. Defaults to "https://api.kucoin.com".
+#' @details
+#' The function implements a fallback hierarchy to determine the appropriate base URL:
+#' - If a URL is explicitly provided via the `url` parameter, it will be used
+#' - If no URL is provided (NULL), it checks for the "KC-API-ENDPOINT" environment variable
+#' - If neither source provides a URL, it falls back to the default "https://api.kucoin.com"
 #'
-#' @return A character string representing the base URL.
+#' @param url A character string representing the base URL. Default is NULL, which triggers
+#'        the fallback behavior.
+#'
+#' @return A character string containing the determined base URL.
 #'
 #' @export
-get_base_url <- function(url = "https://api.kucoin.com") {
-    return(url)
+get_base_url <- function(url = NULL) {
+    if (!is.null(url)) {
+        return(url)
+    }
+
+    env_url <- Sys.getenv("KC-API-ENDPOINT")
+    if (nzchar(env_url)) {
+        return(env_url)
+    }
+
+    return("https://api.kucoin.com")
 }
 
 #' Retrieve KuCoin API Keys from Environment Variables
@@ -63,7 +82,7 @@ get_base_url <- function(url = "https://api.kucoin.com") {
 #' @param api_key        (Optional) The KuCoin API key. Defaults to \code{Sys.getenv("KC-API-KEY")}.
 #' @param api_secret     (Optional) The KuCoin API secret. Defaults to \code{Sys.getenv("KC-API-SECRET")}.
 #' @param api_passphrase (Optional) The KuCoin API passphrase. Defaults to \code{Sys.getenv("KC-API-PASSPHRASE")}.
-#' @param base_url       (Optional) The base URL for the API. Defaults to \code{Sys.getenv("KC-API-ENDPOINT")}.
+#' @param base_url       (Optional) The base URL for the API. Defaults to \code{get_base_url()}.
 #' @param key_version    (Optional) The API key version. Defaults to "2".
 #'
 #' @return A list containing the API credentials and configuration parameters.
@@ -79,7 +98,7 @@ get_api_keys <- function(
     api_key        = Sys.getenv("KC-API-KEY"),
     api_secret     = Sys.getenv("KC-API-SECRET"),
     api_passphrase = Sys.getenv("KC-API-PASSPHRASE"),
-    base_url       = Sys.getenv("KC-API-ENDPOINT"),
+    base_url       = get_base_url(),
     key_version    = "2"
 ) {
     return(list(
