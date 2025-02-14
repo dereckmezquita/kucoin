@@ -1,13 +1,8 @@
 # File: ./R/impl_account_sub_account.R
 
 box::use(
-    data.table,
-    httr[POST, timeout, content, status_code],
-    jsonlite[toJSON, fromJSON],
-    rlang[abort],
-    coro,
-    ./utils[get_base_url, build_query],
-    ./helpers_api[build_headers, paginate_api_generic, process_kucoin_response]
+    ./utils[ get_base_url, build_query ],
+    ./helpers_api[ build_headers, auto_paginate, process_kucoin_response ]
 )
 
 #' Add SubAccount Implementation
@@ -131,7 +126,7 @@ get_subaccount_list_summary_impl <- coro::async(function(config, page_size = 100
             return(data)
         })
         initial_query <- list(currentPage = 1, pageSize = page_size)
-        dt <- await(paginate_api_generic(
+        dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",

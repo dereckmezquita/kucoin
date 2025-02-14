@@ -1,11 +1,7 @@
 # File: ./R/KucoinSubAccount.R
 
 box::use(
-    ./accounts_sub_account[
-        add_subaccount_impl,
-        get_subaccount_list_summary_impl,
-        get_subaccount_detail_balance_impl
-    ],
+    impl = ./accounts_sub_account
     ./utils[get_api_keys, get_subaccount]
 )
 
@@ -80,7 +76,7 @@ KuCoinSubAccount <- R6::R6Class(
         #'   })
         #' }
         add_subaccount = function(password, subName, access, remarks = NULL) {
-            add_subaccount_impl(self$config, password, subName, access, remarks)
+            return(impl$add_subaccount_impl(self$config, password, subName, access, remarks))
         },
 
         #' Get SubAccount List Summary (Paginated)
@@ -93,7 +89,7 @@ KuCoinSubAccount <- R6::R6Class(
         #' @return A promise that resolves to a data.table containing the aggregated sub-account summary information,
         #'         with the "createdAt" column converted to a datetime object if present.
         get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
-            get_subaccount_list_summary_impl(self$config, page_size, max_pages)
+            return(impl$get_subaccount_list_summary_impl(self$config, page_size, max_pages))
         },
 
         #' Get SubAccount Detail - Balance
@@ -108,7 +104,7 @@ KuCoinSubAccount <- R6::R6Class(
         #'
         #' @return A promise that resolves to a data.table containing the sub-account detail.
         get_subaccount_detail_balance = function(subUserId, includeBaseAmount = FALSE) {
-            get_subaccount_detail_balance_impl(self$config, subUserId, includeBaseAmount)
+            return(impl$get_subaccount_detail_balance_impl(self$config, subUserId, includeBaseAmount))
         }
     )
 )

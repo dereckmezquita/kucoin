@@ -1,12 +1,8 @@
 # File: ./R/KucoinAccountAndFunding.R
 
 box::use(
-    ./account_and_funding[
-        get_account_summary_info_impl, get_apikey_info_impl, get_spot_account_type_impl,
-        get_spot_account_dt_impl, get_spot_account_detail_impl, get_cross_margin_account_impl, get_isolated_margin_account_impl, get_futures_account_impl, get_spot_ledger_impl,
-        get_spot_hf_ledger_impl
-    ],
-    ./utils[get_api_keys]
+    impl = ./impl_account_and_funding,
+    ./utils[ get_api_keys ]
 )
 
 #' KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints
@@ -85,7 +81,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_account_summary_info = function() {
-            get_account_summary_info_impl(self$config)
+            return(impl$get_account_summary_info_impl(self$config))
         },
         
         #' Get API Key Information from KuCoin.
@@ -122,7 +118,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_apikey_info = function() {
-            get_apikey_info_impl(self$config)
+            return(impl$get_apikey_info_impl(self$config))
         },
 
         #' Get Spot Account Type from KuCoin.
@@ -150,7 +146,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_spot_account_type = function() {
-            get_spot_account_type_impl(self$config)
+            return(impl$get_spot_account_type_impl(self$config))
         },
 
         #' Get Spot Account List from KuCoin.
@@ -188,7 +184,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_spot_account_dt = function(query = list()) {
-            get_spot_account_dt_impl(self$config, query)
+            return(impl$get_spot_account_dt_impl(self$config, query))
         },
 
         #' Get Spot Account Detail from KuCoin.
@@ -222,7 +218,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_spot_account_detail = function(accountId) {
-            get_spot_account_detail_impl(self$config, accountId)
+            return(impl$get_spot_account_detail_impl(self$config, accountId))
         },
 
         #' Get Cross Margin Account from KuCoin.
@@ -250,7 +246,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   })
         #' }
         get_cross_margin_account = function(query = list()) {
-            get_cross_margin_account_impl(self$config, query)
+            return(impl$get_cross_margin_account_impl(self$config, query))
         },
 
         #' Get Isolated Margin Account from KuCoin.
@@ -280,7 +276,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'     })
         #' }
         get_isolated_margin_account = function(query = list()) {
-            get_isolated_margin_account_impl(self$config, query)
+            return(impl$get_isolated_margin_account_impl(self$config, query))
         },
 
         #' Get Futures Account from KuCoin Futures API
@@ -301,7 +297,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'     })
         #' }
         get_futures_account = function(query = list()) {
-            get_futures_account_impl(self$config, query)
+            return(impl$get_futures_account_impl(self$config, query))
         },
 
         #' Get Spot Ledger from KuCoin
@@ -329,7 +325,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'     })
         #' }
         get_spot_ledger = function(query = list()) {
-            get_spot_ledger_impl(self$config, query)
+            return(impl$get_spot_ledger_impl(self$config, query))
         }
     )
 )

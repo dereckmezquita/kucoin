@@ -1,8 +1,8 @@
 # File: ./R/impl_account_and_funding.R
 
 box::use(
-    ./helpers_api[build_headers, process_kucoin_response],
-    ./utils[convert_datetime_range_to_ms, build_query, get_base_url]
+    ./helpers_api[ build_headers, process_kucoin_response ],
+    ./utils[ convert_datetime_range_to_ms, build_query, get_base_url ]
 )
 
 #' Get Account Summary Information Implementation

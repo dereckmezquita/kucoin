@@ -1,6 +1,6 @@
 # File: ./R/helpers_api.R
 
-box::use(./utils[get_base_url])
+box::use(./utils[ get_base_url ])
 
 #' Get Server Time from KuCoin Futures API
 #'
@@ -246,7 +246,7 @@ process_kucoin_response <- function(response, url = "") {
 #'
 #' @return A promise that resolves to the aggregated result.
 #' @export
-paginate_api_generic <- coro::async(function(
+auto_paginate <- coro::async(function(
     fetch_page,
     query = list(currentPage = 1, pageSize = 50),
     items_field = "items",
@@ -268,11 +268,11 @@ paginate_api_generic <- coro::async(function(
             return(aggregate_fn(accumulator))
         } else if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {
             query$currentPage <- currentPage + 1
-            return(await(paginate_api_generic(fetch_page, query, items_field, accumulator, aggregate_fn, max_pages)))
+            return(await(auto_paginate(fetch_page, query, items_field, accumulator, aggregate_fn, max_pages)))
         } else {
             return(aggregate_fn(accumulator))
         }
     }, error = function(e) {
-        rlang::abort(paste("Error in paginate_api_generic:", conditionMessage(e)))
+        rlang::abort(paste("Error in auto_paginate:", conditionMessage(e)))
     })
 })

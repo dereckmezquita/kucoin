@@ -1,7 +1,8 @@
 # File: ./R/KucoinSpotMarketData.R
 
 box::use(
-    ./utils[get_api_keys]
+    impl = ./impl_market_data,
+    ./utils[ get_api_keys ]
 )
 
 #' @export
