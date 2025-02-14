@@ -1,8 +1,8 @@
 # File: ./R/impl_account_sub_account.R
 
 box::use(
-    ./utils[ get_base_url, build_query ],
-    ./helpers_api[ build_headers, auto_paginate, process_kucoin_response ]
+    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+    ./utils[ build_query, get_base_url ]
 )
 
 #' Add SubAccount Implementation
