@@ -248,75 +248,90 @@ get_spot_account_type_impl <- coro::async(function(
     })
 })
 
-#' Get Spot Account DT Implementation
+#' Get Spot Account List Implementation
 #'
-#' This asynchronous function retrieves a list of spot accounts from the KuCoin API. It sends a 
-#' `GET` request to the `/api/v1/accounts` endpoint with optional query parameters and returns the 
-#' account list as a `data.table`. This function is intended for internal use within an R6 class and 
-#' is **not** meant for direct end-user consumption.
+#' This asynchronous function retrieves a list of spot accounts from the KuCoin API.
+#' It sends a `GET` request to the `/api/v1/accounts` endpoint with optional query parameters and returns the
+#' account list as a `data.table`. This function is intended for internal use within an R6 class and is **not**
+#' meant for direct end-user consumption.
 #'
-#' **Parameters**
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
+#'    and appending the endpoint and query string.
+#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, full endpoint, and request body.
+#' 3. **API Request:** Sends a \code{GET} request to the endpoint.
+#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
 #'
-#' - `config`: A list containing API configuration parameters. It should include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
+#' @param query A named list of query parameters to filter the account list. Supported parameters include:
+#'   - \code{currency} (string, optional): e.g., "USDT".
+#'   - \code{type} (string, optional): Allowed values include "main" or "trade".
 #'
-#' - `query`: A list of query parameters to filter the account list. Supported parameters include:
-#'   - `currency` (string, optional): e.g., `"USDT"`.
-#'   - `type` (string, optional): Allowed values include `"main"` or `"trade"`.
+#' @return A promise that resolves to a \code{data.table} containing the list of spot accounts.
+#' The resulting data table is constructed from the \code{"data"} field of the raw API response, where each row represents an account with the following columns:
+#'   - \strong{id} (string): Account ID.
+#'   - \strong{currency} (string): Currency code.
+#'   - \strong{type} (string): Account type (e.g., "main", "trade", or "balance").
+#'   - \strong{balance} (string): Total funds in the account.
+#'   - \strong{available} (string): Funds available for withdrawal or trading.
+#'   - \strong{holds} (string): Funds on hold.
 #'
-#' **Returns**
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts}  
 #'
-#' A promise that resolves to a `data.table` containing the list of spot accounts.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts`
-#'
-#' - **Response Schema:**
-#'   - `code` (string): Status code, where `"200000"` indicates success.
-#'   - `data` (array of objects): Each object represents an account and contains:
-#'     - `id` (string): Account ID.
-#'     - `currency` (string): Currency code.
-#'     - `type` (string): Account type (e.g., `"main"`, `"trade"`, or `"balance"`).
-#'     - `balance` (string): Total funds in the account.
-#'     - `available` (string): Funds available for withdrawal or trading.
-#'     - `holds` (string): Funds on hold.
-#'
-#' The JSON array returned from the API is converted into a `data.table`.
+#' **Raw Response Schema:**  
+#' - \code{code} (string): Status code, where "200000" indicates success.
+#' - \code{data} (array): An array of account objects as described above.
 #'
 #' For more detailed information, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' query <- list(currency = "USDT", type = "main")
-#' coro::run(function() {
-#'   dt <- await(get_spot_account_dt_impl(config, query))
-#'   print(dt)
-#' })
-#' ```
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
+#'
+#'   # Define query parameters to filter the account list (e.g., for USDT and main account)
+#'   query <- list(currency = "USDT", type = "main")
+#'
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_spot_account_dt_impl(keys, base_url, query))
+#'     print(dt)
+#'   })
+#'
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_spot_account_dt_impl <- coro::async(function(config, query = list()) {
+get_spot_account_dt_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v1/accounts"
         method <- "GET"
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        headers <- await(build_headers(method, full_endpoint, body, config))
-        url <- paste0(base_url, full_endpoint)
+        headers <- await(build_headers(method, full_endpoint, body, keys))
 
+        url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- data.table::as.data.table(data)
-        return(dt)
+
+        parsed_response <- process_kucoin_response(response, url)
+        return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
     })
