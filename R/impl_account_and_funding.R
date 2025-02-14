@@ -1,12 +1,6 @@
-# File: account_and_funding.R
+# File: ./R/impl_account_and_funding.R
 
 box::use(
-    httr[GET, status_code, content, timeout, add_headers],
-    jsonlite[fromJSON],
-    rlang[abort],
-    coro,
-    promises,
-    data.table[as.data.table],
     ./helpers_api[build_headers, process_kucoin_response],
     ./utils[convert_datetime_range_to_ms, build_query, get_base_url]
 )

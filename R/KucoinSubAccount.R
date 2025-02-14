@@ -1,8 +1,10 @@
+# File: ./R/KucoinSubAccount.R
+
 box::use(
-    R6,
-    rlang[abort],
     ./accounts_sub_account[
-        add_subaccount_impl, get_subaccount_list_summary_impl, get_subaccount_detail_balance_impl
+        add_subaccount_impl,
+        get_subaccount_list_summary_impl,
+        get_subaccount_detail_balance_impl
     ],
     ./utils[get_api_keys, get_subaccount]
 )

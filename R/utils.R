@@ -1,8 +1,3 @@
-box::use(
-    rlang,
-    lubridate
-)
-
 # File: utils.R
 
 #' Build Query String for KuCoin API Request
@@ -38,7 +33,6 @@ build_query <- function(params) {
     params <- params[!sapply(params, is.null)]
     if (length(params) == 0) return("")
     return(paste0("?", paste0(names(params), "=", params, collapse = "&")))
-}
 
 #' @export
 get_base_url <- function(config = NULL) {
@@ -67,7 +61,7 @@ get_api_keys <- function(
 
 #' @export
 get_subaccount <- function(
-    sub_account_name = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),
+    sub_account_name     = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),
     sub_account_password = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")
 ) {
     return(list(
