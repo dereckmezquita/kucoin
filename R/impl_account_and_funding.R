@@ -527,69 +527,86 @@ get_cross_margin_account_impl <- coro::async(function(
 #' returns the parsed response data as a `data.table`. This function is intended for internal use within an R6 class
 #' and is **not** intended for direct end-user consumption.
 #'
-#' **Parameters**
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied
+#'    \code{base_url}) and appending the endpoint and query string.
+#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, full endpoint, and request body.
+#' 3. **API Request:** Sends a `GET` request to the endpoint.
+#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
 #'
-#' - `config`: A list containing API configuration parameters. This list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.
+#' @param query A named list of query parameters to filter the isolated margin account information. Supported parameters include:
+#'   - \code{symbol} (string, optional): For isolated trading pairs; if omitted, queries all pairs.
+#'   - \code{quoteCurrency} (string, optional): The quote currency. Allowed values: "USDT", "KCS", "BTC". Defaults to "USDT".
+#'   - \code{queryType} (string, optional): The type of account query. Allowed values: "ISOLATED", "ISOLATED_V2", "ALL". Defaults to "ISOLATED".
 #'
-#' - `query`: A list of query parameters to filter the isolated margin account information. Supported parameters include:
-#'   - `symbol` (string, optional): For isolated trading pairs; if omitted, queries all pairs.
-#'   - `quoteCurrency` (string, optional): The quote currency. Allowed values: `"USDT"`, `"KCS"`, `"BTC"`. Defaults to `"USDT"`.
-#'   - `queryType` (string, optional): The type of account query. Allowed values: `"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`. Defaults to `"ISOLATED"`.
+#' @return A promise that resolves to a \code{data.table} containing the isolated margin account information.
 #'
-#' **Returns**
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/isolated/accounts}
 #'
-#' A promise that resolves to a `data.table` containing the isolated margin account information.
+#' **Raw Response Schema:**  
+#' - \code{code} (string): Status code, where "200000" indicates success.
+#' - \code{data} (object): Contains:
+#'   - \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
+#'   - \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
+#'   - \code{timestamp} (integer): The timestamp.
+#'   - \code{assets} (array): An array of objects, each representing an isolated margin account detail with fields such as:
+#'       - \code{symbol} (string): Trading pair symbol (e.g., "BTC-USDT").
+#'       - \code{status} (string): Position status.
+#'       - \code{debtRatio} (string): Debt ratio.
+#'       - \code{baseAsset} (object): Details of the base asset.
+#'       - \code{quoteAsset} (object): Details of the quote asset.
 #'
-#' **Details**
+#' For more detailed information, please see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin).
 #'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v3/isolated/accounts`
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' - **Response Schema:**
-#'   - `code` (string): Status code, where `"200000"` indicates success.
-#'   - `data` (object): Contains:
-#'     - `totalAssetOfQuoteCurrency` (string): Total assets in the quote currency.
-#'     - `totalLiabilityOfQuoteCurrency` (string): Total liabilities in the quote currency.
-#'     - `timestamp` (integer): The timestamp.
-#'     - `assets` (array of objects): Each object represents a margin account detail with fields such as:
-#'         - `symbol` (string): Trading pair symbol (e.g., `"BTC-USDT"`).
-#'         - `status` (string): Position status.
-#'         - `debtRatio` (string): Debt ratio.
-#'         - `baseAsset` (object): Details of the base asset.
-#'         - `quoteAsset` (object): Details of the quote asset.
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
 #'
-#' For more details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin).
+#'   # Define query parameters, for example:
+#'   query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
 #'
-#' **Example**
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_isolated_margin_account_impl(keys, base_url, query))
+#'     print(dt)
+#'   })
 #'
-#' ```r
-#' query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
-#' coro::run(function() {
-#'   dt <- await(get_isolated_margin_account_impl(config, query))
-#'   print(dt)
-#' })
-#' ```
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_isolated_margin_account_impl <- coro::async(function(config, query = list()) {
+get_isolated_margin_account_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v3/isolated/accounts"
         method <- "GET"
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        headers <- await(build_headers(method, full_endpoint, body, config))
-        url <- paste0(base_url, full_endpoint)
+        headers <- await(build_headers(method, full_endpoint, body, keys))
 
+        url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- data.table::as.data.table(data)
+
+        parsed_response <- process_kucoin_response(response, url)
+        dt <- data.table::as.data.table(parsed_response$data)
         return(dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
