@@ -620,65 +620,82 @@ get_isolated_margin_account_impl <- coro::async(function(
 #' the parsed ledger information as a `data.table`. This function is intended for internal use within an R6 class and is
 #' **not** intended for direct end-user consumption.
 #'
-#' **Parameters**
+#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied
+#'    \code{base_url}) and appending the endpoint and query string.
+#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, the full endpoint (including query string),
+#'    and an empty request body.
+#' 3. **API Request:** Sends a \code{GET} request to the endpoint.
+#' 4. **Response Processing:** Processes the API response using a helper function and converts the resulting \code{"data"}
+#'    field into a \code{data.table}.
 #'
-#' - `config`: A list containing API configuration parameters. This list should include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, defaults to the value returned by \code{get_base_url()}.
+#' @param query A named list of query parameters to filter the ledger records. Supported parameters include:
+#'   - \code{currency} (string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.
+#'   - \code{direction} (string, optional): The direction of the transaction, either `"in"` or `"out"`.
+#'   - \code{bizType} (string, optional): The business type of the transaction (e.g., `"DEPOSIT"`, `"WITHDRAW"`, `"TRANSFER"`, `"SUB_TRANSFER"`, `"TRADE_EXCHANGE"`, etc.).
+#'   - \code{startAt} (integer, optional): Start time in milliseconds.
+#'   - \code{endAt} (integer, optional): End time in milliseconds.
+#'   - \code{currentPage} (integer, optional): The page number (default is 1).
+#'   - \code{pageSize} (integer, optional): Number of results per page (minimum 10, maximum 500; default is 50).
 #'
-#' - `query`: A list of query parameters to filter the ledger records. Supported parameters include:
-#'   - `currency` (string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.
-#'   - `direction` (string, optional): The direction of the transaction, either `"in"` or `"out"`.
-#'   - `bizType` (string, optional): The business type of the transaction, e.g., `"DEPOSIT"`, `"WITHDRAW"`, `"TRANSFER"`, `"SUB_TRANSFER"`, `"TRADE_EXCHANGE"`, etc.
-#'   - `startAt` (integer, optional): Start time in milliseconds.
-#'   - `endAt` (integer, optional): End time in milliseconds.
-#'   - `currentPage` (integer, optional): The page number (default is 1).
-#'   - `pageSize` (integer, optional): Number of results per page (minimum 10, maximum 500; default is 50).
+#' @return A promise that resolves to a \code{data.table} containing the ledger information. The data table includes:
+#'   - \strong{currentPage} (integer): The current page number.
+#'   - \strong{pageSize} (integer): The number of results per page.
+#'   - \strong{totalNum} (integer): The total number of records.
+#'   - \strong{totalPage} (integer): The total number of pages.
+#'   - \strong{items} (list): An array of ledger records.
 #'
-#' **Returns**
-#'
-#' A promise that resolves to a `data.table` containing the ledger information, which includes:
-#' - `currentPage`: The current page number.
-#' - `pageSize`: The number of results per page.
-#' - `totalNum`: The total number of records.
-#' - `totalPage`: The total number of pages.
-#' - `items`: An array of ledger records.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v1/accounts/ledgers`
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts/ledgers}
 #'
 #' For further details, refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
-#' coro::run(function() {
-#'   dt <- await(get_spot_ledger_impl(config, query))
-#'   print(dt)
-#' })
-#' ```
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
+#'
+#'   # Define query parameters, for example:
+#'   query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
+#'
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_spot_ledger_impl(keys, base_url, query))
+#'     print(dt)
+#'   })
+#'
+#'   main_async()
+#'   while (!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_spot_ledger_impl <- coro::async(function(config, query = list()) {
+get_spot_ledger_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v1/accounts/ledgers"
         method <- "GET"
         body <- ""
         qs <- build_query(query)
         full_endpoint <- paste0(endpoint, qs)
-        # Build authentication headers using the full endpoint (including query string)
-        headers <- await(build_headers(method, full_endpoint, body, config))
+        headers <- await(build_headers(method, full_endpoint, body, keys))
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- data.table::as.data.table(data)
+        parsed_response <- process_kucoin_response(response, url)
+        dt <- data.table::as.data.table(parsed_response$data)
         return(dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_ledger_impl:", conditionMessage(e)))
