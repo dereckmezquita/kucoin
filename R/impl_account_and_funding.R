@@ -96,74 +96,77 @@ get_account_summary_info_impl <- coro::async(function(
 #'
 #' This asynchronous function implements the logic for retrieving API key information from the KuCoin API.
 #' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
-#' The function constructs the full URL, builds the authentication headers, sends the `GET` request, and processes the response,
-#' converting the result into a `data.table`.
+#' The function constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url}),
+#' builds the authentication headers, sends the \code{GET} request to the endpoint, and processes the response,
+#' converting the \code{"data"} field into a \code{data.table}.
 #'
-#' **Parameters**
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+#'   - \code{api_key}: Your KuCoin API key.
+#'   - \code{api_secret}: Your KuCoin API secret.
+#'   - \code{api_passphrase}: Your KuCoin API passphrase.
+#'   - \code{key_version}: The version of the API key (e.g., "2").
+#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
 #'
-#' - `config`: A list containing API configuration parameters. The list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `base_url`: The base URL for the API (e.g., `"https://api.kucoin.com"`).
-#'   - `key_version`: The version of the API key (e.g., `"2"`).
+#' @return A promise that resolves to a \code{data.table} containing the API key information. The resulting data table is constructed
+#' from the \code{"data"} field of the raw API response and includes the following columns:
+#'   - \strong{uid} (integer): Account UID.
+#'   - \strong{subName} (string, optional): Sub account name (if applicable; not provided for master accounts).
+#'   - \strong{remark} (string): Remarks associated with the API key.
+#'   - \strong{apiKey} (string): The API key.
+#'   - \strong{apiVersion} (integer): API version.
+#'   - \strong{permission} (string): A comma-separated list of permissions (e.g., "General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn").
+#'   - \strong{ipWhitelist} (string, optional): IP whitelist, if applicable.
+#'   - \strong{isMaster} (boolean): Indicates whether the API key belongs to the master account.
+#'   - \strong{createdAt} (integer): API key creation time in milliseconds.
 #'
-#' **Returns**
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/user/api-key}  
 #'
-#' A promise that resolves to a `data.table` containing the API key information.
-#'
-#' **Details**
-#'
-#' - **Endpoint:** `GET https://api.kucoin.com/api/v1/user/api-key`
-#'
-#' - **Response Schema:**
-#'   - `code` (string): Status code, where `"200000"` indicates success.
-#'   - `data` (object): Contains API key details, including:
-#'     - `uid` (integer): Account UID.
-#'     - `subName` (string, optional): Sub account name (if applicable; not provided for master accounts).
-#'     - `remark` (string): Remarks associated with the API key.
-#'     - `apiKey` (string): The API key.
-#'     - `apiVersion` (integer): API version.
-#'     - `permission` (string): A comma-separated list of permissions (e.g., `General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn`).
-#'     - `ipWhitelist` (string, optional): IP whitelist, if applicable.
-#'     - `isMaster` (boolean): Indicates whether the API key belongs to the master account.
-#'     - `createdAt` (integer): API key creation time in milliseconds.
+#' **Raw Response Schema:**  
+#' - \code{code} (string): Status code, where "200000" indicates success.
+#' - \code{data} (object): Contains API key details as described above.
 #'
 #' For additional details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info).
 #'
-#' **Example**
+#' @examples
+#' \dontrun{
+#'   # Retrieve API keys from the environment using get_api_keys()
+#'   keys <- get_api_keys()
 #'
-#' ```r
-#' config <- list(
-#'   api_key = "your_api_key",
-#'   api_secret = "your_api_secret",
-#'   api_passphrase = "your_api_passphrase",
-#'   base_url = "https://api.kucoin.com",
-#'   key_version = "2"
-#' )
+#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+#'   base_url <- "https://api.kucoin.com"
 #'
-#' # Execute the asynchronous request using coro::run:
-#' coro::run(function() {
-#'   dt <- await(get_apikey_info_impl(config))
-#'   print(dt)
-#' })
-#' ```
+#'   # Execute the asynchronous request using coro::run:
+#'   main_async <- coro::async(function() {
+#'     dt <- await(get_apikey_info_impl(keys, base_url))
+#'     print(dt)
+#'   })
+#'
+#'   main_async()
+#'   while(!later::loop_empty()) {
+#'     later::run_now()
+#'   }
+#' }
 #'
 #' @md
 #' @export
-get_apikey_info_impl <- coro::async(function(config) {
+get_apikey_info_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url()
+) {
     tryCatch({
-        base_url <- get_base_url()
         endpoint <- "/api/v1/user/api-key"
         method <- "GET"
         body <- ""
-        headers <- await(build_headers(method, endpoint, body, config))
-        url <- paste0(base_url, endpoint)
+        headers <- await(build_headers(method, endpoint, body, keys))
 
+        url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, timeout(3))
-        data <- process_kucoin_response(response, url)
-        dt <- data.table::as.data.table(data)
-        return(dt)
+
+        # Process the response and extract the "data" field.
+        parsed_response <- process_kucoin_response(response, url)
+
+        return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
     })
