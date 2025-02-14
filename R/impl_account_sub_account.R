@@ -7,32 +7,107 @@ box::use(
 
 #' Add SubAccount Implementation
 #'
-#' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request
-#' to the `/api/v2/sub/user/created` endpoint. On success, it returns a data.table with the sub‐account details.
+#' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request to the 
+#' `/api/v2/sub/user/created` endpoint. Sub‐accounts are used to segregate trading activities or to allow 
+#' multiple users within the same master account to operate independently. This function handles the entire 
+#' process—from constructing the request body and generating the appropriate authentication headers to sending 
+#' the request and processing the response. On success, it returns a `data.table` with key details about the 
+#' newly created sub‐account.
 #'
-#' @param config A list containing API configuration parameters.
-#' @param password A string representing the sub‐account password (7–24 characters; must contain letters and numbers).
-#' @param subName A string representing the sub‐account name (7–32 characters; must contain at least one letter and one number; no spaces).
-#' @param access A string representing the permission type (allowed values: "Spot", "Futures", "Margin").
-#' @param remarks An optional string for remarks (1–24 characters).
+#' ## Endpoint Overview
 #'
-#' @return A promise that resolves to a data.table containing the sub‐account details. The returned table
-#'         includes at least the following columns: uid, subName, remarks, and access.
+#' **Endpoint URL:**  
+#' `POST https://api.kucoin.com/api/v2/sub/user/created`
 #'
-#' @details
-#' **Endpoint:** POST `https://api.kucoin.com/api/v2/sub/user/created`
+#' **Purpose:**  
+#' This endpoint is used to add a new sub-account under a master KuCoin account. Sub-accounts can be used to manage 
+#' different trading strategies or for delegating trading activities. They are particularly useful in institutional 
+#' or multi-user environments.
 #'
-#' The expected response on success is similar to:
+#' **Request Requirements:**  
+#' - The request must be authenticated using the master account's API credentials.
+#' - The POST request body must be in JSON format.
 #'
-#'     data.table(
-#'         uid = 237231855,
-#'         subName = "Name12345678",
-#'         remarks = "Test sub-account",
-#'         access = "Spot"
-#'     )
+#' **Response Details:**  
+#' On success, the API returns a JSON response with a status code of `"200000"`, and the `data` object contains 
+#' details about the newly created sub-account, including its unique identifier (uid), name, remarks, and permission type.
 #'
-#' @examples
+#' ## Parameters
+#'
+#' - **config**:  
+#'   A list containing API configuration parameters. This list must include:
+#'   - `api_key`: Your KuCoin API key.
+#'   - `api_secret`: Your KuCoin API secret.
+#'   - `api_passphrase`: Your KuCoin API passphrase.
+#'   - `base_url`: The base URL for the API (typically `"https://api.kucoin.com"`).
+#'   - `key_version`: The version of the API key (usually `"2"`).
+#'
+#' - **password**:  
+#'   A string representing the sub‐account password.  
+#'   **Requirements:**  
+#'   - Must be between 7 and 24 characters in length.
+#'   - Must contain both letters and numbers.
+#'
+#' - **subName**:  
+#'   A string representing the desired sub‐account name.  
+#'   **Requirements:**  
+#'   - Must be between 7 and 32 characters.
+#'   - Must contain at least one letter and one number.
+#'   - Must not contain any spaces.
+#'
+#' - **access**:  
+#'   A string representing the permission type for the sub‐account.  
+#'   **Allowed Values:**  
+#'   - `"Spot"`
+#'   - `"Futures"`
+#'   - `"Margin"`
+#'
+#' - **remarks**:  
+#'   (Optional) A string containing remarks or notes about the sub‐account.  
+#'   **Requirements:**  
+#'   - If provided, must be between 1 and 24 characters.
+#'
+#' ## Return Value
+#'
+#' Returns a promise that resolves to a `data.table` containing the sub‐account details. The returned table 
+#' will include at least the following columns:
+#' - **uid**: The unique identifier for the sub-account.
+#' - **subName**: The name of the sub-account.
+#' - **remarks**: Any remarks or notes provided.
+#' - **access**: The permission type granted to the sub-account.
+#'
+#' ## Detailed Workflow
+#'
+#' 1. **URL Construction:**  
+#'    The function retrieves the base URL from the `config` and appends the endpoint `/api/v2/sub/user/created` to construct the full URL.
+#'
+#' 2. **Request Body Preparation:**  
+#'    The function creates a list containing the required parameters (`password`, `subName`, `access`).  
+#'    - If the optional parameter `remarks` is provided, it is added to the list.
+#'    - The list is then converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE` to ensure proper formatting.
+#'
+#' 3. **Header Preparation:**  
+#'    Authentication headers are generated by calling `build_headers()` asynchronously. These headers include 
+#'    the necessary signature and timestamp required by the KuCoin API.
+#'
+#' 4. **API Request:**  
+#'    The function sends a POST request using `POST()` with the constructed URL, headers, and JSON body. A timeout 
+#'    of 3 seconds is applied to the request.
+#'
+#' 5. **Response Handling:**  
+#'    The response is read and parsed from JSON into an R object. The function checks for both HTTP and API-level 
+#'    errors:
+#'    - If the HTTP status code is not 200, an error is raised.
+#'    - If the API returns a code other than `"200000"`, an error is raised with the message provided in the response.
+#'
+#' 6. **Result Conversion:**  
+#'    On success, the `data` field of the response is converted to a `data.table` and returned.
+#'
+#' ## Example Usage
+#'
+#' ```r
 #' \dontrun{
+#'   # Assume `config` is already defined with the necessary API credentials.
 #'   coro::run(function() {
 #'       result <- await(add_subaccount_impl(
 #'           config,
@@ -44,8 +119,10 @@ box::use(
 #'       print(result)
 #'   })
 #' }
+#' ```
 #'
 #' @export
+#' @md
 add_subaccount_impl <- coro::async(function(config, password, subName, access, remarks = NULL) {
     tryCatch({
         base_url <- get_base_url(config)
