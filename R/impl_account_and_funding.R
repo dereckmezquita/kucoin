@@ -737,7 +737,7 @@ get_isolated_margin_account_impl <- coro::async(function(
 #'     \item{\code{bizType}}{(string) Business type (e.g., "TRANSFER").}
 #'     \item{\code{direction}}{(string) Transaction direction ("in" or "out").}
 #'     \item{\code{createdAt}}{(integer) Timestamp of the transaction in milliseconds.}
-#'     \item{\code{context}}{(string) Additional context provided with the transaction.}
+#'     \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin}).}
 #'     \item{\code{context}}{(string) Additional context provided with the transaction.}
 #'     \item{\code{currentPage}}{(integer) The current page number (from the response).}
 #'     \item{\code{pageSize}}{(integer) The page size (from the response).}
