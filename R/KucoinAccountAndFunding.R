@@ -396,34 +396,53 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' Retrieve Spot Ledger Records.
         #'
         #' @description
-        #' Retrieves detailed ledger records for spot and margin accounts, including transaction histories for deposits, 
-        #' withdrawals, transfers, and trades. The response is paginated and includes metadata such as the current page number,
-        #' page size, total number of records, and total pages. The results are returned as a `data.table`.
+        #' Retrieves detailed ledger records for spot and margin accounts, including transaction histories for deposits, withdrawals, transfers, and trades.
+        #' The response is paginated and includes metadata such as current page, page size, total number of records, and total pages.
+        #' The results are aggregated into a single flat data.table.
         #'
         #' **API Endpoint:**  
         #' `GET https://api.kucoin.com/api/v1/accounts/ledgers`
         #'
         #' **Workflow:**
-        #' - Constructs the URL by appending `/api/v1/accounts/ledgers` and any query parameters to the base URL.
+        #' - Constructs the URL by appending `/api/v1/accounts/ledgers` and any user-supplied query parameters to the base URL.
         #' - Generates authentication headers.
         #' - Sends an asynchronous GET request.
-        #' - Processes the response and converts the `"data"` field into a `data.table` with pagination metadata and an array 
-        #'   of ledger records.
+        #' - Automatically paginates through all pages using the \code{auto_paginate} helper. Pagination parameters are supplied as separate arguments.
+        #' - Aggregates the ledger records into a single data.table.
         #'
         #' **Query Parameters:**  
         #' - `currency`: (Optional) Filter by one or more currencies.
         #' - `direction`: (Optional) `"in"` for incoming or `"out"` for outgoing transactions.
         #' - `bizType`: (Optional) The business type (e.g., `"DEPOSIT"`, `"WITHDRAW"`, `"TRANSFER"`, etc.).
         #' - `startAt` / `endAt`: (Optional) Millisecond timestamps defining a time range.
-        #' - `currentPage`: (Optional) The page number (default is 1).
-        #' - `pageSize`: (Optional) The number of records per page (default is 50; range: 10–500).
         #'
-        #' For further details, see the [Spot Ledger API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
+        #' @param query A named list of additional query parameters (excluding pagination parameters).
+        #' @param page_size (integer, optional) Number of results per page (default is 50; range: 10–500).
+        #' @param max_pages (integer, optional) Maximum number of pages to fetch (default is \code{Inf} to fetch all pages).
         #'
-        #' @param query A named list of query parameters.
-        #' @return A promise that resolves to a `data.table` containing ledger records and pagination metadata.
-        get_spot_ledger = function(query = list()) {
-            return(impl$get_spot_ledger_impl(self$keys, self$base_url, query))
+        #' @return A promise that resolves to a data.table containing the aggregated ledger records.
+        #' Each row represents a ledger record with columns including:
+        #'   - \code{id}: Ledger record ID.
+        #'   - \code{currency}: The currency.
+        #'   - \code{amount}: Transaction amount.
+        #'   - \code{fee}: Transaction fee.
+        #'   - \code{balance}: Account balance after the transaction.
+        #'   - \code{accountType}: The account type (e.g., "TRADE").
+        #'   - \code{bizType}: Business type (e.g., "TRANSFER").
+        #'   - \code{direction}: Transaction direction ("in" or "out").
+        #'   - \code{createdAt}: Transaction timestamp in milliseconds.
+        #'   - \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin}).}
+        #'   - \code{context}: Additional context for the transaction.
+        #'   - \code{currentPage}: Current page number from the response.
+        #'   - \code{pageSize}: Page size from the response.
+        #'   - \code{totalNum}: Total number of records.
+        #'   - \code{totalPage}: Total number of pages.
+        #'
+        #' For further details, please refer to the [Spot Ledger API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
+        #'
+        #' @export
+        get_spot_ledger = function(query = list(), page_size = 50, max_pages = Inf) {
+            return(impl$get_spot_ledger_impl(self$keys, self$base_url, page_size, max_pages, query))
         }
     )
 )
