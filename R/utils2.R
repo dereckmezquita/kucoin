@@ -4,7 +4,7 @@
 #' @param ms A numeric value representing the time in milliseconds.
 #' @return A POSIXct object representing the time in the UTC timezone.
 #' @export
-time_convert_from_kucoin <- function(ms) {
+time_convert_from_kucoin_ms <- function(ms) {
     if (!is.numeric(ms)) {
         rlang::abort("Input must be a numeric value.")
     }
@@ -16,7 +16,7 @@ time_convert_from_kucoin <- function(ms) {
 #' @param datetime A POSIXct object representing the time.
 #' @return A numeric value representing the time in milliseconds.
 #' @export
-time_convert_to_kucoin <- function(datetime) {
+time_convert_to_kucoin_ms <- function(datetime) {
     if (!inherits(datetime, "POSIXct")) {
         rlang::abort("Input must be a POSIXct object.")
     }
