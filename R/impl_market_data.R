@@ -68,11 +68,15 @@ frequency_to_seconds <- function(freq) {
 #' Given a start and end time (POSIXct) and the duration of a single candle (in seconds),
 #' this function splits the overall time range into segments such that each segment covers at most
 #' `max_candles` candles.
+#' 
+#' Note: The function extends the end of each segment by `overlap` seconds to ensure that the last candle
+#' when fetching data segments make sure to deduplicate the data.
 #'
 #' @param from A POSIXct object representing the start time.
 #' @param to A POSIXct object representing the end time.
 #' @param candle_duration_s A numeric value; the duration of one candle in seconds.
 #' @param max_candles Maximum number of candles per segment (default is 1500).
+#' @param overlap Number of seconds to extend the end of each segment (default is 1).
 #'
 #' @return A data.table with two columns, `from` and `to`, where each row defines a segment.
 #'
@@ -84,7 +88,13 @@ frequency_to_seconds <- function(freq) {
 #' split_time_range_by_candles(from, to, candle_duration_s)
 #'
 #' @export
-split_time_range_by_candles <- function(from, to, candle_duration_s, max_candles = 1500) {
+split_time_range_by_candles <- function(
+    from,
+    to,
+    candle_duration_s,
+    max_candles = 1500,
+    overlap = 1
+) {
     if (from >= to) {
         rlang::abort('"from" must be earlier than "to".')
     }
@@ -94,15 +104,14 @@ split_time_range_by_candles <- function(from, to, candle_duration_s, max_candles
     to_s <- utils2$time_convert_to_kucoin_s(to)
     total_seconds <- to_s - from_s
 
-    time_interval <- lubridate::interval(from, to)
-
     segment_seconds <- max_candles * candle_duration_s
-    # if the whole segement can be covered by 1500 data points
     if (total_seconds <= segment_seconds) {
         return(data.table::data.table(from = from, to = to))
     }
+    # Generate segment start times
     seg_starts <- seq(from, to, by = segment_seconds)
-    seg_ends <- pmin(seg_starts + segment_seconds, to)
+    # For each segment, extend the end by 'overlap' seconds, but do not go past the overall 'to'
+    seg_ends <- pmin(seg_starts + segment_seconds + overlap, to)
     return(data.table::data.table(from = seg_starts, to = seg_ends))
 }
 
@@ -340,6 +349,8 @@ get_klines_impl <- coro::async(function(
         # Execute all segment requests concurrently.
         result <- promises::promise_all(.list = fetch_promises)$then(function(datas) {
             combined <- data.table::rbindlist(datas, fill = TRUE)
+            # Remove duplicates based on the timestamp (or datetime) column
+            combined <- unique(combined, by = "timestamp")
             data.table::setorder(combined, datetime)
             return(combined)
         })
@@ -350,6 +361,7 @@ get_klines_impl <- coro::async(function(
             dt_seg <- await(p)
             combined <- data.table::rbindlist(list(combined, dt_seg), fill = TRUE)
         }
+        combined <- unique(combined, by = "timestamp")
         data.table::setorder(combined, datetime)
         result <- combined
     }
