@@ -2,7 +2,7 @@
 
 box::use(
     impl = ./impl_account_and_funding,
-    ./utils[ get_api_keys ]
+    ./utils[ get_api_keys, get_base_url ]
 )
 
 #' KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints
