@@ -147,7 +147,7 @@ fetch_klines_segment <- coro::async(function(
         data.table::setnames(data, old_cnames, new_cnames)
         data[, (1:7) := lapply(.SD, as.numeric), .SDcols = 1:7]
         data[, datetime := lubridate::as_datetime(timestamp)]
-        data.table::setcolorderv(data, c("datetime", new_cnames))
+        data.table::setcolorder(data, c("datetime", new_cnames))
         data.table::setorder(data, datetime)
     }
     return(data)
@@ -181,7 +181,7 @@ get_klines_impl <- coro::async(function(
 
     # Create a list of promises (one for each segment)
     fetch_promises <- lapply(1:nrow(segments_dt), function(idx) {
-        curr_seg <- segments[idx]
+        curr_seg <- segments_dt[idx]
         return(fetch_klines_segment(symbol, freq, curr_seg$from, curr_seg$to, base_url, retries, delay_ms))
     })
 
