@@ -3,6 +3,7 @@ temp*
 *.ignore.*
 *html
 *.sqlite
+merged_files.txt
 
 *.log
 

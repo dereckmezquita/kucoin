@@ -338,12 +338,11 @@ get_klines_impl <- coro::async(function(
 
     if (concurrent) {
         # Execute all segment requests concurrently.
-        result <- promises::promise_all(.list = fetch_promises)
-            $then(function(datas) {
-                combined <- data.table::rbindlist(datas, fill = TRUE)
-                data.table::setorder(combined, datetime)
-                return(combined)
-            })
+        result <- promises::promise_all(.list = fetch_promises)$then(function(datas) {
+            combined <- data.table::rbindlist(datas, fill = TRUE)
+            data.table::setorder(combined, datetime)
+            return(combined)
+        })
     } else {
         # Execute requests sequentially.
         combined <- data.table::data.table()

@@ -51,5 +51,5 @@ time_convert_to_kucoin_s <- function(datetime) {
     if (!inherits(datetime, "POSIXct")) {
         rlang::abort("Input must be a POSIXct object.")
     }
-    return(as.numeric(lubridate::as_datetime(datetime)))
+    return(as.integer(as.numeric(lubridate::as_datetime(datetime))))
 }
