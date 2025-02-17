@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ process_kucoin_response ],
     ./utils[ build_query, get_base_url ],
-    ./utils2[ time_convert_from_kucoin_ms, time_convert_to_kucoin_ms ]
+    ./utils2[ time_convert_from_kucoin_s, time_convert_to_kucoin_ms ]
 )
 
 #' Convert Frequency String to Seconds
