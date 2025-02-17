@@ -1,5 +1,14 @@
 # File: ./R/utils2.R
 
+#' @export
+verify_ticker <- function(ticker) {
+    # has to be of format "BTC-USDT"
+    if (!grepl("^[A-Z|0-9]+-[A-Z|0-9]+$", ticker)) {
+        return(FALSE)
+    }
+    return(TRUE)
+}
+
 #' Convert Kucoin's server time; UNIX timestamp to POSIXct from milliseconds
 #' @param ms A numeric value representing the time in milliseconds.
 #' @return A POSIXct object representing the time in the UTC timezone.
