@@ -1,4 +1,4 @@
-# File: ./R/KucoinSubAccount.R
+# File: ./R/KucoinSubAccount
 
 box::use(
     impl = ./impl_account_sub_account,
@@ -6,8 +6,8 @@ box::use(
 )
 
 #' @export
-KuCoinSubAccount <- R6::R6Class(
-    "KuCoinSubAccount",
+KucoinSubAccount <- R6::R6Class(
+    "KucoinSubAccount",
     public = list(
         keys = NULL,
         base_url = NULL,
