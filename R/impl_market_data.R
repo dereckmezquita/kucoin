@@ -317,7 +317,8 @@ get_klines_impl <- coro::async(function(
     to = lubridate::now(),
     concurrent = TRUE,
     delay_ms = 0,
-    retries = 3
+    retries = 3,
+    verbose = FALSE
 ) {
     from <- lubridate::as_datetime(from)
     to <- lubridate::as_datetime(to)
@@ -333,6 +334,7 @@ get_klines_impl <- coro::async(function(
 
     # Create a list of promises (one for each segment)
     fetch_promises <- lapply(1:nrow(segments_dt), function(idx) {
+        if (verbose) cat("Fetching segment", idx, "of", nrow(segments_dt), "\n")
         curr_seg <- segments_dt[idx]
         return(fetch_klines_segment(
             base_url = base_url,

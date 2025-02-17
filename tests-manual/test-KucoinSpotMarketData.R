@@ -21,8 +21,8 @@ market_data <- KucoinSpotMarketData$new()
 async_main <- coro::async(function() {
     data <- await(market_data$get_klines(
         symbol = "BTC-USDT",
-        freq = "1min",
-        from = lubridate::now() - 24 * 3600,
+        freq = "15min",
+        from = lubridate::now() - lubridate::days(90),
         to = lubridate::now(),
         concurrent = TRUE
     ))
