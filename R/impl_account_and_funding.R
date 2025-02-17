@@ -2,7 +2,7 @@
 
 box::use(
     ./helpers_api[ build_headers, process_kucoin_response ],
-    ./utils[ build_query, convert_datetime_range_to_ms, get_api_keys, get_base_url ]
+    ./utils[ build_query, get_api_keys, get_base_url, time_convert_from_kucoin_ms ]
 )
 
 #' Get Account Summary Information (Implementation)
@@ -556,7 +556,7 @@ get_cross_margin_account_impl <- coro::async(function(
 #' 3. **API Request:** Sends an asynchronous GET request to the endpoint.
 #' 4. **Response Processing:** Processes the API response using a helper function and then:
 #'    \itemize{
-#'      \item Extracts overall summary fields into a data.table and adds a new column \code{datetime} by converting the raw \code{timestamp} using \code{time_convert_from_kucoin}.
+#'      \item Extracts overall summary fields into a data.table and adds a new column \code{datetime} by converting the raw \code{timestamp} using \code{time_convert_from_kucoin_ms}.
 #'      \item Flattens the nested \code{baseAsset} and \code{quoteAsset} objects from each asset into separate columns with prefixes.
 #'    }
 #'
@@ -583,7 +583,7 @@ get_cross_margin_account_impl <- coro::async(function(
 #'         \item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
 #'         \item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
 #'         \item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-#'         \item{\code{datetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin}).}
+#'         \item{\code{datetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin_ms}).}
 #'       }
 #'     }
 #'     \item{\code{assets}}{
@@ -661,7 +661,7 @@ get_isolated_margin_account_impl <- coro::async(function(
         # Extract summary fields into a data.table and add a converted datetime column.
         summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "timestamp")
         summary_dt <- data.table::as.data.table(data_obj[summary_fields])
-        summary_dt[, datetime := time_convert_from_kucoin(timestamp)]
+        summary_dt[, datetime := time_convert_from_kucoin_ms(timestamp)]
 
         # Flatten the 'assets' array:
         assets_list <- lapply(data_obj$assets, function(asset) {
@@ -737,7 +737,7 @@ get_isolated_margin_account_impl <- coro::async(function(
 #'     \item{\code{bizType}}{(string) Business type (e.g., "TRANSFER").}
 #'     \item{\code{direction}}{(string) Transaction direction ("in" or "out").}
 #'     \item{\code{createdAt}}{(integer) Timestamp of the transaction in milliseconds.}
-#'     \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin}).}
+#'     \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin_ms}).}
 #'     \item{\code{context}}{(string) Additional context provided with the transaction.}
 #'     \item{\code{currentPage}}{(integer) The current page number (from the response).}
 #'     \item{\code{pageSize}}{(integer) The page size (from the response).}
@@ -803,7 +803,7 @@ get_spot_ledger_impl <- coro::async(function(
             paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
             aggregate_fn = function(acc) {
                 data <- data.table::rbindlist(acc, fill = TRUE)
-                data[, createdAtDatetime := time_convert_from_kucoin(createdAt)]
+                data[, createdAtDatetime := time_convert_from_kucoin_ms(createdAt)]
                 return()
             },
             max_pages = max_pages

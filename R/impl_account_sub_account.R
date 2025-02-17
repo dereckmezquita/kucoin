@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
     ./utils[ build_query, get_base_url ],
-    ./utils2[ time_convert_from_kucoin ]
+    ./utils2[ time_convert_from_kucoin_ms ]
 )
 
 #' Add SubAccount Implementation
@@ -280,7 +280,7 @@ get_subaccount_list_summary_impl <- coro::async(function(
             max_pages = max_pages
         ))
 
-        dt[, createdDatetime := time_convert_from_kucoin(createdAt)]
+        dt[, createdDatetime := time_convert_from_kucoin_ms(createdAt)]
 
         return(dt)
     }, error = function(e) {
