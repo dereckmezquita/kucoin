@@ -673,11 +673,11 @@ get_isolated_margin_account_impl <- coro::async(function(
             dt_row <- data.table::as.data.table(top)
 
             # Flatten baseAsset
-            base <- as.data.table(asset$baseAsset)
+            base <- data.table::as.data.table(asset$baseAsset)
             setnames(base, names(base), paste0("base_", names(base)))
 
             # Flatten quoteAsset
-            quote <- as.data.table(asset$quoteAsset)
+            quote <- data.table::as.data.table(asset$quoteAsset)
             setnames(quote, names(quote), paste0("quote_", names(quote)))
 
             # Combine all columns
