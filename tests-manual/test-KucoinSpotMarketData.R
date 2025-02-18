@@ -19,6 +19,10 @@ box::use(
 market_data <- KucoinSpotMarketData$new()
 
 async_main <- coro::async(function() {
+    cat("Get get_announcements\n")
+    annc <- await(market_data$get_announcements())
+    print(annc)
+
     # cat("Get market data ticker data\n")
     # data <- await(market_data$get_klines(
     #     symbol = "BTC-USDT",
