@@ -6,7 +6,7 @@ box::use(
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
         get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
         get_trade_history_impl, get_part_orderbook_impl, get_full_orderbook_impl,
-        get_24hr_stats_impl
+        get_24hr_stats_impl, get_market_list_impl
     ],
     ./utils[ get_api_keys, get_base_url ]
 )
@@ -807,6 +807,41 @@ KucoinSpotMarketData <- R6::R6Class(
             return(get_24hr_stats_impl(
                 base_url = self$base_url,
                 symbol = symbol
+            ))
+        },
+
+        #' Get Market List
+        #'
+        #' This method retrieves the list of all available trading markets from the KuCoin API.
+        #' The endpoint returns a character vector of market identifiers (e.g., "USDS", "TON", "AI", etc.) that represent different trading areas.
+        #' 
+        #' These identifiers can be used to further query market-specific data with other endpoints, such as obtaining 24-hour statistics or ticker information for a given market.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **URL Construction:**  
+        #'    The method constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint path \code{/api/v1/markets}.  
+        #'
+        #' 2. **HTTP Request:**  
+        #'    It sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+        #'
+        #' 3. **Response Processing:**  
+        #'    The response is processed using \code{process_kucoin_response()} to validate the HTTP status and API code, and the \code{data} field is extracted.
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
+        #'
+        #' @return A promise that resolves to a \code{character} vector containing the list of available trading markets.
+        #'         Each element in the vector is a market identifier (e.g., "USDS", "TON", "AI", etc.).
+        #'
+        #' @seealso
+        #' \itemize{
+        #'   \item \code{\link{get_24hr_stats_impl}} for retrieving detailed 24-hour statistics for a specific trading pair.
+        #'   \item \code{\link{get_ticker_impl}} for obtaining ticker information for a specific trading pair.
+        #' }
+        get_market_list = function() {
+            return(get_market_list_impl(
+                base_url = self$base_url
             ))
         }
     )    

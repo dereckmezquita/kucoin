@@ -1110,3 +1110,70 @@ get_24hr_stats_impl <- coro::async(function(
         rlang::abort(paste("Error in get_24hr_stats_impl:", conditionMessage(e)))
     })
 })
+
+#' Get Market List (Implementation)
+#'
+#' This asynchronous function retrieves the list of all available trading markets from the KuCoin API.
+#' The endpoint returns an array of market identifiers (e.g., "USDS", "TON", "AI", etc.) which represent different
+#' trading areas. This list can be used to filter or further query market-specific data using other endpoints (e.g., retrieving
+#' 24-hour statistics or ticker information for a specific market).
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **URL Construction:**  
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint path
+#'    \code{/api/v1/markets}. No query parameters are required.
+#'
+#' 2. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 3. **Response Processing:**  
+#'    Processes the API response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field, which contains the list of markets.
+#'
+#' **API Documentation:**  
+#' [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#'
+#' @return A promise that resolves to a \code{character} vector containing the list of available trading markets.
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/markets}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @seealso
+#' \itemize{
+#'   \item \code{\link{get_24hr_stats_impl}} for retrieving detailed statistics for a specific trading pair.
+#'   \item \code{\link{get_ticker_impl}} for obtaining ticker information.
+#' }
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve the list of markets:
+#'   dt_markets <- await(get_market_list_impl())
+#'   print(dt_markets)
+#' }
+#'
+#' @md
+#' @export
+get_market_list_impl <- coro::async(function(
+  base_url = get_base_url()
+) {
+    tryCatch({
+        endpoint <- "/api/v1/markets"
+        url <- paste0(base_url, endpoint)
+        
+        # Send the GET request with a 10-second timeout.
+        response <- httr::GET(url, httr::timeout(10))
+        
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+        
+        return(parsed_response$data)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_market_list_impl:", conditionMessage(e)))
+    })
+})
