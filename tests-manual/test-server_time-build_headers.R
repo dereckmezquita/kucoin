@@ -1,3 +1,5 @@
+if (interactive()) setwd("./tests-manual")
+
 #!/usr/bin/env Rscript
 box::use(
     later[run_now, loop_empty],
@@ -11,16 +13,17 @@ box::use(
 # We call get_server_time() with a fake base URL. Since the URL is fake,
 # we expect the promise to be rejected.
 # -----------------------------------------------------------------------------
-cat("Testing get_server_time() with a fake URL...\n")
 
 base_url <- get_base_url()
+
+cat("Testing get_server_time()\n", base_url, "\n")
 
 # Call get_server_time with a fake URL.
 p_time <- get_server_time(base_url)
 p_time$
     then(function(timestamp) {
         cat("get_server_time resolved to:", timestamp, "\n")
-        print(jsonlite::fromJSON(timestamp)$data)
+        print(timestamp)
     })$
     catch(function(e) {
         cat("get_server_time rejected with error:", conditionMessage(e), "\n")
