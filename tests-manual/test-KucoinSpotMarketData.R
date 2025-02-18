@@ -19,34 +19,38 @@ box::use(
 market_data <- KucoinSpotMarketData$new()
 
 async_main <- coro::async(function() {
-    # cat("Get market data ticker data\n")
-    # data <- await(market_data$get_klines(
-    #     symbol = "BTC-USDT",
-    #     freq = "15min",
-    #     from = lubridate::now() - lubridate::days(90),
-    #     to = lubridate::now(),
-    #     concurrent = TRUE
-    # ))
+    cat("Get market data ticker data\n")
+    data <- await(market_data$get_klines(
+        symbol = "BTC-USDT",
+        freq = "15min",
+        from = lubridate::now() - lubridate::days(90),
+        to = lubridate::now(),
+        concurrent = TRUE
+    ))
 
-    # print(data)
+    print(data)
 
-    # cat("Get currency information\n")
-    # currency_data <- await(market_data$get_currency(
-    #     currency = "BTC"
-    # ))
+    cat("Get currency information\n")
+    currency_data <- await(market_data$get_currency(
+        currency = "BTC"
+    ))
 
-    # print(currency_data)
+    print(currency_data)
 
     cat("Get all currencies\n")
     all_currencies <- await(market_data$get_all_currencies())
     print(all_currencies)
 
-    # cat("Get symbol\n")
-    # symbol_data <- await(market_data$get_symbol(
-    #     symbol = "BTC-USDT"
-    # ))
+    cat("Get symbol\n")
+    symbol_data <- await(market_data$get_symbol(
+        symbol = "BTC-USDT"
+    ))
 
-    # print(symbol_data)
+    print(symbol_data)
+
+    cat("Get all symbols\n")
+    all_symbols <- await(market_data$get_all_symbols())
+    print(all_symbols)
 })
 
 async_main()

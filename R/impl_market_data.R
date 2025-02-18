@@ -363,3 +363,112 @@ get_symbol_impl <- coro::async(function(
         rlang::abort(paste("Error in get_symbol_impl:", conditionMessage(e)))
     })
 })
+
+#' Get All Symbols (Implementation)
+#'
+#' This asynchronous function retrieves a list of all available trading symbols (currency pairs)
+#' from the KuCoin API. The endpoint returns an array of symbol objects with details such as the
+#' symbol code, base currency, quote currency, fee currency, order size limits, price increments,
+#' and fee coefficients.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **Query String Construction (Optional):**  
+#'    Uses the helper function \code{build_query()} to build a query string from the optional \code{market} parameter.
+#'
+#' 2. **URL Construction:**  
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}),
+#'    the endpoint path \code{/api/v2/symbols}, and the optional query string.
+#'
+#' 3. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 4. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field.
+#'
+#' 5. **Data Conversion:**  
+#'    Converts the \code{data} property (an array of symbol objects) into a \code{data.table}.
+#'
+#' **API Documentation:**  
+#' [KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#' @param market (Optional) A character string specifying the trading market to filter symbols (e.g., "ALTS", "USDS", "ETF").
+#'
+#' @return A promise that resolves to a \code{data.table} containing the symbol details. The resulting data.table includes:
+#'         \describe{
+#'           \item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
+#'           \item{name}{(string) Name of the trading pair, which may change after renaming.}
+#'           \item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
+#'           \item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
+#'           \item{feeCurrency}{(string) The currency used for charging fees.}
+#'           \item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
+#'           \item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
+#'           \item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
+#'           \item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
+#'           \item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
+#'           \item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
+#'           \item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
+#'           \item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
+#'           \item{priceLimitRate}{(string) The threshold for price protection.}
+#'           \item{minFunds}{(string) The minimum trading amount required for an order.}
+#'           \item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
+#'           \item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
+#'           \item{feeCategory}{(integer) The fee category/type for the trading pair.}
+#'           \item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
+#'           \item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
+#'           \item{st}{(boolean) A flag indicating special treatment status for the symbol.}
+# Note: below new additions:
+#'           \item{callauctionIsEnabled}{(boolean) Indicates whether call auction is enabled for the symbol.}
+#'           \item{callauctionPriceFloor}{(string) The price floor for call auction.}
+#'           \item{callauctionPriceCeiling}{(string) The price ceiling for call auction.}
+#'           \item{callauctionFirstStageStartTime}{(integer) The start time of the first stage of call auction.}
+#'           \item{callauctionSecondStageStartTime}{(integer) The start time of the second stage of call auction.}
+#'           \item{callauctionThirdStageStartTime}{(integer) The start time of the third stage of call auction.}
+#'           \item{tradingStartTime}{(integer) The start time of trading for the symbol.}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve all trading symbols:
+#'   dt_symbols <- await(get_all_symbols_impl())
+#'   print(dt_symbols)
+#'
+#'   # Retrieve all symbols filtered by market "ALTS":
+#'   dt_symbols_alts <- await(get_all_symbols_impl(market = "ALTS"))
+#'   print(dt_symbols_alts)
+#' }
+#'
+#' @md
+#' @export
+get_all_symbols_impl <- coro::async(function(
+    base_url = get_base_url(),
+    market = NULL
+) {
+    tryCatch({
+        # Build query string from the optional market parameter.
+        qs <- build_query(list(market = market))
+        endpoint <- "/api/v2/symbols"
+        url <- paste0(base_url, endpoint, qs)
+
+        # Send a GET request to the endpoint with a 10-second timeout.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        # Convert the entire 'data' field (an array of symbol objects) into a data.table.
+        symbols_dt <- data.table::as.data.table(parsed_response$data)
+
+        return(symbols_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_all_symbols_impl:", conditionMessage(e)))
+    })
+})

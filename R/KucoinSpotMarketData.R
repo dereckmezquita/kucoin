@@ -2,7 +2,10 @@
 
 box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
-    ./impl_market_data[ get_currency_impl, get_all_currencies_impl, get_symbol_impl ],
+    ./impl_market_data[
+        get_currency_impl, get_all_currencies_impl, get_symbol_impl,
+        get_all_symbols_impl
+    ],
     ./utils[ get_base_url ]
 )
 
@@ -347,6 +350,85 @@ KucoinSpotMarketData <- R6::R6Class(
             return(get_symbol_impl(
                 base_url = self$base_url,
                 symbol = symbol
+            ))
+        },
+
+        #' Retrieve All Trading Symbols
+        #'
+        #' This asynchronous method retrieves a list of all available trading symbols (currency pairs) from the KuCoin API.
+        #' The endpoint returns an array of symbol objects, each containing details such as the symbol code, base currency,
+        #' quote currency, fee currency, trading market, order size limits, price increments, fee coefficients, and other trading-related parameters.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **Query String Construction (Optional):**  
+        #'    Uses the helper function \code{build_query()} to construct a query string from the optional \code{market} parameter.
+        #'
+        #' 2. **URL Construction:**  
+        #'    Constructs the full URL by concatenating the base URL (stored in the class) with the endpoint path 
+        #'    \code{/api/v2/symbols} and the query string.
+        #'
+        #' 3. **HTTP Request:**  
+        #'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+        #'
+        #' 4. **Response Processing:**  
+        #'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+        #'    then extracts the \code{data} field.
+        #'
+        #' 5. **Data Conversion:**  
+        #'    Converts the entire \code{data} property (an array of symbol objects) into a \code{data.table}.
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
+        #'
+        #' @param market (Optional) A character string specifying the trading market filter (e.g., "ALTS", "USDS", "ETF").
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the trading symbol details. The data.table includes:
+        #'         \describe{
+        #'           \item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
+        #'           \item{name}{(string) Name of the trading pair, which may change after renaming.}
+        #'           \item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
+        #'           \item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
+        #'           \item{feeCurrency}{(string) The currency used for charging fees.}
+        #'           \item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
+        #'           \item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
+        #'           \item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
+        #'           \item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
+        #'           \item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
+        #'           \item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
+        #'           \item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
+        #'           \item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
+        #'           \item{priceLimitRate}{(string) The threshold for price protection.}
+        #'           \item{minFunds}{(string) The minimum trading amount required for an order.}
+        #'           \item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
+        #'           \item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
+        #'           \item{feeCategory}{(integer) The fee category/type for the trading pair.}
+        #'           \item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
+        #'           \item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
+        #'           \item{st}{(boolean) A flag indicating special treatment status for the symbol.}
+        #'         }
+        #'
+        #' @details
+        #' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols}  
+        #'
+        #' This method uses a public API endpoint and does not require authentication.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve all trading symbols:
+        #'   dt_symbols <- await(market_data$get_all_symbols())
+        #'   print(dt_symbols)
+        #'
+        #'   # Retrieve trading symbols filtered by market "ALTS":
+        #'   dt_symbols_alts <- await(market_data$get_all_symbols(market = "ALTS"))
+        #'   print(dt_symbols_alts)
+        #' }
+        #'
+        #' @export
+        get_all_symbols = function(market = NULL) {
+            return(get_all_symbols_impl(
+                base_url = self$base_url,
+                market = market
             ))
         }
     )    
