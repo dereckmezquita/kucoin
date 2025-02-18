@@ -4,7 +4,8 @@ box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
-        get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl
+        get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
+        get_trade_history_impl
     ],
     ./utils[ get_base_url ]
 )
@@ -551,6 +552,64 @@ KucoinSpotMarketData <- R6::R6Class(
         #' @export
         get_all_tickers = function() {
             return(get_all_tickers_impl(base_url = self$base_url))
+        },
+
+        #' Retrieve Trade History
+        #'
+        #' This asynchronous method retrieves the trade history (up to the most recent 100 trades) for a specified trading symbol
+        #' from the KuCoin API. It returns a promise that resolves to a `data.table` containing details of each trade, including
+        #' the sequence number, filled price, filled size, trade side, and timestamps. The original trade timestamp (in nanoseconds)
+        #' is converted to a POSIXct datetime.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **HTTP Request:**  
+        #'    Sends a GET request to the KuCoin endpoint for trade history using `httr::GET()` with a 10‑second timeout.
+        #'
+        #' 2. **Response Processing:**  
+        #'    Processes the response using `process_kucoin_response()` to validate the HTTP status and API code, then extracts the
+        #'    `data` field (an array of trade history records).
+        #'
+        #' 3. **Data Conversion:**  
+        #'    Converts the array of trade history objects into a `data.table`.
+        #'
+        #' 4. **Timestamp Conversion:**  
+        #'    Converts the original trade timestamp from nanoseconds into a POSIXct datetime using the helper function
+        #'    `time_convert_from_kucoin_ms()` after dividing by 1e6 (to convert nanoseconds to milliseconds).
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
+        #'
+        #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+        #'
+        #' @return A promise that resolves to a `data.table` containing the trade history. The data.table includes:
+        #'         \describe{
+        #'           \item{sequence}{(string) The sequence number for the trade.}
+        #'           \item{price}{(string) The filled price of the trade.}
+        #'           \item{size}{(string) The filled amount for the trade.}
+        #'           \item{side}{(string) The side of the trade ("buy" or "sell").}
+        #'           \item{time}{(integer) The original trade timestamp in nanoseconds.}
+        #'           \item{timestamp}{(POSIXct) The trade timestamp converted to a datetime (UTC).}
+        #'         }
+        #'
+        #' @details
+        #' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/histories?symbol=<symbol>}  
+        #'
+        #' This method uses a public endpoint and does not require authentication.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve the trade history for the BTC-USDT trading pair:
+        #'   dt_trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
+        #'   print(dt_trade_history)
+        #' }
+        #'
+        #' @export
+        get_trade_history = function(symbol) {
+            return(get_trade_history_impl(
+                base_url = self$base_url,
+                symbol = symbol
+            ))
         }
     )    
 )

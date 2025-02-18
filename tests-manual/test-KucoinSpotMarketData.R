@@ -58,9 +58,12 @@ async_main <- coro::async(function() {
     # ))
     # print(ticker_data)
 
-    cat("Get all tickers\n")
-    all_tickers <- await(market_data$get_all_tickers())
-    print(all_tickers)
+    # cat("Get all tickers\n")
+    # all_tickers <- await(market_data$get_all_tickers())
+    # print(all_tickers)
+
+    cat("Get trade history\n")
+    trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
 })
 
 async_main()

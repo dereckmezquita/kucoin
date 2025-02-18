@@ -667,3 +667,91 @@ get_all_tickers_impl <- coro::async(function(
         rlang::abort(paste("Error in get_all_tickers_impl:", conditionMessage(e)))
     })
 })
+
+#' Get Trade History (Implementation)
+#'
+#' This asynchronous function retrieves the trade history for a specified trading symbol from the KuCoin API.
+#' The endpoint returns the most recent 100 trade records, with each record including details such as the sequence number,
+#' filled price, filled size, trade side (buy/sell), and the timestamp (in nanoseconds).
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **Query String Construction:**  
+#'    Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
+#'
+#' 2. **URL Construction:**  
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
+#'    \code{/api/v1/market/histories}, and the query string.
+#'
+#' 3. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 4. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field which contains an array of trade history objects.
+#'
+#' 5. **Data Conversion:**  
+#'    Converts the array of trade history objects into a \code{data.table}.
+#'
+#' 6. **Timestamp Conversion:**  
+#'    Converts the trade timestamp from nanoseconds to a POSIXct datetime by dividing by 1e6 (to get milliseconds)
+#'    and applying the helper function \code{time_convert_from_kucoin_ms()}.
+#'
+#' **API Documentation:**  
+#' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+#'
+#' @return A promise that resolves to a \code{data.table} containing the trade history records.
+#'         The data.table includes the following columns:
+#'         \describe{
+#'           \item{sequence}{(string) The sequence number for the trade.}
+#'           \item{price}{(string) The filled price of the trade.}
+#'           \item{size}{(string) The filled amount for the trade.}
+#'           \item{side}{(string) The side of the trade ("buy" or "sell").}
+#'           \item{time}{(integer) The original trade timestamp in nanoseconds.}
+#'           \item{datetime}{(POSIXct) The trade timestamp converted to a datetime (UTC).}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/histories?symbol=<symbol>}  
+#'
+#' This function uses a public API endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve the trade history for the BTC-USDT trading pair:
+#'   dt_trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
+#'   print(dt_trade_history)
+#' }
+#'
+#' @md
+#' @export
+get_trade_history_impl <- coro::async(function(
+    base_url = get_base_url(),
+    symbol
+) {
+    tryCatch({
+        qs <- build_query(list(symbol = symbol))
+        endpoint <- "/api/v1/market/histories"
+        url <- paste0(base_url, endpoint, qs)
+
+        # Send a GET request to the endpoint with a 10-second timeout.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        # Convert the 'data' field (an array of trade history objects) into a data.table.
+        trade_history_dt <- data.table::as.data.table(parsed_response$data)
+
+        # Convert the trade timestamp from nanoseconds to a POSIXct datetime.
+        trade_history_dt[, timestamp := time_convert_from_kucoin_ms(time / 1e6)]
+
+        return(trade_history_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_trade_history_impl:", conditionMessage(e)))
+    })
+})
