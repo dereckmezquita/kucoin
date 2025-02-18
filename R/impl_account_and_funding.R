@@ -239,7 +239,7 @@ get_spot_account_type_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
 
         url <- paste0(base_url, endpoint)
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
 
         # Process the response and extract the "data" field, expected to be boolean.
         parsed_response <- process_kucoin_response(response, url)
@@ -329,7 +329,7 @@ get_spot_account_dt_impl <- coro::async(function(
         headers <- await(build_headers(method, full_endpoint, body, keys))
 
         url <- paste0(base_url, full_endpoint)
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
 
         parsed_response <- process_kucoin_response(response, url)
         return(data.table::as.data.table(parsed_response$data))
@@ -415,7 +415,7 @@ get_spot_account_detail_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
         url <- paste0(base_url, endpoint)
 
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
         parsed_response <- process_kucoin_response(response, url)
 
         return(data.table::as.data.table(parsed_response$data))
@@ -526,7 +526,7 @@ get_cross_margin_account_impl <- coro::async(function(
         headers <- await(build_headers(method, full_endpoint, body, keys))
 
         url <- paste0(base_url, full_endpoint)
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
 
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
@@ -654,7 +654,7 @@ get_isolated_margin_account_impl <- coro::async(function(
         headers <- await(build_headers(method, full_endpoint, body, keys))
 
         url <- paste0(base_url, full_endpoint)
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
 
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
