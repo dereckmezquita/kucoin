@@ -674,23 +674,73 @@ KucoinSpotMarketData <- R6::R6Class(
             ))
         },
 
-        #' Retrieve Full OrderBook
+        #' Retrieve Full OrderBook (Authenticated)
         #'
-        #' This asynchronous method retrieves the full orderbook depth data for a specified trading symbol
-        #' from the KuCoin API by calling the underlying implementation function \code{get_full_orderbook_impl()}.
+        #' This asynchronous method retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API.
+        #' Because this is a private endpoint, it requires valid API credentials stored in the R6 object (in the \code{keys} field).
+        #' The method wraps the lower‐level implementation function \code{get_full_orderbook_impl()}, which performs the following steps:
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **Authentication Header Preparation:**  
+        #'    Uses the helper function \code{build_headers()} along with the stored API keys to construct the necessary authentication headers.
+        #'
+        #' 2. **Query String Construction:**  
+        #'    Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
+        #'
+        #' 3. **URL Construction:**  
+        #'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
+        #'    \code{/api/v3/market/orderbook/level2}, and the query string.
+        #'
+        #' 4. **HTTP Request:**  
+        #'    Sends a GET request to the constructed URL using \code{httr::GET()} with the authentication headers and a 10‑second timeout.
+        #'
+        #' 5. **Response Processing:**  
+        #'    Processes the response using \code{process_kucoin_response()} to verify the HTTP status and API code, then extracts
+        #'    the \code{data} field which contains the global snapshot timestamp, sequence number, and bid/ask matrices.
+        #'
+        #' 6. **Data Conversion and Flattening:**  
+        #'    - Converts the bids and asks matrices (with price in the first column and size in the second) into two separate \code{data.table} objects.
+        #'    - Adds a \code{side} column (set to "bid" for bids and "ask" for asks) to each table.
+        #'    - Combines the two tables into a single flat \code{data.table}.
+        #'
+        #' 7. **Timestamp Conversion:**  
+        #'    Appends the global snapshot timestamp (in milliseconds) and a corresponding POSIXct datetime (via \code{time_convert_from_kucoin_ms()}).
+        #'
+        #' **Return Value Details:**
+        #'
+        #' The method returns a promise that resolves to a \code{data.table} (from the \pkg{data.table} package) containing the full orderbook details.
+        #' The returned data.table has one row per aggregated price level and includes the following columns:
+        #'
+        #' \describe{
+        #'   \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+        #'   \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
+        #'   \item{sequence}{(string) The sequence number for the orderbook update.}
+        #'   \item{side}{(string) The order side ("bid" or "ask").}
+        #'   \item{price}{(string) The aggregated price at the given level.}
+        #'   \item{size}{(string) The aggregated size at that price level.}
+        #' }
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
         #'
         #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
         #'
-        #' @return A promise that resolves to a \code{data.table} containing the full orderbook details.
+        #' @return A promise that resolves to a \code{data.table} (from the \pkg{data.table} package) containing the full orderbook details.
+        #'         The data.table includes the following columns:
+        #'         \describe{
+        #'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
+        #'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
+        #'           \item{sequence}{(string) The sequence number for the orderbook update.}
+        #'           \item{side}{(string) The order side ("bid" or "ask").}
+        #'           \item{price}{(string) The aggregated price at the given level.}
+        #'           \item{size}{(string) The aggregated size at that price level.}
+        #'         }
         #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve the full orderbook for BTC-USDT:
-        #'   dt_full_orderbook <- await(market_data$get_full_orderbook(symbol = "BTC-USDT"))
-        #'   print(dt_full_orderbook)
-        #' }
+        #' @details
+        #' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/market/orderbook/level2?symbol=<symbol>}
         #'
-        #' @export
+        #' This endpoint requires authentication; therefore, valid API keys must be provided in the R6 object.
         get_full_orderbook = function(symbol) {
             return(get_full_orderbook_impl(
                 keys = self$keys,
