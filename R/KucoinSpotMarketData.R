@@ -3,10 +3,10 @@
 box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
     ./impl_market_data[
-        get_currency_impl, get_all_currencies_impl, get_symbol_impl,
-        get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
-        get_trade_history_impl, get_part_orderbook_impl, get_full_orderbook_impl,
-        get_24hr_stats_impl, get_market_list_impl
+        get_announcements_impl, get_currency_impl, get_all_currencies_impl,
+        get_symbol_impl, get_all_symbols_impl, get_ticker_impl,
+        get_all_tickers_impl, get_trade_history_impl, get_part_orderbook_impl,
+        get_full_orderbook_impl, get_24hr_stats_impl, get_market_list_impl
     ],
     ./utils[ get_api_keys, get_base_url ]
 )
@@ -21,6 +21,81 @@ KucoinSpotMarketData <- R6::R6Class(
             self$keys <- keys
             self$base_url <- base_url
         },
+
+        #' Retrieve Announcements
+        #'
+        #' Retrieves the latest news announcements from the KuCoin API. Announcements include updates, promotions,
+        #' new listings, product updates, and other market-related news. This method wraps the asynchronous
+        #' implementation function \code{get_announcements_impl} and returns a promise that resolves to a
+        #' \code{data.table} containing all announcement records across all pages.
+        #'
+        #' **Usage:**  
+        #' This method can be used to monitor market news and developments. It is particularly useful when combined
+        #' with market statistics or ticker data to correlate news events with market behavior.
+        #'
+        #' **Workflow Overview:**
+        #' - Merges default pagination parameters with any user-supplied query parameters.
+        #' - Constructs the full URL for the announcements endpoint.
+        #' - Sends an asynchronous GET request.
+        #' - Automatically paginates through all pages using the \code{auto_paginate} helper.
+        #' - Aggregates and returns the announcement records as a single \code{data.table}.
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
+        #'
+        #' @param query A named list of additional query parameters for filtering announcements. For example:
+        #'   \describe{
+        #'     \item{annType}{(string) The announcement type (e.g., "latest-announcements", "activities", "new-listings", etc.).}
+        #'     \item{lang}{(string) The language code (e.g., "en_US").}
+        #'     \item{startTime}{(integer) The announcement online start time in milliseconds.}
+        #'     \item{endTime}{(integer) The announcement online end time in milliseconds.}
+        #'   }
+        #' @param page_size (integer, optional) The number of results per page (default is 50).
+        #' @param max_pages (integer, optional) The maximum number of pages to fetch (default is \code{Inf} to fetch all pages).
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the aggregated announcement records.
+        #'         Each row represents an announcement with columns such as:
+        #'         \describe{
+        #'           \item{annId}{(integer) The unique announcement ID.}
+        #'           \item{annTitle}{(string) The title of the announcement.}
+        #'           \item{annType}{(list) A list of announcement types.}
+        #'           \item{annDesc}{(string) The announcement description.}
+        #'           \item{cTime}{(integer) The announcement release time in Unix milliseconds.}
+        #'           \item{language}{(string) The language code of the announcement.}
+        #'           \item{annUrl}{(string) The URL linking to the full announcement.}
+        #'           \item{currentPage}{(integer) The current page number from the API response.}
+        #'           \item{pageSize}{(integer) The page size from the API response.}
+        #'           \item{totalNum}{(integer) The total number of announcements available.}
+        #'           \item{totalPage}{(integer) The total number of pages available.}
+        #'         }
+        #'
+        #' @seealso
+        #' \itemize{
+        #'   \item \code{\link{get_market_list_impl}} for retrieving the list of available markets.
+        #'   \item \code{\link{get_24hr_stats_impl}} for retrieving 24-hour market statistics.
+        #' }
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve the latest announcements:
+        #'   announcements <- spot_data$get_announcements(query = list(annType = "latest-announcements"))
+        #'   print(announcements)
+        #'
+        #'   # Retrieve announcements within a specific time range:
+        #'   announcements <- spot_data$get_announcements(query = list(startTime = 1729594043000, endTime = 1729697729000))
+        #'   print(announcements)
+        #' }
+        #'
+        #' @export
+        get_announcements = function(query = list(), page_size = 50, max_pages = Inf) {
+            return(get_announcements_impl(
+                base_url = self$base_url,
+                query = query,
+                page_size = page_size,
+                max_pages = max_pages
+            ))
+        },
+
         #' Retrieve Historical Klines Data
         #'
         #' This asynchronous method retrieves historical candlestick (klines) data for a single trading pair from the KuCoin API.
