@@ -759,34 +759,34 @@ get_trade_history_impl <- coro::async(function(
 #' Get Part OrderBook (Implementation)
 #'
 #' This asynchronous function retrieves partial orderbook depth data for a specified trading symbol from the KuCoin API.
-#' The endpoint returns aggregated price levels for bids and asks (either the top 20 or 100 levels), along with a global
+#' The endpoint returns aggregated orderbook data at a specified depth (either 20 or 100 levels) along with a global
 #' snapshot timestamp and sequence number. The function processes the response and returns a single flattened
-#' \code{data.table} where each row represents one price level (including the order side, price, and size) along with the
-#' global snapshot details.
+#' \code{data.table} where each row represents a price level (from either the bids or the asks), with the global snapshot
+#' fields appended.
 #'
 #' **Workflow Overview:**
 #'
 #' 1. **Input Validation:**  
-#'    The function first ensures that the provided \code{size} parameter is either 20 or 100.
+#'    Converts the \code{size} parameter to an integer and validates that it is either 20 or 100.
 #'
-#' 2. **Query String and URL Construction:**  
-#'    It uses \code{build_query()} to construct a query string with the required \code{symbol} parameter and then 
-#'    constructs the full URL by concatenating the base URL, the endpoint path (with the requested depth), and the query string.
+#' 2. **URL Construction:**  
+#'    Uses \code{build_query()} to construct a query string with the required \code{symbol} parameter. The full URL is
+#'    built by concatenating the base URL, the endpoint path (which includes the depth parameter), and the query string.
 #'
 #' 3. **HTTP Request:**  
-#'    A GET request is sent to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
 #'
 #' 4. **Response Processing:**  
-#'    The response is processed using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    and the \code{data} field is extracted.
+#'    Processes the response with \code{process_kucoin_response()} to validate the HTTP status and extract the \code{data} field.
 #'
-#' 5. **Data Conversion and Flattening:**  
-#'    The bid and ask data (returned as matrices) are converted into two separate \code{data.table} objects. Each table
-#'    is assigned a new column \code{side} ("bid" for bids and "ask" for asks). The two tables are then combined into one.
+#' 5. **Data Conversion:**  
+#'    - Extracts global snapshot fields (\code{time} and \code{sequence}) from the response.
+#'    - Converts the bids and asks matrices into separate \code{data.table} objects, each with an added \code{side} column
+#'      ("bid" for bids, "ask" for asks).
 #'
-#' 6. **Global Field Augmentation:**  
-#'    The global snapshot fields (\code{time} and \code{sequence}) are added to every row, and the global timestamp
-#'    (in milliseconds) is converted to a POSIXct datetime using \code{time_convert_from_kucoin_ms()}.
+#' 6. **Data Assembly:**  
+#'    Combines the bids and asks tables into a single \code{data.table}, appends the global snapshot fields, and reorders
+#'    the columns so that the global fields appear first.
 #'
 #' **API Documentation:**  
 #' [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
@@ -794,16 +794,16 @@ get_trade_history_impl <- coro::async(function(
 #' @param base_url A character string representing the base URL for the KuCoin API.
 #'        Defaults to the value returned by \code{get_base_url()}.
 #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#' @param size An integer specifying the depth of the orderbook to retrieve. Allowed values are 20 or 100.
+#' @param size An integer specifying the orderbook depth to retrieve. Allowed values are 20 or 100.
 #'
-#' @return A promise that resolves to a \code{data.table} containing the partial orderbook details. The resulting data.table includes:
+#' @return A promise that resolves to a \code{data.table} containing the partial orderbook details. Each row contains:
 #'         \describe{
+#'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
+#'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
+#'           \item{sequence}{(string) The sequence number for the orderbook update.}
 #'           \item{side}{(string) The order side ("bid" or "ask").}
 #'           \item{price}{(string) The aggregated price at that level.}
 #'           \item{size}{(string) The aggregated size at that price level.}
-#'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
-#'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
-#'           \item{sequence}{(string) The sequence number for the orderbook update.}
 #'         }
 #'
 #' @details
@@ -835,15 +835,15 @@ get_part_orderbook_impl <- coro::async(function(
         if (!(requested_size %in% c(20, 100))) {
             rlang::abort("Invalid size. Allowed values are 20 and 100.")
         }
-        
+
         # Construct query string and full URL.
         qs <- build_query(list(symbol = symbol))
         endpoint <- paste0("/api/v1/market/orderbook/level2_", requested_size)
         url <- paste0(base_url, endpoint, qs)
-        
+
         # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
-        
+
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
@@ -852,30 +852,31 @@ get_part_orderbook_impl <- coro::async(function(
         global_time <- data_obj$time   # in milliseconds
         sequence <- data_obj$sequence
 
-        # Create a data.table for bids
+        # Create a data.table for bids.
         bids_dt <- data.table::data.table(
             price = data_obj$bids[, 1],
             size  = data_obj$bids[, 2],
             side  = "bid"
         )
 
-        # Create a data.table for asks
+        # Create a data.table for asks.
         asks_dt <- data.table::data.table(
             price = data_obj$asks[, 1],
             size  = data_obj$asks[, 2],
             side  = "ask"
         )
 
-        # Combine the two data.tables into one
+        # Combine the bids and asks into a single data.table.
         orderbook_dt <- data.table::rbindlist(list(bids_dt, asks_dt))
 
+        # Append global snapshot fields.
         orderbook_dt[, time_ms := global_time]
         orderbook_dt[, sequence := sequence]
         orderbook_dt[, timestamp := time_convert_from_kucoin_ms(global_time)]
 
-        # Move the global fields to the front
+        # Reorder columns to move global fields to the front.
         data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
-        
+
         return(orderbook_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_part_orderbook_impl:", conditionMessage(e)))
