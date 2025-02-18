@@ -3,8 +3,7 @@ if (interactive()) setwd("./tests-manual")
 #!/usr/bin/env Rscript
 box::use(
     later[run_now, loop_empty],
-    ../R/helpers_api_get_server_time[get_server_time],
-    ../R/helpers_api[build_headers],
+    ../R/helpers_api[get_server_time, build_headers],
     ../R/utils[get_base_url, get_api_keys]
 )
 
