@@ -84,7 +84,7 @@ KucoinSubAccount <- R6::R6Class(
         #'
         #' @return A promise that resolves to a `data.table` containing aggregated sub-account summary information.
         get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
-            return(impl$get_subaccount_list_summary_impl(self$config, page_size, max_pages))
+            return(impl$get_subaccount_list_summary_impl(self$keys, self$base_url, page_size, max_pages))
         },
 
         #' Get SubAccount Detail - Balance
