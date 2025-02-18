@@ -563,3 +563,107 @@ get_ticker_impl <- coro::async(function(
         rlang::abort(paste("Error in get_ticker_impl:", conditionMessage(e)))
     })
 })
+
+
+#' Get All Tickers (Implementation)
+#'
+#' This asynchronous function retrieves market tickers for all trading pairs from the KuCoin API.
+#' The endpoint returns a snapshot of market data, including 24-hour volume, for all symbols.
+#' The response contains a global timestamp and an array of ticker objects. Each ticker object includes
+#' details such as the last traded price and size, best bid/ask prices and sizes, and other trading parameters.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **URL Construction:**  
+#'    Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()})
+#'    with the endpoint path \code{/api/v1/market/allTickers}. An optional query string can be built using the
+#'    \code{build_query()} helper if needed (though no parameters are required by default).
+#'
+#' 2. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 3. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field. The \code{data} object contains a global \code{time} field and a \code{ticker} array.
+#'
+#' 4. **Data Conversion:**  
+#'    Converts the \code{ticker} array (an array of ticker objects) into a \code{data.table}.
+#'
+#' 5. **Snapshot Time Augmentation:**  
+#'    Adds columns for the global snapshot time both in its original millisecond format and as a converted
+#'    POSIXct datetime (using the helper function \code{time_convert_from_kucoin_ms()}).
+#'
+#' **API Documentation:**  
+#' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#'
+#' @return A promise that resolves to a \code{data.table} containing the ticker information.
+#'         The data.table includes the following columns:
+#'         \describe{
+#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
+#'           \item{symbolName}{(string) The symbol name (which may be updated if the currency name changes).}
+#'           \item{buy}{(string) The current best bid price.}
+#'           \item{bestBidSize}{(string) The size at the best bid price.}
+#'           \item{sell}{(string) The current best ask price.}
+#'           \item{bestAskSize}{(string) The size at the best ask price.}
+#'           \item{changeRate}{(string) The 24-hour change rate.}
+#'           \item{changePrice}{(string) The 24-hour price change.}
+#'           \item{high}{(string) The highest price in the last 24 hours.}
+#'           \item{low}{(string) The lowest price in the last 24 hours.}
+#'           \item{vol}{(string) The 24-hour trading volume.}
+#'           \item{volValue}{(string) The 24-hour trading turnover.}
+#'           \item{last}{(string) The last traded price.}
+#'           \item{averagePrice}{(string) The average price over the last 24 hours.}
+#'           \item{takerFeeRate}{(string) The taker fee rate.}
+#'           \item{makerFeeRate}{(string) The maker fee rate.}
+#'           \item{takerCoefficient}{(string) The taker fee coefficient.}
+#'           \item{makerCoefficient}{(string) The maker fee coefficient.}
+#'           \item{globalTime_ms}{(integer) The snapshot timestamp in milliseconds (from the parent data object).}
+#'           \item{snapshotTime}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/allTickers}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve all market tickers:
+#'   dt_tickers <- await(market_data$get_all_tickers())
+#'   print(dt_tickers)
+#' }
+#'
+#' @md
+#' @export
+get_all_tickers_impl <- coro::async(function(
+    base_url = get_base_url()
+) {
+    tryCatch({
+        endpoint <- "/api/v1/market/allTickers"
+        url <- paste0(base_url, endpoint)
+
+        # Send a GET request to the endpoint with a timeout of 10 seconds.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        # Extract the global snapshot time and the ticker array.
+        global_time <- parsed_response$data$time
+        ticker_list <- parsed_response$data$ticker
+
+        # Convert the ticker array into a data.table.
+        ticker_dt <- data.table::as.data.table(ticker_list)
+
+        # Add the snapshot time information.
+        ticker_dt[, globalTime_ms := global_time]
+        ticker_dt[, globalTime_datetime := time_convert_from_kucoin_ms(global_time)]
+
+        return(ticker_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_all_tickers_impl:", conditionMessage(e)))
+    })
+})

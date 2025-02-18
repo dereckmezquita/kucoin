@@ -52,11 +52,15 @@ async_main <- coro::async(function() {
     # all_symbols <- await(market_data$get_all_symbols())
     # print(all_symbols)
 
-    cat("Get ticker\n")
-    ticker_data <- await(market_data$get_ticker(
-        symbol = "BTC-USDT"
-    ))
-    print(ticker_data)
+    # cat("Get ticker\n")
+    # ticker_data <- await(market_data$get_ticker(
+    #     symbol = "BTC-USDT"
+    # ))
+    # print(ticker_data)
+
+    cat("Get all tickers\n")
+    all_tickers <- await(market_data$get_all_tickers())
+    print(all_tickers)
 })
 
 async_main()

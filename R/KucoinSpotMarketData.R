@@ -4,7 +4,7 @@ box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
-        get_all_symbols_impl, get_ticker_impl
+        get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl
     ],
     ./utils[ get_base_url ]
 )
@@ -491,6 +491,66 @@ KucoinSpotMarketData <- R6::R6Class(
                 base_url = self$base_url,
                 symbol = symbol
             ))
+        },
+
+        #' Retrieve All Tickers
+        #'
+        #' This asynchronous method retrieves market tickers for all trading pairs from the KuCoin API.
+        #' It returns a promise that resolves to a `data.table` containing detailed ticker information for each trading pair,
+        #' including the global snapshot timestamp in both its original millisecond format and as a converted POSIXct datetime.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **HTTP Request:**  
+        #'    Sends a GET request to the KuCoin endpoint using `httr::GET()` with a 10‑second timeout.
+        #'
+        #' 2. **Response Processing:**  
+        #'    Processes the response using `process_kucoin_response()` to validate the HTTP status and API code,
+        #'    then extracts the `data` field, which contains a global timestamp and an array of ticker objects.
+        #'
+        #' 3. **Data Conversion:**  
+        #'    Converts the ticker array (an array of ticker objects) into a `data.table`.
+        #'
+        #' 4. **Snapshot Time Augmentation:**  
+        #'    Adds the global snapshot time (in milliseconds) as well as a converted POSIXct datetime (using `time_convert_from_kucoin_ms()`).
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
+        #'
+        #' @return A promise that resolves to a `data.table` containing the following columns:
+        #'         \describe{
+        #'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
+        #'           \item{symbolName}{(string) The symbol name (which may be updated if the currency name changes).}
+        #'           \item{buy}{(string) The current best bid price.}
+        #'           \item{bestBidSize}{(string) The size at the best bid price.}
+        #'           \item{sell}{(string) The current best ask price.}
+        #'           \item{bestAskSize}{(string) The size at the best ask price.}
+        #'           \item{changeRate}{(string) The 24-hour change rate.}
+        #'           \item{changePrice}{(string) The 24-hour price change.}
+        #'           \item{high}{(string) The highest price in the last 24 hours.}
+        #'           \item{low}{(string) The lowest price in the last 24 hours.}
+        #'           \item{vol}{(string) The 24-hour trading volume.}
+        #'           \item{volValue}{(string) The 24-hour trading turnover.}
+        #'           \item{last}{(string) The last traded price.}
+        #'           \item{averagePrice}{(string) The average price over the last 24 hours.}
+        #'           \item{takerFeeRate}{(string) The taker fee rate.}
+        #'           \item{makerFeeRate}{(string) The maker fee rate.}
+        #'           \item{takerCoefficient}{(string) The taker fee coefficient.}
+        #'           \item{makerCoefficient}{(string) The maker fee coefficient.}
+        #'           \item{globalTime_ms}{(integer) The snapshot timestamp in milliseconds.}
+        #'           \item{snapshotTime}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+        #'         }
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve all market tickers:
+        #'   dt_tickers <- await(market_data$get_all_tickers())
+        #'   print(dt_tickers)
+        #' }
+        #'
+        #' @export
+        get_all_tickers = function() {
+            return(get_all_tickers_impl(base_url = self$base_url))
         }
     )    
 )
