@@ -1,7 +1,7 @@
 # File: ./R/KucoinSpotMarketData.R
 
 box::use(
-    impl = ./impl_market_data,
+    ./impl_market_data_get_klines[ get_klines_impl ],
     ./utils[ get_base_url ]
 )
 
@@ -138,7 +138,7 @@ KucoinSpotMarketData <- R6::R6Class(
             delay_ms = 0,
             retries = 3
         ) {
-            return(impl$get_klines_impl(
+            return(get_klines_impl(
                 base_url = self$base_url,
                 symbol = symbol,
                 freq = freq,
