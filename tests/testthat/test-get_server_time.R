@@ -31,12 +31,16 @@ test_that("get_server_time returns a valid timestamp", {
             )
         })$
         catch(function(e) {
-            # Ensure no error was captured outside of the callbacks.
-            expect_null(e)
+            error <<- e
+            # Immediately fail the test if the promise is rejected.
+            fail(paste("Promise rejected with error:", conditionMessage(e)))
         })
 
     # Process all asynchronous tasks until the event loop is empty.
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
+
+    # Ensure no error was captured outside of the callbacks.
+    expect_null(error)
 })
