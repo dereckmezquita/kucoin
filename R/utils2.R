@@ -1,7 +1,7 @@
 # File: ./R/utils2.R
 
 #' @export
-verify_ticker <- function(ticker) {
+verify_symbol <- function(ticker) {
     # has to be of format "BTC-USDT"
     if (!grepl("^[A-Z|0-9]+-[A-Z|0-9]+$", ticker)) {
         return(FALSE)
