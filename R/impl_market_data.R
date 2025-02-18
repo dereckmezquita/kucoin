@@ -1014,3 +1014,99 @@ get_full_orderbook_impl <- coro::async(function(
         rlang::abort(paste("Error in get_full_orderbook_impl:", conditionMessage(e)))
     })
 })
+
+#' Get 24-Hour Statistics (Implementation)
+#'
+#' This asynchronous function retrieves the 24-hour market statistics for a specified trading symbol from the KuCoin API.
+#' The endpoint returns a snapshot of market data including the best bid and ask prices, last traded price, 24-hour change rate
+#' and change in price, highest and lowest prices, trading volume, turnover, average price, and fee rates.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **Query String Construction:**  
+#'    Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
+#'
+#' 2. **URL Construction:**  
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
+#'    \code{/api/v1/market/stats}, and the query string.
+#'
+#' 3. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 4. **Response Processing:**  
+#'    Processes the API response with \code{process_kucoin_response()} to validate the HTTP status and API code, then extracts the \code{data} field.
+#'
+#' 5. **Data Conversion:**  
+#'    Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
+#'    \describe{
+#'      \item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
+#'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin_ms()}.}
+#'    }
+#'
+#' **API Documentation:**  
+#' [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+#'
+#' @return A promise that resolves to a \code{data.table} containing the 24-hour market statistics.
+#'         The resulting \code{data.table} includes the following columns:
+#'         \describe{
+#'           \item{time}{(integer) The raw snapshot timestamp in milliseconds.}
+#'           \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
+#'           \item{buy}{(string) The best bid price.}
+#'           \item{sell}{(string) The best ask price.}
+#'           \item{changeRate}{(string) The 24-hour change rate (percentage).}
+#'           \item{changePrice}{(string) The absolute price change over the last 24 hours.}
+#'           \item{high}{(string) The highest price in the last 24 hours.}
+#'           \item{low}{(string) The lowest price in the last 24 hours.}
+#'           \item{vol}{(string) The 24-hour trading volume (in base currency).}
+#'           \item{volValue}{(string) The 24-hour trading turnover (in quote currency).}
+#'           \item{last}{(string) The last traded price.}
+#'           \item{averagePrice}{(string) The average trading price over the last 24 hours.}
+#'           \item{takerFeeRate}{(string) The basic taker fee rate.}
+#'           \item{makerFeeRate}{(string) The basic maker fee rate.}
+#'           \item{takerCoefficient}{(string) The taker fee coefficient.}
+#'           \item{makerCoefficient}{(string) The maker fee coefficient.}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/stats?symbol=<symbol>}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve 24-hour statistics for BTC-USDT:
+#'   stats <- await(market_data$get_24hr_stats(symbol = "BTC-USDT"))
+#'   print(stats)
+#' }
+#'
+#' @md
+#' @export
+get_24hr_stats_impl <- coro::async(function(
+  base_url = get_base_url(),
+  symbol
+) {
+    tryCatch({
+        qs <- build_query(list(symbol = symbol))
+        endpoint <- "/api/v1/market/stats"
+        url <- paste0(base_url, endpoint, qs)
+
+        response <- httr::GET(url, httr::timeout(10))
+        parsed_response <- process_kucoin_response(response, url)
+        data_obj <- parsed_response$data
+
+        stats_dt <- data.table::as.data.table(data_obj)
+        stats_dt[, timestamp := time_convert_from_kucoin_ms(time)]
+
+        data.table::setnames(stats_dt, "time", "time_ms")
+        data.table::setcolorder(stats_dt, c("timestamp", "time_ms", setdiff(names(stats_dt), c("timestamp", "time_ms"))))
+
+        return(stats_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_24hr_stats_impl:", conditionMessage(e)))
+    })
+})

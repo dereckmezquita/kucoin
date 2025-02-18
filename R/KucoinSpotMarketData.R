@@ -5,7 +5,8 @@ box::use(
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
         get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
-        get_trade_history_impl, get_part_orderbook_impl, get_full_orderbook_impl
+        get_trade_history_impl, get_part_orderbook_impl, get_full_orderbook_impl,
+        get_24hr_stats_impl
     ],
     ./utils[ get_api_keys, get_base_url ]
 )
@@ -744,6 +745,66 @@ KucoinSpotMarketData <- R6::R6Class(
         get_full_orderbook = function(symbol) {
             return(get_full_orderbook_impl(
                 keys = self$keys,
+                base_url = self$base_url,
+                symbol = symbol
+            ))
+        },
+
+        #' Retrieve 24-Hour Market Statistics
+        #'
+        #' This asynchronous method retrieves the 24-hour market statistics for a specified trading symbol from the KuCoin API.
+        #' It returns a promise that resolves to a \code{data.table} containing various market statistics such as the best bid/ask prices,
+        #' last traded price, 24-hour change rate and change in price, highest and lowest prices, trading volume, turnover, average price,
+        #' and fee rates.
+        #' 
+        #' **Workflow Overview:**
+        #'
+        #' 1. **Query String Construction:**  
+        #'    Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
+        #'
+        #' 2. **URL Construction:**  
+        #'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
+        #'    \code{/api/v1/market/stats}, and the query string.
+        #'
+        #' 3. **HTTP Request:**  
+        #'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+        #'
+        #' 4. **Response Processing:**  
+        #'    Processes the API response with \code{process_kucoin_response()} to validate the HTTP status and API code, then extracts the \code{data} field.
+        #'
+        #' 5. **Data Conversion:**  
+        #'    Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
+        #'    \describe{
+        #'      \item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
+        #'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin_ms()}.}
+        #'    }
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
+        #' 
+        #' @return A promise that resolves to a \code{data.table} containing the 24-hour market statistics.
+        #'         The resulting \code{data.table} includes the following columns:
+        #'         \describe{
+        #'           \item{time}{(integer) The raw snapshot timestamp in milliseconds.}
+        #'           \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+        #'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
+        #'           \item{buy}{(string) The best bid price.}
+        #'           \item{sell}{(string) The best ask price.}
+        #'           \item{changeRate}{(string) The 24-hour change rate (percentage).}
+        #'           \item{changePrice}{(string) The absolute price change over the last 24 hours.}
+        #'           \item{high}{(string) The highest price in the last 24 hours.}
+        #'           \item{low}{(string) The lowest price in the last 24 hours.}
+        #'           \item{vol}{(string) The 24-hour trading volume (in base currency).}
+        #'           \item{volValue}{(string) The 24-hour trading turnover (in quote currency).}
+        #'           \item{last}{(string) The last traded price.}
+        #'           \item{averagePrice}{(string) The average trading price over the last 24 hours.}
+        #'           \item{takerFeeRate}{(string) The basic taker fee rate.}
+        #'           \item{makerFeeRate}{(string) The basic maker fee rate.}
+        #'           \item{takerCoefficient}{(string) The taker fee coefficient.}
+        #'           \item{makerCoefficient}{(string) The maker fee coefficient.}
+        #'         }
+        get_24hr_stats = function(symbol) {
+            return(get_24hr_stats_impl(
                 base_url = self$base_url,
                 symbol = symbol
             ))

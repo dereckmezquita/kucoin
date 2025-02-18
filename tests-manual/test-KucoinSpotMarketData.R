@@ -74,11 +74,17 @@ async_main <- coro::async(function() {
     # ))
     # print(order_book)
 
-    cat("Get full order book\n")
-    order_book_full <- await(market_data$get_full_orderbook(
+    # cat("Get full order book\n")
+    # order_book_full <- await(market_data$get_full_orderbook(
+    #     symbol = "BTC-USDT"
+    # ))
+    # print(order_book_full)
+
+    cat("Get 24 hour stats\n")
+    stats <- await(market_data$get_24hr_stats(
         symbol = "BTC-USDT"
     ))
-    print(order_book_full)
+    print(stats)
 })
 
 async_main()
