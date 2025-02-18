@@ -109,7 +109,6 @@ get_currency_impl <- coro::async(function(
     ))
 })
 
-
 #' Get All Currencies (Implementation)
 #'
 #' This asynchronous function retrieves a list of all currencies available on the KuCoin API.
@@ -196,22 +195,64 @@ get_all_currencies_impl <- coro::async(function(
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
 
-        summary_fields <- c(
-            "name", "fullName", "precision", "confirms",
-            "contractAddress", "isMarginEnabled", "isDebitEnabled"
-        )
+        # Iterate over each row (currency) in the data.frame.
+        result_list <- lapply(seq_len(nrow(parsed_response$data)), function(i) {
+            # Extract the i-th row as a one-row data.frame.
+            curr <- parsed_response$data[i, , drop = FALSE]
 
-        summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
-        currency_dt <- data.table::rbindlist(parsed_response$data$chains, fill = TRUE)
+            # Build a summary data.table from the currency row.
+            summary_dt <- data.table::data.table(
+                currency = curr$currency,
+                name = curr$name,
+                fullName = curr$fullName,
+                precision = curr$precision,
+                confirms = curr$confirms,
+                contractAddress = curr$contractAddress,
+                isMarginEnabled = curr$isMarginEnabled,
+                isDebitEnabled = curr$isDebitEnabled
+            )
 
-        # Rename the chain-level 'contractAddress' to avoid conflicts.
-        currency_dt[, chain_contractAddress := contractAddress]
-        currency_dt[, contractAddress := NULL]
+            # Attempt to extract the chains data.
+            chains_data <- curr$chains[[1]]
 
-        return(cbind(
-            summary_dt,
-            currency_dt
-        ))
+            # Check if chains_data is a data.frame with at least one row.
+            if (is.data.frame(chains_data) && nrow(chains_data) > 0) {
+                chains_dt <- data.table::as.data.table(chains_data, fill = TRUE)
+                # Rename the chain-level 'contractAddress' to avoid conflicts.
+                if ("contractAddress" %in% names(chains_dt)) {
+                    data.table::setnames(chains_dt, "contractAddress", "chain_contractAddress")
+                }
+                # Replicate the summary row for each chain.
+                summary_dt <- summary_dt[rep(1, nrow(chains_dt))]
+                return(cbind(summary_dt, chains_dt))
+            } else {
+                # If chains_data is not a data.frame or is empty, create dummy chain columns (all NA).
+                dummy_chain <- data.table::data.table(
+                    chainName = NA_character_,
+                    withdrawalMinSize = NA_character_,
+                    depositMinSize = NA_character_,
+                    withdrawFeeRate = NA_character_,
+                    withdrawalMinFee = NA_character_,
+                    isWithdrawEnabled = NA,
+                    isDepositEnabled = NA,
+                    confirms_chain = NA_integer_,
+                    preConfirms = NA_integer_,
+                    chain_contractAddress = NA_character_,
+                    withdrawPrecision = NA_integer_,
+                    maxWithdraw = NA_character_,
+                    maxDeposit = NA_character_,
+                    needTag = NA,
+                    chainId = NA_character_,
+                    depositFeeRate = NA_character_,
+                    withdrawMaxFee = NA_character_,
+                    depositTierFee = NA_character_
+                )
+                return(cbind(summary_dt, dummy_chain))
+            }
+        })
+
+        final_dt <- data.table::rbindlist(result_list, fill = TRUE)
+        return(final_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_currencies_impl:", conditionMessage(e)))
     })
@@ -291,9 +332,6 @@ get_symbol_impl <- coro::async(function(
     base_url = get_base_url(),
     symbol
 ) {
-    if (verify_symbol(symbol)) {
-        rlang::abort("Invalid symbol format. Use 'BTC-USDT' format.")
-    }
     tryCatch({
         endpoint <- "/api/v2/symbols/"
         url <- paste0(base_url, endpoint, symbol)

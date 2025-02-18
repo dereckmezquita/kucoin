@@ -2,7 +2,7 @@
 
 box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
-    ./impl_market_data[ get_currency_impl, get_all_currencies_impl ],
+    ./impl_market_data[ get_currency_impl, get_all_currencies_impl, get_symbol_impl ],
     ./utils[ get_base_url ]
 )
 
