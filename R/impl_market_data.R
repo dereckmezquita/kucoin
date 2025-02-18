@@ -887,41 +887,40 @@ get_part_orderbook_impl <- coro::async(function(
 #' Get Full OrderBook (Implementation, Authenticated)
 #'
 #' This asynchronous function retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API.
-#' Because this is a private endpoint, authentication headers must be included. The endpoint returns aggregated price levels
-#' for both bids and asks, along with a global snapshot timestamp and sequence number. Note that this endpoint is intended for
-#' professional use, given its higher resource usage and stricter rate limiting.
+#' Because this is a private endpoint, valid API keys must be provided and authentication headers are constructed.
+#' The endpoint returns aggregated price levels for both bids and asks along with a global snapshot timestamp and sequence number.
 #'
 #' **Workflow Overview:**
 #'
 #' 1. **Authentication Header Preparation:**  
-#'    Uses the helper function \code{build_headers()} along with the provided API keys to construct the necessary headers.
+#'    Uses the helper function \code{build_headers()} along with the provided API keys to construct the necessary authentication headers.
 #'
 #' 2. **Query String Construction:**  
-#'    Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
+#'    Uses \code{build_query()} to generate a query string containing the required \code{symbol} parameter.
 #'
 #' 3. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (from \code{get_base_url()}), the endpoint path 
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
 #'    \code{/api/v3/market/orderbook/level2}, and the query string.
 #'
 #' 4. **HTTP Request:**  
 #'    Sends a GET request to the constructed URL using \code{httr::GET()} with the authentication headers and a 10‑second timeout.
 #'
 #' 5. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field, which contains the global snapshot time, sequence number, and bid/ask matrices.
+#'    Processes the response using \code{process_kucoin_response()} to ensure the HTTP status and API code indicate success,
+#'    then extracts the \code{data} field.
 #'
 #' 6. **Data Conversion and Flattening:**  
 #'    - Converts the bids and asks matrices (with price in the first column and size in the second) into two separate \code{data.table} objects.
-#'    - Adds a \code{side} column ("bid" for bids and "ask" for asks) to each table.
+#'    - Adds a \code{side} column to each table ("bid" for bids, "ask" for asks).
 #'    - Combines the two tables into a single \code{data.table}.
 #'
 #' 7. **Timestamp Conversion:**  
-#'    Appends the global snapshot timestamp (in milliseconds) and a corresponding POSIXct datetime (using \code{time_convert_from_kucoin_ms()}).
+#'    Appends the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin_ms()}).
 #'
 #' **API Documentation:**  
 #' [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. This list must include:
+#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
 #'   - \code{api_key}: Your KuCoin API key.
 #'   - \code{api_secret}: Your KuCoin API secret.
 #'   - \code{api_passphrase}: Your KuCoin API passphrase.
@@ -929,7 +928,7 @@ get_part_orderbook_impl <- coro::async(function(
 #' @param base_url A character string representing the base URL for the API. Defaults to the value returned by \code{get_base_url()}.
 #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
 #'
-#' @return A promise that resolves to a \code{data.table} containing the full orderbook details. The returned table includes:
+#' @return A promise that resolves to a \code{data.table} containing the full orderbook details. The returned data.table includes:
 #'         \describe{
 #'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
 #'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
@@ -942,11 +941,11 @@ get_part_orderbook_impl <- coro::async(function(
 #' @details
 #' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/market/orderbook/level2?symbol=<symbol>}  
 #'
-#' This function requires valid API keys and constructs the necessary authentication headers.
+#' This function is private and requires valid API keys to construct authentication headers.
 #'
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from your environment using get_api_keys()
+#'   # Retrieve API keys from your environment:
 #'   keys <- get_api_keys()
 #'
 #'   # Retrieve the full orderbook for BTC-USDT:
@@ -962,31 +961,31 @@ get_full_orderbook_impl <- coro::async(function(
     symbol
 ) {
     tryCatch({
-        # Construct query string and full URL.
+        # Construct the query string with the required symbol.
         qs <- build_query(list(symbol = symbol))
         endpoint <- "/api/v3/market/orderbook/level2"
         full_endpoint <- paste0(endpoint, qs)
-        
+
         # Prepare authentication headers.
         method <- "GET"
         body <- ""
         headers <- await(build_headers(method, full_endpoint, body, keys))
-        
+
         # Construct the full URL.
         url <- paste0(base_url, full_endpoint)
-        
+
         # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, headers, httr::timeout(10))
-        
+
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
-        
+
         # Extract global snapshot fields.
         global_time <- data_obj$time   # in milliseconds
         sequence <- data_obj$sequence
-        
-        # Create data.tables for bids and asks.
+
+        # Create data.tables for bids and asks from their matrices.
         bids_dt <- data.table::data.table(
             price = data_obj$bids[, 1],
             size  = data_obj$bids[, 2],
@@ -997,19 +996,19 @@ get_full_orderbook_impl <- coro::async(function(
             size  = data_obj$asks[, 2],
             side  = "ask"
         )
-        
+
         # Combine bids and asks into a single data.table.
         orderbook_dt <- data.table::rbindlist(list(bids_dt, asks_dt))
-        
+
         # Append global snapshot fields.
         orderbook_dt[, time_ms := global_time]
         orderbook_dt[, sequence := sequence]
         orderbook_dt[, timestamp := time_convert_from_kucoin_ms(global_time)]
-        
-        # Reorder columns.
+
+        # Reorder columns so that global fields appear first.
         data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
         data.table::setorder(orderbook_dt, price, size)
-        
+
         return(orderbook_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_full_orderbook_impl:", conditionMessage(e)))
