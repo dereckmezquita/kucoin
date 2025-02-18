@@ -5,17 +5,19 @@ box::use(
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
         get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
-        get_trade_history_impl, get_part_orderbook_impl
+        get_trade_history_impl, get_part_orderbook_impl, get_full_orderbook_impl
     ],
-    ./utils[ get_base_url ]
+    ./utils[ get_api_keys, get_base_url ]
 )
 
 #' @export
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
     public = list(
+        keys = NULL,
         base_url = NULL,
-        initialize = function(base_url = get_base_url()) {
+        initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
+            self$keys <- keys
             self$base_url <- base_url
         },
         #' Retrieve Historical Klines Data
@@ -669,6 +671,31 @@ KucoinSpotMarketData <- R6::R6Class(
                 base_url = self$base_url,
                 symbol = symbol,
                 size = size
+            ))
+        },
+
+        #' Retrieve Full OrderBook
+        #'
+        #' This asynchronous method retrieves the full orderbook depth data for a specified trading symbol
+        #' from the KuCoin API by calling the underlying implementation function \code{get_full_orderbook_impl()}.
+        #'
+        #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the full orderbook details.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve the full orderbook for BTC-USDT:
+        #'   dt_full_orderbook <- await(market_data$get_full_orderbook(symbol = "BTC-USDT"))
+        #'   print(dt_full_orderbook)
+        #' }
+        #'
+        #' @export
+        get_full_orderbook = function(symbol) {
+            return(get_full_orderbook_impl(
+                keys = self$keys,
+                base_url = self$base_url,
+                symbol = symbol
             ))
         }
     )    
