@@ -36,6 +36,10 @@ async_main <- coro::async(function() {
     ))
 
     print(currency_data)
+
+    cat("Get all currencies\n")
+    all_currencies <- await(market_data$get_all_currencies())
+    print(all_currencies)
 })
 
 async_main()

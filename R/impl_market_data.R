@@ -206,7 +206,7 @@ get_all_currencies_impl <- coro::async(function(
         )
 
         summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
-        currency_dt <- data.table::as.data.table(parsed_response$data$chains)
+        currency_dt <- data.table::rbindlist(parsed_response$data$chains, fill = TRUE)
 
         # Rename the chain-level 'contractAddress' to avoid conflicts.
         currency_dt[, chain_contractAddress := contractAddress]

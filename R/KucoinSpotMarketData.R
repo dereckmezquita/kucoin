@@ -2,7 +2,7 @@
 
 box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
-    ./impl_market_data[ get_currency_impl ],
+    ./impl_market_data[ get_currency_impl, get_all_currencies_impl ],
     ./utils[ get_base_url ]
 )
 
@@ -233,6 +233,92 @@ KucoinSpotMarketData <- R6::R6Class(
                 currency = currency,
                 chain = chain
             ))
+        },
+
+        #' Retrieve All Currencies
+        #'
+        #' This asynchronous method retrieves a complete list of all currencies available on the KuCoin API.
+        #' Each currency entry includes both summary information and detailed chain-specific data.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **URL Construction:**  
+        #'    Constructs the full API URL by concatenating the base URL (stored in the class) with the endpoint
+        #'    \code{/api/v3/currencies}.
+        #'
+        #' 2. **HTTP Request:**  
+        #'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+        #'
+        #' 3. **Response Processing:**  
+        #'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+        #'    then extracts the \code{data} field.
+        #'
+        #' 4. **Data Conversion:**  
+        #'    Converts the selected currency summary fields into a \code{data.table} and the nested \code{chains} data
+        #'    into another \code{data.table}.
+        #'
+        #' 5. **Column Renaming:**  
+        #'    Renames the chain-level \code{contractAddress} column to \code{chain_contractAddress} to avoid conflicts
+        #'    with the currency-level field.
+        #'
+        #' 6. **Result Assembly:**  
+        #'    Combines the currency summary and chain-specific data using \code{cbind()} and returns the final
+        #'    \code{data.table}.
+        #'
+        #' **Returned Data Structure:**
+        #'
+        #' The promise resolves to a \code{data.table} containing the following columns:
+        #'
+        #' **Currency Summary Fields:**
+        #' \describe{
+        #'   \item{name}{(string) The short name of the currency.}
+        #'   \item{fullName}{(string) The full descriptive name of the currency.}
+        #'   \item{precision}{(integer) The number of decimal places supported by the currency.}
+        #'   \item{confirms}{(integer or NULL) The number of block confirmations required at the currency level.}
+        #'   \item{contractAddress}{(string or NULL) The primary contract address for tokenized currencies.}
+        #'   \item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled for the currency.}
+        #'   \item{isDebitEnabled}{(boolean) Indicates whether debit transactions are enabled for the currency.}
+        #' }
+        #'
+        #' **Chain-Specific Fields:**
+        #' \describe{
+        #'   \item{chainName}{(string) The name of the blockchain network associated with the currency.}
+        #'   \item{withdrawalMinSize}{(string) The minimum withdrawal amount permitted on this chain.}
+        #'   \item{depositMinSize}{(string) The minimum deposit amount permitted on this chain.}
+        #'   \item{withdrawFeeRate}{(string) The fee rate applied to withdrawals on this chain.}
+        #'   \item{withdrawalMinFee}{(string) The minimum fee charged for a withdrawal on this chain.}
+        #'   \item{isWithdrawEnabled}{(boolean) Indicates whether withdrawals are enabled on this chain.}
+        #'   \item{isDepositEnabled}{(boolean) Indicates whether deposits are enabled on this chain.}
+        #'   \item{confirms}{(integer) The number of blockchain confirmations required on this chain.}
+        #'   \item{preConfirms}{(integer) The number of pre-confirmations required for on-chain verification on this chain.}
+        #'   \item{chain_contractAddress}{(string) The chain-specific contract address (renamed from \code{contractAddress}).}
+        #'   \item{withdrawPrecision}{(integer) The withdrawal precision, indicating the maximum number of decimal places for withdrawal amounts on this chain.}
+        #'   \item{maxWithdraw}{(string or NULL) The maximum amount allowed per withdrawal transaction on this chain.}
+        #'   \item{maxDeposit}{(string or NULL) The maximum amount allowed per deposit transaction on this chain (applicable to certain chains such as Lightning Network).}
+        #'   \item{needTag}{(boolean) Indicates whether a memo/tag is required for transactions on this chain.}
+        #'   \item{chainId}{(string) The unique identifier for the blockchain network associated with the currency.}
+        #'   \item{depositFeeRate}{(string, optional) The fee rate applied to deposits on this chain, if provided by the API.}
+        #'   \item{withdrawMaxFee}{(string, optional) The maximum fee charged for a withdrawal on this chain, if provided by the API.}
+        #'   \item{depositTierFee}{(string, optional) The tiered fee structure for deposits on this chain, if provided by the API.}
+        #' }
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the combined currency details as described above.
+        #'
+        #' @details
+        #' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/currencies}  
+        #'
+        #' This method uses a public API endpoint that does not require authentication.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve all available currencies:
+        #'   dt_all_currencies <- await(spot_data$get_all_currencies())
+        #'   print(dt_all_currencies)
+        #' }
+        #'
+        #' @export
+        get_all_currencies = function() {
+            return(get_all_currencies_impl(base_url = self$base_url))
         }
     )
 )
