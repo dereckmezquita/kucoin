@@ -9,7 +9,7 @@ box::use(
 #' @export
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
-    public = list
+    public = list(
         base_url = NULL,
         initialize = function(base_url = get_base_url()) {
             self$base_url <- base_url
@@ -349,5 +349,5 @@ KucoinSpotMarketData <- R6::R6Class(
                 symbol = symbol
             ))
         }
-    
+    )    
 )
