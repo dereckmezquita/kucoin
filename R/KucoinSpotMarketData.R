@@ -2,6 +2,7 @@
 
 box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
+    ./impl_market_data[ get_currency_impl ],
     ./utils[ get_base_url ]
 )
 
@@ -147,6 +148,90 @@ KucoinSpotMarketData <- R6::R6Class(
                 concurrent = concurrent,
                 delay_ms = delay_ms,
                 retries = retries
+            ))
+        },
+
+        #' Retrieve Currency Details
+        #'
+        #' This asynchronous method retrieves detailed information for a specified currency from the KuCoin API.
+        #' It returns a promise that resolves to a \code{data.table} containing various details about the currency,
+        #' such as its unique code, name, full name, precision, margin and debit support, and chain information (if applicable).
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **Input Validation:**  
+        #'    The method verifies that a non-empty currency code is provided.
+        #'
+        #' 2. **Query String Construction:**  
+        #'    If a \code{chain} parameter is specified, it is incorporated into the query string via the \code{build_query()} helper.
+        #'
+        #' 3. **URL Construction:**  
+        #'    Constructs the full API URL by concatenating the base URL (stored in the class), the endpoint path 
+        #'    \code{/api/v3/currencies/} (with the provided currency code as a path parameter), and the optional query string.
+        #'
+        #' 4. **HTTP Request and Response Processing:**  
+        #'    Sends a GET request to the constructed URL (with a 10-second timeout) and processes the response
+        #'    using \code{process_kucoin_response()} to ensure the request was successful.
+        #'
+        #' 5. **Data Conversion:**  
+        #'    Converts the returned data (a named list of currency details) into a \code{data.table} for easy consumption.
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
+        #'
+        #' @param currency A character string representing the currency code (e.g., "BTC", "USDT").
+        #' @param chain (Optional) A character string specifying the chain to query (e.g., "ERC20", "TRC20"). This parameter applies only to multi‑chain currencies.
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the currency details.
+        #' 
+        #'    currency   name fullName precision isMarginEnabled isDebitEnabled
+        #'      <char> <char>   <char>     <int>          <lgcl>         <lgcl>
+        #' 1:      BTC    BTC  Bitcoin         8            TRUE           TRUE
+        #' 2:      BTC    BTC  Bitcoin         8            TRUE           TRUE
+        #' 3:      BTC    BTC  Bitcoin         8            TRUE           TRUE
+        #' 4:      BTC    BTC  Bitcoin         8            TRUE           TRUE
+        #'            chainName withdrawalMinSize depositMinSize withdrawFeeRate
+        #'               <char>            <char>         <char>          <char>
+        #' 1:               BTC            0.0006         0.0002               0
+        #' 2: Lightning Network           0.00001        0.00001               0
+        #' 3:               KCC            0.0008           <NA>               0
+        #' 4:        BTC-Segwit            0.0008         0.0002               0
+        #'    withdrawalMinFee isWithdrawEnabled isDepositEnabled confirms preConfirms
+        #'              <char>            <lgcl>           <lgcl>    <int>       <int>
+        #' 1:          0.00035              TRUE             TRUE        3           1
+        #' 2:         0.000015              TRUE             TRUE        1           1
+        #' 3:          0.00002              TRUE             TRUE       20          20
+        #' 4:           0.0005             FALSE             TRUE        2           2
+        #'                               contractAddress withdrawPrecision maxWithdraw
+        #'                                        <char>             <int>      <lgcl>
+        #' 1:                                                            8          NA
+        #' 2:                                                            8          NA
+        #' 3: 0xfa93c12cd345c658bc4644d1d4e1b9615952258c                 8          NA
+        #' 4:                                                            8          NA
+        #'    maxDeposit needTag chainId
+        #'        <char>  <lgcl>  <char>
+        #' 1:       <NA>   FALSE     btc
+        #' 2:       0.03   FALSE   btcln
+        #' 3:       <NA>   FALSE     kcc
+        #' 4:       <NA>   FALSE  bech32
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve details for Bitcoin:
+        #'   dt <- await(spot_data$get_currency(currency = "BTC"))
+        #'   print(dt)
+        #'
+        #'   # Retrieve details for USDT on the ERC20 chain:
+        #'   dt <- await(spot_data$get_currency(currency = "USDT", chain = "ERC20"))
+        #'   print(dt)
+        #' }
+        #'
+        #' @export
+        get_currency = function(currency, chain = NULL) {
+            return(get_currency_impl(
+                base_url = self$base_url,
+                currency = currency,
+                chain = chain
             ))
         }
     )
