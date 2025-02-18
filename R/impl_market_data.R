@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ process_kucoin_response ],
     ./utils[ build_query, get_base_url ],
-    ./utils2[ verify_ticker ]
+    ./utils2[ verify_symbol ]
 )
 
 #' Get Currency Details (Implementation)
@@ -77,10 +77,6 @@ get_currency_impl <- coro::async(function(
     currency,
     chain = NULL
 ) {
-    if (verify_ticker(currency)) {
-        rlang::abort("Invalid currency format. Use 'BTC-USDT' format.")
-    }
-
     endpoint <- "/api/v3/currencies/"
 
     # Build query string from the optional chain parameter
@@ -218,5 +214,101 @@ get_all_currencies_impl <- coro::async(function(
         ))
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_currencies_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get Symbol (Implementation)
+#'
+#' This asynchronous function retrieves detailed information about a specified trading symbol from the KuCoin API.
+#' It returns a promise that resolves to a \code{data.table} containing all available symbol details.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **Input Validation:**  
+#'    Validates that a valid trading symbol is provided using the helper function \code{verify_symbol()}.
+#'
+#' 2. **URL Construction:**  
+#'    Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint
+#'    path \code{/api/v2/symbols/}, and the provided \code{symbol}.
+#'
+#' 3. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 4. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field.
+#'
+#' 5. **Data Conversion:**  
+#'    Converts the entire \code{data} property (a named list of symbol details) into a \code{data.table} without filtering.
+#'
+#' #' **API Documentation:**  
+#' [KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+#'
+#' @return A promise that resolves to a \code{data.table}:
+#' \describe{
+#'   \item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
+#'   \item{name}{(string) Name of the trading pair, which may change after renaming.}
+#'   \item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
+#'   \item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
+#'   \item{feeCurrency}{(string) The currency used for charging fees.}
+#'   \item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
+#'   \item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
+#'   \item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
+#'   \item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
+#'   \item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
+#'   \item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
+#'   \item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
+#'   \item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
+#'   \item{priceLimitRate}{(string) The threshold for price protection.}
+#'   \item{minFunds}{(string) The minimum trading amount required for an order.}
+#'   \item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
+#'   \item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
+#'   \item{feeCategory}{(integer) The fee category/type for the trading pair.}
+#'   \item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
+#'   \item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
+#'   \item{st}{(boolean) A flag indicating additional status information (usage context-specific).}
+#' }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols/{symbol}}  
+#'
+#' This function uses a public API endpoint that does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve details for the BTC-USDT trading pair:
+#'   dt_symbol <- await(get_symbol_impl(symbol = "BTC-USDT"))
+#'   print(dt_symbol)
+#' }
+#'
+#' @md
+#' @export
+get_symbol_impl <- coro::async(function(
+    base_url = get_base_url(),
+    symbol
+) {
+    if (verify_symbol(symbol)) {
+        rlang::abort("Invalid symbol format. Use 'BTC-USDT' format.")
+    }
+    tryCatch({
+        endpoint <- "/api/v2/symbols/"
+        url <- paste0(base_url, endpoint, symbol)
+
+        # Send a GET request to the endpoint with a 10-second timeout.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        # Convert the entire 'data' field from the response into a data.table.
+        symbol_dt <- data.table::as.data.table(parsed_response$data)
+
+        return(symbol_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_symbol_impl:", conditionMessage(e)))
     })
 })
