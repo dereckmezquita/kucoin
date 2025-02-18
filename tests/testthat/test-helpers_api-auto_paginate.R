@@ -5,42 +5,8 @@ box::use(
     testthat[ test_that, expect_null, expect_equal, expect_true, fail ],
     later[ loop_empty, run_now ],
     promises[ then, catch ],
-    coro[ async, await ]
+    ../../R/helpers_api[ auto_paginate ]
 )
-
-# Redefine auto_paginate using a loop (this version replaces the original).
-# This avoids using await() in function arguments and thus prevents the error.
-auto_paginate <- async(function(
-    fetch_page,
-    query = list(currentPage = 1, pageSize = 50),
-    items_field = "items",
-    paginate_fields = list(
-        currentPage = "currentPage",
-        totalPage   = "totalPage"
-    ),
-    aggregate_fn = function(acc) { acc },
-    max_pages = Inf
-) {
-    accumulator <- list()
-    repeat {
-        # Fetch the current page asynchronously.
-        response <- await(fetch_page(query))
-        if (!is.null(response[[items_field]])) {
-            page_items <- response[[items_field]]
-        } else {
-            page_items <- response
-        }
-        accumulator[[length(accumulator) + 1]] <- page_items
-        currentPage <- response[[paginate_fields$currentPage]]
-        totalPage   <- response[[paginate_fields$totalPage]]
-        # If we've reached max_pages, or there is no next page, break.
-        if (is.finite(max_pages) && currentPage >= max_pages) break
-        if (is.null(currentPage) || is.null(totalPage) || (currentPage >= totalPage)) break
-        # Prepare query for next page.
-        query$currentPage <- currentPage + 1
-    }
-    aggregate_fn(accumulator)
-})
 
 # Test 1: Aggregates multiple pages correctly.
 test_that("auto_paginate aggregates multiple pages correctly", {

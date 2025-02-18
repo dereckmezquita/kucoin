@@ -264,13 +264,48 @@ process_kucoin_response <- function(response, url = "") {
 #'    - \code{currentPage}: The field containing the current page number.
 #'    - \code{totalPage}: The field containing the total number of pages.
 #' @param aggregate_fn A function to combine the accumulated results into the final output (default returns the accumulator list as is).
-#' @param accumulator An internal accumulator for recursive calls (do not supply this parameter).
 #' @param max_pages The maximum number of pages to fetch (default is \code{Inf} to fetch all available pages).
 #' @return A promise that resolves to the aggregated result as defined by the \code{aggregate_fn}.
 #'
 #' @md
 #' @export
 auto_paginate <- coro::async(function(
+    fetch_page,
+    query = list(currentPage = 1, pageSize = 50),
+    items_field = "items",
+    paginate_fields = list(
+        currentPage = "currentPage",
+        totalPage   = "totalPage"
+    ),
+    aggregate_fn = function(acc) { acc },
+    max_pages = Inf
+) {
+    tryCatch({
+        accumulator <- list()
+        repeat {
+            # Fetch the current page asynchronously.
+            response <- await(fetch_page(query))
+            if (!is.null(response[[items_field]])) {
+                page_items <- response[[items_field]]
+            } else {
+                page_items <- response
+            }
+            accumulator[[length(accumulator) + 1]] <- page_items
+            currentPage <- response[[paginate_fields$currentPage]]
+            totalPage   <- response[[paginate_fields$totalPage]]
+            # If we've reached max_pages, or there is no next page, break.
+            if (is.finite(max_pages) && currentPage >= max_pages) break
+            if (is.null(currentPage) || is.null(totalPage) || (currentPage >= totalPage)) break
+            # Prepare query for next page.
+            query$currentPage <- currentPage + 1
+        }
+        aggregate_fn(accumulator)
+    }, error = function(e) {
+        stop("Error in auto_paginate: ", conditionMessage(e))
+    })
+})
+
+auto_paginate_old <- coro::async(function(
     fetch_page,
     query = list(currentPage = 1, pageSize = 50),
     items_field = "items",
