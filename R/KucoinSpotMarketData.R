@@ -5,7 +5,7 @@ box::use(
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
         get_all_symbols_impl, get_ticker_impl, get_all_tickers_impl,
-        get_trade_history_impl
+        get_trade_history_impl, get_part_orderbook_impl
     ],
     ./utils[ get_base_url ]
 )
@@ -609,6 +609,14 @@ KucoinSpotMarketData <- R6::R6Class(
             return(get_trade_history_impl(
                 base_url = self$base_url,
                 symbol = symbol
+            ))
+        },
+
+        get_part_orderbook = function(symbol, size = 20) {
+            return(get_part_orderbook_impl(
+                base_url = self$base_url,
+                symbol = symbol,
+                size = size
             ))
         }
     )    
