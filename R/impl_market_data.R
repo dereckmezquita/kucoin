@@ -112,8 +112,10 @@ get_currency_impl <- coro::async(function(
 #' Get All Currencies (Implementation)
 #'
 #' This asynchronous function retrieves a list of all currencies available on the KuCoin API.
-#' Each currency entry includes metadata such as its name, full name, precision, confirmation requirements,
-#' and contract address, as well as a nested list of supported chains for multi-chain currencies.
+#' Each currency is returned along with its associated summary details and nested chain-specific details.
+#' For currencies that support multiple chains, the summary information is replicated for each chain,
+#' so that each row in the resulting data.table corresponds to a unique (currency, chain) combination.
+#' If a currency has no associated chain data, dummy chain columns (filled with NA) are appended.
 #'
 #' **Workflow Overview:**
 #'
@@ -129,15 +131,12 @@ get_currency_impl <- coro::async(function(
 #'    then extracts the \code{data} field.
 #'
 #' 4. **Data Conversion:**  
-#'    Converts the selected currency summary fields into a \code{data.table}. It also converts the nested
-#'    \code{chains} data into a separate \code{data.table}.
+#'    Iterates over each row (currency) in the returned data.frame. For each currency, its summary fields are
+#'    extracted and its nested \code{chains} data (if available) is converted to a data.table.
 #'
-#' 5. **Column Renaming:**  
-#'    Renames the \code{contractAddress} column in the chains table to \code{chain_contractAddress} to avoid
-#'    potential name conflicts when combining with the summary table.
-#'
-#' 6. **Result Assembly:**  
-#'    Combines the summary currency table and the chains table using \code{cbind()} and returns the result.
+#' 5. **Result Assembly:**  
+#'    If chain data exists, the summary row is replicated for each chain row and combined with the chain data.
+#'    Otherwise, dummy chain columns (filled with \code{NA}) are appended.
 #'
 #' **API Documentation:**  
 #' [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
@@ -146,26 +145,40 @@ get_currency_impl <- coro::async(function(
 #'        Defaults to the value returned by \code{get_base_url()}.
 #'
 #' @return A promise that resolves to a \code{data.table} containing combined currency details.
-#'         The resulting data.table includes:
+#'         Each row represents a unique currency/chain combination. The data.table includes:
+#'
+#'         **Currency Summary Fields:**
 #'         \describe{
-#'           \item{chainName}{(string) The name of the blockchain network associated with the currency.}
-#'           \item{withdrawalMinSize}{(string) The minimum withdrawal amount permitted on this chain.}
-#'           \item{depositMinSize}{(string) The minimum deposit amount permitted on this chain.}
-#'           \item{withdrawFeeRate}{(string) The fee rate applied to withdrawals on this chain.}
-#'           \item{withdrawalMinFee}{(string) The minimum fee charged for a withdrawal transaction on this chain.}
-#'           \item{isWithdrawEnabled}{(boolean) Indicates whether withdrawals are enabled on this chain.}
-#'           \item{isDepositEnabled}{(boolean) Indicates whether deposits are enabled on this chain.}
-#'           \item{confirms}{(integer) The number of blockchain confirmations required on this chain.}
-#'           \item{preConfirms}{(integer) The number of pre-confirmations required for on-chain verification on this chain.}
-#'           \item{chain_contractAddress}{(string) The contract address specific to this chain (renamed from \code{contractAddress}).}
-#'           \item{withdrawPrecision}{(integer) The withdrawal precision, indicating the maximum number of decimal places for withdrawal amounts on this chain.}
-#'           \item{maxWithdraw}{(string or NULL) The maximum amount allowed per withdrawal transaction on this chain.}
-#'           \item{maxDeposit}{(string or NULL) The maximum amount allowed per deposit transaction on this chain (applicable to some chains such as Lightning Network).}
-#'           \item{needTag}{(boolean) Indicates whether a memo/tag is required for transactions on this chain.}
-#'           \item{chainId}{(string) The unique identifier for the blockchain network associated with the currency.}
-#'           \item{depositFeeRate}{(string, optional) The fee rate applied to deposits on this chain, if provided by the API.}
-#'           \item{withdrawMaxFee}{(string, optional) The maximum fee charged for a withdrawal on this chain, if provided by the API.}
-#'           \item{depositTierFee}{(string, optional) The tiered fee structure for deposits on this chain, if provided by the API.}
+#'           \item{currency}{(string) The unique currency code.}
+#'           \item{name}{(string) The short name of the currency.}
+#'           \item{fullName}{(string) The full descriptive name of the currency.}
+#'           \item{precision}{(integer) The number of decimal places supported by the currency.}
+#'           \item{confirms}{(integer or NA) The number of block confirmations required at the currency level.}
+#'           \item{contractAddress}{(string or NA) The primary contract address for tokenized currencies.}
+#'           \item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled for the currency.}
+#'           \item{isDebitEnabled}{(boolean) Indicates whether debit transactions are enabled for the currency.}
+#'         }
+#'
+#'         **Chain-Specific Fields:**
+#'         \describe{
+#'           \item{chainName}{(string or NA) The name of the blockchain network associated with the currency.}
+#'           \item{withdrawalMinSize}{(string or NA) The minimum withdrawal amount permitted on this chain.}
+#'           \item{depositMinSize}{(string or NA) The minimum deposit amount permitted on this chain.}
+#'           \item{withdrawFeeRate}{(string or NA) The fee rate applied to withdrawals on this chain.}
+#'           \item{withdrawalMinFee}{(string or NA) The minimum fee charged for a withdrawal transaction on this chain.}
+#'           \item{isWithdrawEnabled}{(boolean or NA) Indicates whether withdrawals are enabled on this chain.}
+#'           \item{isDepositEnabled}{(boolean or NA) Indicates whether deposits are enabled on this chain.}
+#'           \item{confirms}{(integer or NA) The number of blockchain confirmations required on this chain.}
+#'           \item{preConfirms}{(integer or NA) The number of pre-confirmations required for on-chain verification on this chain.}
+#'           \item{chain_contractAddress}{(string or NA) The contract address specific to this chain (renamed from \code{contractAddress}).}
+#'           \item{withdrawPrecision}{(integer or NA) The withdrawal precision (maximum number of decimal places for withdrawal amounts on this chain).}
+#'           \item{maxWithdraw}{(string or NA) The maximum amount allowed per withdrawal transaction on this chain.}
+#'           \item{maxDeposit}{(string or NA) The maximum amount allowed per deposit transaction on this chain (applicable to some chains such as Lightning Network).}
+#'           \item{needTag}{(boolean or NA) Indicates whether a memo/tag is required for transactions on this chain.}
+#'           \item{chainId}{(string or NA) The unique identifier for the blockchain network associated with the currency.}
+#'           \item{depositFeeRate}{(string or NA) The fee rate applied to deposits on this chain, if provided by the API.}
+#'           \item{withdrawMaxFee}{(string or NA) The maximum fee charged for a withdrawal on this chain, if provided by the API.}
+#'           \item{depositTierFee}{(string or NA) The tiered fee structure for deposits on this chain, if provided by the API.}
 #'         }
 #'
 #' @details
@@ -195,7 +208,7 @@ get_all_currencies_impl <- coro::async(function(
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
 
-        # Iterate over each row (currency) in the data.frame.
+        # Iterate over each row (currency) in the returned data.frame.
         result_list <- lapply(seq_len(nrow(parsed_response$data)), function(i) {
             # Extract the i-th row as a one-row data.frame.
             curr <- parsed_response$data[i, , drop = FALSE]
@@ -226,7 +239,7 @@ get_all_currencies_impl <- coro::async(function(
                 summary_dt <- summary_dt[rep(1, nrow(chains_dt))]
                 return(cbind(summary_dt, chains_dt))
             } else {
-                # If chains_data is not a data.frame or is empty, create dummy chain columns (all NA).
+                # If no chains exist, create dummy chain columns (all NA).
                 dummy_chain <- data.table::data.table(
                     chainName = NA_character_,
                     withdrawalMinSize = NA_character_,
@@ -235,7 +248,7 @@ get_all_currencies_impl <- coro::async(function(
                     withdrawalMinFee = NA_character_,
                     isWithdrawEnabled = NA,
                     isDepositEnabled = NA,
-                    confirms_chain = NA_integer_,
+                    confirms = NA_integer_,
                     preConfirms = NA_integer_,
                     chain_contractAddress = NA_character_,
                     withdrawPrecision = NA_integer_,
