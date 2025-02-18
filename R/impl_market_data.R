@@ -114,6 +114,70 @@ get_currency_impl <- coro::async(function(
 })
 
 
+#' Get All Currencies (Implementation)
+#'
+#' This asynchronous function retrieves a list of all currencies available on the KuCoin API.
+#' Each currency entry includes metadata such as its name, full name, precision, confirmation requirements,
+#' and contract address, as well as a nested list of supported chains for multi-chain currencies.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **URL Construction:**  
+#'    Constructs the URL by concatenating the base URL (obtained via \code{get_base_url()})
+#'    with the endpoint path \code{/api/v3/currencies}.
+#'
+#' 2. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 3. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field.
+#'
+#' 4. **Data Conversion:**  
+#'    Converts the selected currency summary fields into a \code{data.table}. It also converts the nested
+#'    \code{chains} data into a separate \code{data.table}.
+#'
+#' 5. **Column Renaming:**  
+#'    Renames the \code{contractAddress} column in the chains table to \code{chain_contractAddress} to avoid
+#'    potential name conflicts when combining with the summary table.
+#'
+#' 6. **Result Assembly:**  
+#'    Combines the summary currency table and the chains table using \code{cbind()} and returns the result.
+#'
+#' **API Documentation:**  
+#' [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#'
+#' @return A promise that resolves to a \code{data.table} containing combined currency details.
+#'         The resulting data.table includes:
+#'         \describe{
+#'           \item{name}{(string) The short name of the currency.}
+#'           \item{fullName}{(string) The full name of the currency.}
+#'           \item{precision}{(integer) The number of decimal places for the currency.}
+#'           \item{confirms}{(integer or NULL) The number of block confirmations required (if applicable).}
+#'           \item{contractAddress}{(string or NULL) The primary contract address for the currency.}
+#'           \item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled.}
+#'           \item{isDebitEnabled}{(boolean) Indicates whether debit is enabled.}
+#'           \item{chain_contractAddress}{(string or NULL) The contract address at the chain level (if provided).}
+#'           \item{...}{Additional chain‑specific fields (e.g., \code{chainName}, \code{withdrawalMinSize}, etc.).}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/currencies}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve all available currencies:
+#'   dt_all_currencies <- await(get_all_currencies_impl())
+#'   print(dt_all_currencies)
+#' }
+#'
+#' @md
+#' @export
 get_all_currencies_impl <- coro::async(function(
     base_url = get_base_url()
 ) {
@@ -135,7 +199,7 @@ get_all_currencies_impl <- coro::async(function(
         summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
         currency_dt <- data.table::as.data.table(parsed_response$data$chains)
 
-        # rename to avoid name conflicts
+        # Rename the chain-level 'contractAddress' to avoid conflicts.
         currency_dt[, chain_contractAddress := contractAddress]
         currency_dt[, contractAddress := NULL]
 
