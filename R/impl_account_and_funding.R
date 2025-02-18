@@ -1,8 +1,9 @@
 # File: ./R/impl_account_and_funding.R
 
 box::use(
-    ./helpers_api[ build_headers, process_kucoin_response ],
-    ./utils[ build_query, get_api_keys, get_base_url, time_convert_from_kucoin_ms ]
+    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+    ./utils[ build_query, get_api_keys, get_base_url ],
+    ./utils2[ time_convert_from_kucoin_ms ]
 )
 
 #' Get Account Summary Information (Implementation)
@@ -790,7 +791,7 @@ get_spot_ledger_impl <- coro::async(function(
             full_endpoint <- paste0(endpoint, qs)
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
-            response <- httr::GET(url, headers, timeout(3))
+            response <- httr::GET(url, headers, httr::timeout(3))
             parsed_response <- process_kucoin_response(response, url)
             return(parsed_response$data)
         })
@@ -804,7 +805,7 @@ get_spot_ledger_impl <- coro::async(function(
             aggregate_fn = function(acc) {
                 data <- data.table::rbindlist(acc, fill = TRUE)
                 data[, createdAtDatetime := time_convert_from_kucoin_ms(createdAt)]
-                return()
+                return(data)
             },
             max_pages = max_pages
         ))
