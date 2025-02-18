@@ -7,12 +7,12 @@ box::use(
   ../../R/helpers_api[ auto_paginate ]
 )
 
-# Define an async main function that runs several tests.
+# Define an asynchronous main function for testing auto_paginate.
 async_main <- async(function() {
-  
+
   ## Test 1: Multiple pages are aggregated correctly.
-  res1 <- await(async(function(){
-    # Simulated paginated responses.
+  res1 <- await(async(function() {
+    # Simulate three paginated responses.
     pages <- list(
       list(items = 1:3, currentPage = 1, totalPage = 3),
       list(items = 4:6, currentPage = 2, totalPage = 3),
@@ -24,7 +24,7 @@ async_main <- async(function() {
       return(pages[[counter]])
     })
     
-    # Call auto_paginate with the simulated fetch_page.
+    # Call auto_paginate with our simulated fetch_page.
     result <- await(auto_paginate(
       fetch_page = fetch_page,
       query = list(currentPage = 1, pageSize = 50)
@@ -33,6 +33,7 @@ async_main <- async(function() {
   }))
   
   test_that("auto_paginate paginates through multiple pages", {
+    # We expect three pages aggregated.
     expect_equal(length(res1), 3)
     combined_items <- unlist(lapply(res1, function(page) page$items))
     expect_equal(combined_items, 1:9)

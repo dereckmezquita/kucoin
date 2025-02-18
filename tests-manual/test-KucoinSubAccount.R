@@ -13,10 +13,10 @@ box::use(
     rlang,
     later,
     coro,
-    ../R/KuCoinSubAccount[ KuCoinSubAccount ]
+    ../R/KucoinSubAccount[ KucoinSubAccount ]
 )
 
-subAcc <- KuCoinSubAccount$new()
+subAcc <- KucoinSubAccount$new()
 
 async_main <- coro::async(function() {
     # result <- await(subAcc$add_subaccount(
@@ -37,10 +37,10 @@ async_main <- coro::async(function() {
     cat("SubAccount List Summary:\n")
     print(dt_summary)
 
-    # Example: Retrieve sub-account detail (balance) for a given subUserId.
-    dt_balance <- await(subAcc$get_subaccount_detail_balance("some-accout-num", includeBaseAmount = FALSE))
-    cat("SubAccount Detail - Balance:\n")
-    print(dt_balance)
+    # # Example: Retrieve sub-account detail (balance) for a given subUserId.
+    # dt_balance <- await(subAcc$get_subaccount_detail_balance("some-accout-num", includeBaseAmount = FALSE))
+    # cat("SubAccount Detail - Balance:\n")
+    # print(dt_balance)
 })
 
 async_main()

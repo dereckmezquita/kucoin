@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+git#!/usr/bin/env Rscript
 if (interactive()) {
     setwd("./tests-manual")
 }
