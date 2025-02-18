@@ -112,3 +112,38 @@ get_currency_impl <- coro::async(function(
         currency_dt
     ))
 })
+
+
+get_all_currencies_impl <- coro::async(function(
+    base_url = get_base_url()
+) {
+    tryCatch({
+        endpoint <- "/api/v3/currencies"
+        url <- paste0(base_url, endpoint)
+
+        # Send a GET request to the endpoint with a timeout of 10 seconds.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        summary_fields <- c(
+            "name", "fullName", "precision", "confirms",
+            "contractAddress", "isMarginEnabled", "isDebitEnabled"
+        )
+
+        summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
+        currency_dt <- data.table::as.data.table(parsed_response$data$chains)
+
+        # rename to avoid name conflicts
+        currency_dt[, chain_contractAddress := contractAddress]
+        currency_dt[, contractAddress := NULL]
+
+        return(cbind(
+            summary_dt,
+            currency_dt
+        ))
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_all_currencies_impl:", conditionMessage(e)))
+    })
+})
