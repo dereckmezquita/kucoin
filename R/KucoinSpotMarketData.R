@@ -612,6 +612,58 @@ KucoinSpotMarketData <- R6::R6Class(
             ))
         },
 
+        #' Retrieve Part OrderBook
+        #'
+        #' This asynchronous method retrieves partial orderbook depth data for a specified trading symbol from the KuCoin API.
+        #' It returns a promise that resolves to a single \code{data.table} containing the aggregated price levels for both bids and asks,
+        #' along with the global snapshot details (timestamp and sequence). Each row in the returned table represents one price level,
+        #' with an indicator of the order side ("bid" for bids, "ask" for asks).
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **HTTP Request:**  
+        #'    Sends a GET request to the KuCoin endpoint for partial orderbook data using the specified depth (\code{size}).
+        #'
+        #' 2. **Response Processing:**  
+        #'    Processes the API response using \code{process_kucoin_response()} to extract the global snapshot fields (\code{time} and \code{sequence})
+        #'    and the bid/ask arrays.
+        #'
+        #' 3. **Data Conversion and Flattening:**  
+        #'    - Converts the bids and asks matrices into individual rows in two separate \code{data.table} objects.
+        #'    - Tags each row with a \code{side} indicator ("bid" or "ask").
+        #'    - Combines these two tables into one single \code{data.table}.
+        #'
+        #' 4. **Timestamp Conversion:**  
+        #'    Adds the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin_ms()}).
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
+        #'
+        #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+        #' @param size An integer specifying the depth of the orderbook to retrieve. Allowed values are 20 or 100. Defaults to 20.
+        #'
+        #' @return A promise that resolves to a \code{data.table} containing the following columns:
+        #'         \describe{
+        #'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
+        #'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
+        #'           \item{sequence}{(string) The sequence number for the orderbook update.}
+        #'           \item{side}{(string) The order side ("bid" or "ask").}
+        #'           \item{price}{(string) The aggregated price at the given level.}
+        #'           \item{size}{(string) The aggregated size at that price level.}
+        #'         }
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve the top 20 levels of the orderbook for BTC-USDT:
+        #'   dt_orderbook <- await(market_data$get_part_orderbook(symbol = "BTC-USDT", size = 20))
+        #'   print(dt_orderbook)
+        #'
+        #'   # Retrieve the top 100 levels of the orderbook for BTC-USDT:
+        #'   dt_orderbook_100 <- await(market_data$get_part_orderbook(symbol = "BTC-USDT", size = 100))
+        #'   print(dt_orderbook_100)
+        #' }
+        #'
+        #' @export
         get_part_orderbook = function(symbol, size = 20) {
             return(get_part_orderbook_impl(
                 base_url = self$base_url,
