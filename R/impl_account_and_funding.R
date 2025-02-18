@@ -82,7 +82,7 @@ get_account_summary_info_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
 
         url <- paste0(base_url, endpoint)
-        response <- httr::GET(url, headers, timeout(3))
+        response <- httr::GET(url, headers, httr::timeout(3))
 
         # Process the response and extract the "data" field.
         parsed_response <- process_kucoin_response(response, url)
