@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ process_kucoin_response ],
     ./utils[ build_query, get_base_url ],
-    ./utils2[ verify_symbol ]
+    ./utils2[ verify_symbol, time_convert_from_kucoin_ms ]
 )
 
 #' Get Currency Details (Implementation)
@@ -470,5 +470,96 @@ get_all_symbols_impl <- coro::async(function(
         return(symbols_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_symbols_impl:", conditionMessage(e)))
+    })
+})
+
+#' Get Ticker (Implementation)
+#'
+#' This asynchronous function retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API.
+#' The endpoint returns details such as the last traded price and size, the best bid and ask prices and sizes, as well as additional metadata.
+#'
+#' **Workflow Overview:**
+#'
+#' 1. **Query String Construction:**  
+#'    Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
+#'
+#' 2. **URL Construction:**  
+#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
+#'    \code{/api/v1/market/orderbook/level1}, and the query string.
+#'
+#' 3. **HTTP Request:**  
+#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#'
+#' 4. **Response Processing:**  
+#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+#'    then extracts the \code{data} field.
+#'
+#' 5. **Data Conversion:**  
+#'    Converts the returned \code{data} (a named list containing ticker information) into a \code{data.table}.
+#'
+#' **API Documentation:**  
+#' [KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
+#'
+#' @param base_url A character string representing the base URL for the KuCoin API.
+#'        Defaults to the value returned by \code{get_base_url()}.
+#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+#'
+#' @return A promise that resolves to a \code{data.table} containing the ticker information. The data.table includes:
+#'         \describe{
+#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
+#'           \item{timestamp}{(POSIXct) The timestamp of the ticker data in UTC.}
+#'           \item{time_ms}{(integer) The timestamp of the ticker data (in milliseconds).}
+#'           \item{sequence}{(string) The sequence identifier for the ticker update.}
+#'           \item{price}{(string) The last traded price.}
+#'           \item{size}{(string) The last traded size.}
+#'           \item{bestBid}{(string) The best bid price.}
+#'           \item{bestBidSize}{(string) The best bid size.}
+#'           \item{bestAsk}{(string) The best ask price.}
+#'           \item{bestAskSize}{(string) The best ask size.}
+#'         }
+#'
+#' @details
+#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT}  
+#'
+#' This function uses a public endpoint and does not require authentication.
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve ticker information for the BTC-USDT trading pair:
+#'   dt_ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
+#'   print(dt_ticker)
+#' }
+#'
+#' @md
+#' @export
+get_ticker_impl <- coro::async(function(
+    base_url = get_base_url(),
+    symbol
+) {
+    tryCatch({
+        qs <- build_query(list(symbol = symbol))
+        endpoint <- "/api/v1/market/orderbook/level1"
+        url <- paste0(base_url, endpoint, qs)
+
+        # Send a GET request with a 10-second timeout.
+        response <- httr::GET(url, httr::timeout(10))
+
+        # Process and validate the response.
+        parsed_response <- process_kucoin_response(response, url)
+
+        # Convert the 'data' field (a named list) to a data.table.
+        ticker_dt <- data.table::as.data.table(parsed_response$data)
+        ticker_dt[, symbol := symbol]
+
+        # convert kucoin time to POSIXct
+        ticker_dt[, timestamp := time_convert_from_kucoin_ms(time)]
+        # rename the time col to time_ms
+        data.table::setnames(ticker_dt, "time", "time_ms")
+
+        move_cols <- c("symbol", "timestamp", "time_ms")
+        data.table::setcolorder(ticker_dt, c(move_cols, setdiff(names(ticker_dt), move_cols)))
+        return(ticker_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_ticker_impl:", conditionMessage(e)))
     })
 })

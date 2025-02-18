@@ -4,7 +4,7 @@ box::use(
     ./impl_market_data_get_klines[ get_klines_impl ],
     ./impl_market_data[
         get_currency_impl, get_all_currencies_impl, get_symbol_impl,
-        get_all_symbols_impl
+        get_all_symbols_impl, get_ticker_impl
     ],
     ./utils[ get_base_url ]
 )
@@ -429,6 +429,67 @@ KucoinSpotMarketData <- R6::R6Class(
             return(get_all_symbols_impl(
                 base_url = self$base_url,
                 market = market
+            ))
+        },
+
+        #' Retrieve Ticker Information
+        #'
+        #' This asynchronous method retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API.
+        #' It returns a promise that resolves to a `data.table` containing the ticker details.
+        #'
+        #' **Workflow Overview:**
+        #'
+        #' 1. **Input Validation:**  
+        #'    Validates that a trading symbol is provided.
+        #'
+        #' 2. **URL Construction:**  
+        #'    Constructs the full URL by concatenating the base URL (stored in the class) with the endpoint path 
+        #'    \code{/api/v1/market/orderbook/level1} and a query string built from the required \code{symbol} parameter.
+        #'
+        #' 3. **HTTP Request:**  
+        #'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+        #'
+        #' 4. **Response Processing:**  
+        #'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
+        #'    then extracts the \code{data} field.
+        #'
+        #' 5. **Data Conversion:**  
+        #'    Converts the returned \code{data} (a named list containing ticker information) into a `data.table`.
+        #'
+        #' **API Documentation:**  
+        #' [KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
+        #'
+        #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
+        #'
+        #' @return A promise that resolves to a `data.table` containing the following columns:
+        #'         \describe{
+        #'           \item{time}{(integer) The timestamp of the ticker data (in milliseconds).}
+        #'           \item{sequence}{(string) The sequence identifier for the ticker update.}
+        #'           \item{price}{(string) The last traded price.}
+        #'           \item{size}{(string) The last traded size.}
+        #'           \item{bestBid}{(string) The best bid price.}
+        #'           \item{bestBidSize}{(string) The best bid size.}
+        #'           \item{bestAsk}{(string) The best ask price.}
+        #'           \item{bestAskSize}{(string) The best ask size.}
+        #'         }
+        #'
+        #' @details
+        #' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=<symbol>}  
+        #'
+        #' This method uses a public endpoint and does not require authentication.
+        #'
+        #' @examples
+        #' \dontrun{
+        #'   # Retrieve ticker information for BTC-USDT:
+        #'   dt_ticker <- await(market_data$get_ticker(symbol = "BTC-USDT"))
+        #'   print(dt_ticker)
+        #' }
+        #'
+        #' @export
+        get_ticker = function(symbol) {
+            return(get_ticker_impl(
+                base_url = self$base_url,
+                symbol = symbol
             ))
         }
     )    
