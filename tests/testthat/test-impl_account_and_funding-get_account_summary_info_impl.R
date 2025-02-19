@@ -16,7 +16,7 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
 
     # If API keys are not set, skip the test.
     skip_if(is.null(keys$api_key) || keys$api_key == "", "No API key set in environment; skipping live API test")
-    
+
     error <- NULL
     result <- NULL
 
@@ -36,11 +36,12 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
             error <<- e
             fail(paste("Promise rejected with error:", conditionMessage(e)))
         })
-    
+
     while (!later::loop_empty()) {
         later::run_now(timeoutSecs = 0.1)
     }
-    
+
     expect_null(error)
     expect_true(!is.null(result))
 })
+
