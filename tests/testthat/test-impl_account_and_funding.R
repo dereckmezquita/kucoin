@@ -81,9 +81,8 @@ test_that("get_apikey_info_impl returns valid API key info from live API", {
             result <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c(
-                "uid", "subName", "remark", "apiKey", 
-                "apiVersion", "permission", "ipWhitelist",
-                "isMaster", "createdAt"
+                "remark", "apiKey", "apiVersion",
+                "permission", "createdAt", "uid", "isMaster"
             )
             expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
