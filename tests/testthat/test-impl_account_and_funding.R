@@ -1,7 +1,16 @@
 if (interactive()) setwd("./tests/testthat")
 
 box::use(
-    testthat[ test_that, skip_if, expect_true, expect_equal, fail, expect_null, expect_false, expect_match ],
+    testthat[
+        test_that,
+        skip_if,
+        expect_true,
+        expect_equal,
+        fail,
+        expect_null,
+        expect_false,
+        expect_match
+    ],
     later[ loop_empty, run_now ],
     promises[ then, catch ],
     data.table[ is.data.table ],
