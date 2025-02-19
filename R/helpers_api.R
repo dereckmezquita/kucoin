@@ -223,7 +223,12 @@ process_kucoin_response <- function(response, url = "") {
     }
 
     response_text <- httr::content(response, as = "text", encoding = "UTF-8")
-    parsed_response <- jsonlite::fromJSON(response_text)
+    parsed_response <- jsonlite::fromJSON(
+        response_text,
+        simplifyVector = TRUE,
+        simplifyDataFrame = FALSE,
+        simplifyMatrix = FALSE
+    )
 
     if (!"code" %in% names(parsed_response)) {
         rlang::abort("Invalid API response structure: missing 'code' field.")
