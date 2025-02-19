@@ -362,12 +362,12 @@ get_spot_account_dt_impl <- coro::async(function(
 
         if (nrow(account_dt)) {
             return(data.table::data.table(
-                id        = NA_character_,
-                currency  = NA_character_,
-                type      = NA_character_,
-                balance   = NA_real_,
-                available = NA_real_,
-                holds     = NA_real_
+                id        = character(0),
+                currency  = character(0),
+                type      = character(0),
+                balance   = numeric(0),
+                available = numeric(0),
+                holds     = numeric(0)
             ))
         }
 
