@@ -179,7 +179,10 @@ test_that("get_spot_account_detail_impl returns valid spot account detail from l
             detail <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("currency", "balance", "available", "holds")
+            # check if all expected columns are present
             expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            # check col types; balance, available, holds, are numeric
+            expect_true(all(sapply(dt[, c("balance", "available", "holds")], is.numeric)))
         })$
         catch(function(e) {
             error <<- e
