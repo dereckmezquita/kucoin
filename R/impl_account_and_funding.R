@@ -360,7 +360,7 @@ get_spot_account_dt_impl <- coro::async(function(
         # $data: list of lists
         account_dt <- data.table::rbindlist(parsed_response$data)
 
-        if (nrow(account_dt)) {
+        if (nrow(account_dt) == 0) {
             return(data.table::data.table(
                 id        = character(0),
                 currency  = character(0),
