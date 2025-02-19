@@ -44,4 +44,3 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
     expect_null(error)
     expect_true(!is.null(result))
 })
-
