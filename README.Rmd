@@ -1,0 +1,25 @@
+---
+output: github_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    warning = FALSE,
+    message = FALSE,
+    fig.path = "man/figures/README-",
+    fig.align = "center",
+    out.width = "100%",
+    collapse = TRUE,
+    comment = "#>"
+)
+
+options("datatable.print.topn" = 3, "datatable.print.nrows" = 50, "datatable.print.class" = TRUE, "datatable.print.trunc.cols" = TRUE)
+```
+
+# kucoin
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Travis build status](https://travis-ci.org/dereckmezquita/kucoin.svg?branch=master)](https://travis-ci.org/dereckmezquita/kucoin)
+<!-- badges: end -->
+
