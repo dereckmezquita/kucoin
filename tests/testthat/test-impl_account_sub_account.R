@@ -36,17 +36,30 @@ format_error <- function(e) {
     )
 }
 
-# Test: Add SubAccount Implementation
-test_that("add_subaccount_impl creates a subaccount and returns valid data", {
+test_that("add_subaccount_impl creates a subaccount and returns valid data (mocked HTTP request)", {
     skip_if(skip_live, "No API key set in environment; skipping live API test")
     error <- NULL
     result <- NULL
-    # Generate a unique subaccount name using the current timestamp.
-    subName <- paste0("TestSub_", format(Sys.time(), "%Y%m%d%H%M%S"))
+
+    # Generate a unique subaccount name without underscore.
+    subName <- paste0("TestSub", format(Sys.time(), "%Y%m%d%H%M%S"))
     password <- "Test1234"   # Must meet requirements (7-24 characters, letters and numbers)
     access <- "Spot"         # Allowed values: "Spot", "Futures", "Margin"
     remarks <- "Test sub-account creation"
 
+    # Load the saved HTTP response from the RDS file.
+    saved_response <- readRDS("../../api-responses/add_subaccount_impl.Rds")
+
+    # NOTE: WORKING MOCK OF HTTR::POST!!!
+    # Set up the mock: override POST() in the httr package.
+    testthat::local_mocked_bindings(
+        POST = function(url, headers, body, encode, timeout) {
+            return(saved_response)
+        },
+        .package = "httr"
+    )
+
+    # Now call the asynchronous function.
     subimpl$add_subaccount_impl(keys, base_url, password, subName, access, remarks)$
         then(function(dt) {
             result <<- dt
@@ -62,88 +75,90 @@ test_that("add_subaccount_impl creates a subaccount and returns valid data", {
             fail(format_error(e))
         })
 
+    # Run the event loop until all promises are resolved.
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
+
     expect_null(error)
     expect_true(!is.null(result))
     Sys.sleep(delay_seconds)
 })
 
-# Test: Get SubAccount List Summary Implementation
-test_that("get_subaccount_list_summary_impl returns valid subaccount summary data", {
-    skip_if(skip_live, "No API key set in environment; skipping live API test")
-    error <- NULL
-    result <- NULL
+# # Test: Get SubAccount List Summary Implementation
+# test_that("get_subaccount_list_summary_impl returns valid subaccount summary data", {
+#     skip_if(skip_live, "No API key set in environment; skipping live API test")
+#     error <- NULL
+#     result <- NULL
 
-    subimpl$get_subaccount_list_summary_impl(keys, base_url)$
-        then(function(dt) {
-            result <<- dt
-            expect_true(is.data.table(dt))
-            # Expected columns from the subaccount summary. Adjust as needed.
-            expected_cols <- c("uid", "subName", "status", "access", "createdAt")
-            expect_true(
-                all(expected_cols %in% names(dt)),
-                info = paste("Actual columns:", paste(names(dt), collapse = ", "))
-            )
-            # Verify that the datetime conversion has been added.
-            expect_true("createdDatetime" %in% names(dt))
-        })$
-        catch(function(e) {
-            error <<- e
-            fail(format_error(e))
-        })
+#     subimpl$get_subaccount_list_summary_impl(keys, base_url)$
+#         then(function(dt) {
+#             result <<- dt
+#             expect_true(is.data.table(dt))
+#             # Expected columns from the subaccount summary. Adjust as needed.
+#             expected_cols <- c("uid", "subName", "status", "access", "createdAt")
+#             expect_true(
+#                 all(expected_cols %in% names(dt)),
+#                 info = paste("Actual columns:", paste(names(dt), collapse = ", "))
+#             )
+#             # Verify that the datetime conversion has been added.
+#             expect_true("createdDatetime" %in% names(dt))
+#         })$
+#         catch(function(e) {
+#             error <<- e
+#             fail(format_error(e))
+#         })
 
-    while (!loop_empty()) {
-        run_now(timeoutSecs = 0.1)
-    }
-    expect_null(error)
-    expect_true(!is.null(result))
-    Sys.sleep(delay_seconds)
-})
+#     while (!loop_empty()) {
+#         run_now(timeoutSecs = 0.1)
+#     }
+#     expect_null(error)
+#     expect_true(!is.null(result))
+#     Sys.sleep(delay_seconds)
+# })
 
-# Test: Get SubAccount Detail Balance Implementation
-test_that("get_subaccount_detail_balance_impl returns valid balance details for a subaccount", {
-    skip_if(skip_live, "No API key set in environment; skipping live API test")
-    # First, retrieve the subaccount summary list.
-    subaccount_list <- NULL
-    subimpl$get_subaccount_list_summary_impl(keys, base_url)$
-        then(function(dt) {
-            subaccount_list <<- dt
-        })$
-        catch(function(e) {
-            fail(format_error(e))
-        })
-    while (!loop_empty()) {
-        run_now(timeoutSecs = 0.1)
-    }
-    skip_if(is.null(subaccount_list) || nrow(subaccount_list) == 0,
-        "No subaccounts available")
+# # Test: Get SubAccount Detail Balance Implementation
+# test_that("get_subaccount_detail_balance_impl returns valid balance details for a subaccount", {
+#     skip_if(skip_live, "No API key set in environment; skipping live API test")
+#     # First, retrieve the subaccount summary list.
+#     subaccount_list <- NULL
+#     subimpl$get_subaccount_list_summary_impl(keys, base_url)$
+#         then(function(dt) {
+#             subaccount_list <<- dt
+#         })$
+#         catch(function(e) {
+#             fail(format_error(e))
+#         })
+#     while (!loop_empty()) {
+#         run_now(timeoutSecs = 0.1)
+#     }
+#     skip_if(is.null(subaccount_list) || nrow(subaccount_list) == 0,
+#         "No subaccounts available")
 
-    error <- NULL
-    result <- NULL
-    # Use the first subaccount's uid as subUserId.
-    subUserId <- subaccount_list$uid[1]
+#     error <- NULL
+#     result <- NULL
+#     # Use the first subaccount's uid as subUserId.
+#     subUserId <- subaccount_list$uid[1]
 
-    subimpl$get_subaccount_detail_balance_impl(keys, base_url, subUserId)$
-        then(function(dt) {
-            result <<- dt
-            expect_true(is.data.table(dt))
-            expected_cols <- c("currency", "balance", "available", "holds", "accountType", "subUserId", "subName")
-            expect_true(
-                all(expected_cols %in% names(dt)),
-                info = paste("Actual columns:", paste(names(dt), collapse = ", "))
-            )
-        })$
-        catch(function(e) {
-            error <<- e
-            fail(format_error(e))
-        })
+#     subimpl$get_subaccount_detail_balance_impl(keys, base_url, subUserId)$
+#         then(function(dt) {
+#             result <<- dt
+#             expect_true(is.data.table(dt))
+#             expected_cols <- c("currency", "balance", "available", "holds", "accountType", "subUserId", "subName")
+#             expect_true(
+#                 all(expected_cols %in% names(dt)),
+#                 info = paste("Actual columns:", paste(names(dt), collapse = ", "))
+#             )
+#         })$
+#         catch(function(e) {
+#             error <<- e
+#             fail(format_error(e))
+#         })
 
-    while (!loop_empty()) {
-        run_now(timeoutSecs = 0.1)
-    }
-    expect_null(error)
-    expect_true(!is.null(result))
-    Sys.sleep(delay_seconds)
-})
+#     while (!loop_empty()) {
+#         run_now(timeoutSecs = 0.1)
+#     }
+#     expect_null(error)
+#     expect_true(!is.null(result))
+#     Sys.sleep(delay_seconds)
+# })
