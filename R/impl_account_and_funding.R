@@ -358,7 +358,29 @@ get_spot_account_dt_impl <- coro::async(function(
 
         parsed_response <- process_kucoin_response(response, url)
         # $data: list of lists
-        return(data.table::rbindlist(parsed_response$data))
+        account_dt <- data.table::rbindlist(parsed_response$data)
+
+        if (nrow(account_dt)) {
+            return(data.table::data.table(
+                id        = NA_character_,
+                currency  = NA_character_,
+                type      = NA_character_,
+                balance   = NA_real_,
+                available = NA_real_,
+                holds     = NA_real_
+            ))
+        }
+
+        account_dt[, `:=`(
+            id        = as.character(id),
+            currency  = as.character(currency),
+            type      = as.character(type),
+            balance   = as.numeric(balance),
+            available = as.numeric(available),
+            holds     = as.numeric(holds)
+        )]
+
+        return(account_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
     })
