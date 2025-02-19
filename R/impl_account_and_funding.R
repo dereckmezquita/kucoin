@@ -881,6 +881,23 @@ get_spot_ledger_impl <- coro::async(function(
             items_field = "items",
             paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
             aggregate_fn = function(acc) {
+                if (length(acc) == 0 || all(sapply(acc, function(x) length(x) == 0))) {
+                    # Create empty data.table with correct columns
+                    return(data.table::data.table(
+                        id = character(),
+                        currency = character(),
+                        amount = character(),
+                        fee = character(),
+                        balance = character(),
+                        accountType = character(),
+                        bizType = character(),
+                        direction = character(),
+                        createdAt = integer(),
+                        context = character(),
+                        createdAtDatetime = lubridate::as_datetime(character())
+                    ))
+                }
+
                 data <- data.table::rbindlist(acc, fill = TRUE)
                 data[, createdAtDatetime := time_convert_from_kucoin(createdAt, "ms")]
                 return(data)

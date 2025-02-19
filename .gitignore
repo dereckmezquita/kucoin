@@ -9,6 +9,9 @@ dev/keys/
 
 *.log
 
+# dev files
+.env
+
 # History files
 .Rhistory
 .Rapp.history
