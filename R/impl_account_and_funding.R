@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
     ./utils[ build_query, get_api_keys, get_base_url ],
-    ./utils2[ time_convert_from_kucoin ]
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
 )
 
 #' Get Account Summary Information (Implementation)

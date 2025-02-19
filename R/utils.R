@@ -1,5 +1,20 @@
 # File: utils.R
 
+#' Verify Symbol Format
+#'
+#' Checks whether the ticker symbol is of the format "BTC-USDT" (uppercase alphanumeric separated by a dash).
+#'
+#' @param ticker A character string representing the symbol.
+#' @return A logical value; TRUE if the symbol is valid, FALSE otherwise.
+#' @export
+verify_symbol <- function(ticker) {
+    # has to be of format "BTC-USDT"
+    if (!grepl("^[A-Z|0-9]+-[A-Z|0-9]+$", ticker)) {
+        return(FALSE)
+    }
+    return(TRUE)
+}
+
 #' Build Query String for KuCoin API Request
 #'
 #' This function constructs a URL query string from a named list of parameters. It performs the following steps:

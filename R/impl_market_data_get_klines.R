@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ process_kucoin_response ],
     ./utils[ build_query, get_base_url ],
-    ./utils2
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ]
 )
 
 #' Get Klines market data allowed frequencies
@@ -100,8 +100,8 @@ split_time_range_by_candles <- function(
     }
     check_allowed_frequency_s(candle_duration_s)
 
-    from_s <- utils2$time_convert_to_kucoin(from, "s")
-    to_s <- utils2$time_convert_to_kucoin(to, "s")
+    from_s <- time_convert_to_kucoin(from, "s")
+    to_s <- time_convert_to_kucoin(to, "s")
     total_seconds <- to_s - from_s
 
     segment_seconds <- max_candles * candle_duration_s
@@ -203,8 +203,8 @@ fetch_klines_segment <- coro::async(function(
     query <- list(
         symbol = symbol,
         type = freq,
-        startAt = utils2$time_convert_to_kucoin(from, "s"),
-        endAt   = utils2$time_convert_to_kucoin(to, "s")
+        startAt = time_convert_to_kucoin(from, "s"),
+        endAt   = time_convert_to_kucoin(to, "s")
     )
     qs <- build_query(query)
 
