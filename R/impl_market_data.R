@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
     ./utils[ build_query, get_api_keys, get_base_url ],
-    ./utils2[ verify_symbol, time_convert_from_kucoin_ms ]
+    ./utils2[ verify_symbol, time_convert_from_kucoin ]
 )
 
 #' Get Announcements (Implementation)
@@ -679,7 +679,7 @@ get_ticker_impl <- coro::async(function(
         ticker_dt[, symbol := symbol]
 
         # convert kucoin time to POSIXct
-        ticker_dt[, timestamp := time_convert_from_kucoin_ms(time)]
+        ticker_dt[, timestamp := time_convert_from_kucoin(time, "ms")]
         # rename the time col to time_ms
         data.table::setnames(ticker_dt, "time", "time_ms")
 
@@ -718,7 +718,7 @@ get_ticker_impl <- coro::async(function(
 #'
 #' 5. **Snapshot Time Augmentation:**  
 #'    Adds columns for the global snapshot time both in its original millisecond format and as a converted
-#'    POSIXct datetime (using the helper function \code{time_convert_from_kucoin_ms()}).
+#'    POSIXct datetime (using the helper function \code{time_convert_from_kucoin("ms")}).
 #'
 #' **API Documentation:**  
 #' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
@@ -787,7 +787,7 @@ get_all_tickers_impl <- coro::async(function(
 
         # Add the snapshot time information.
         ticker_dt[, globalTime_ms := global_time]
-        ticker_dt[, globalTime_datetime := time_convert_from_kucoin_ms(global_time)]
+        ticker_dt[, globalTime_datetime := time_convert_from_kucoin(global_time, "ms")]
 
         return(ticker_dt)
     }, error = function(e) {
@@ -822,7 +822,7 @@ get_all_tickers_impl <- coro::async(function(
 #'
 #' 6. **Timestamp Conversion:**  
 #'    Converts the trade timestamp from nanoseconds to a POSIXct datetime by dividing by 1e6 (to get milliseconds)
-#'    and applying the helper function \code{time_convert_from_kucoin_ms()}.
+#'    and applying the helper function \code{time_convert_from_kucoin("ns")}.
 #'
 #' **API Documentation:**  
 #' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
@@ -875,7 +875,7 @@ get_trade_history_impl <- coro::async(function(
         trade_history_dt <- data.table::as.data.table(parsed_response$data)
 
         # Convert the trade timestamp from nanoseconds to a POSIXct datetime.
-        trade_history_dt[, timestamp := lubridate::as_datetime(time / 1e9, tz = "UTC")]
+        trade_history_dt[, timestamp := time_convert_to_kucoin(time, "ns")]
 
         return(trade_history_dt)
     }, error = function(e) {
@@ -999,7 +999,7 @@ get_part_orderbook_impl <- coro::async(function(
         # Append global snapshot fields.
         orderbook_dt[, time_ms := global_time]
         orderbook_dt[, sequence := sequence]
-        orderbook_dt[, timestamp := time_convert_from_kucoin_ms(global_time)]
+        orderbook_dt[, timestamp := time_convert_from_kucoin(global_time, "ms")]
 
         # Reorder columns to move global fields to the front.
         data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
@@ -1042,7 +1042,7 @@ get_part_orderbook_impl <- coro::async(function(
 #'    - Combines the two tables into a single \code{data.table}.
 #'
 #' 7. **Timestamp Conversion:**  
-#'    Appends the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin_ms()}).
+#'    Appends the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin("ms")}).
 #'
 #' **API Documentation:**  
 #' [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
@@ -1130,7 +1130,7 @@ get_full_orderbook_impl <- coro::async(function(
         # Append global snapshot fields.
         orderbook_dt[, time_ms := global_time]
         orderbook_dt[, sequence := sequence]
-        orderbook_dt[, timestamp := time_convert_from_kucoin_ms(global_time)]
+        orderbook_dt[, timestamp := time_convert_from_kucoin(global_time, "ms")]
 
         # Reorder columns so that global fields appear first.
         data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
@@ -1167,7 +1167,7 @@ get_full_orderbook_impl <- coro::async(function(
 #'    Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
 #'    \describe{
 #'      \item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
-#'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin_ms()}.}
+#'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin("ms")}.}
 #'    }
 #'
 #' **API Documentation:**  
@@ -1227,7 +1227,7 @@ get_24hr_stats_impl <- coro::async(function(
         data_obj <- parsed_response$data
 
         stats_dt <- data.table::as.data.table(data_obj)
-        stats_dt[, timestamp := time_convert_from_kucoin_ms(time)]
+        stats_dt[, timestamp := time_convert_from_kucoin(time, "ms")]
 
         data.table::setnames(stats_dt, "time", "time_ms")
         data.table::setcolorder(stats_dt, c("timestamp", "time_ms", setdiff(names(stats_dt), c("timestamp", "time_ms"))))

@@ -313,7 +313,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'         \item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
         #'         \item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
         #'         \item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-        #'         \item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin_ms}).}
+        #'         \item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin("ms")}).}
         #'       }
         #'     }
         #'     \item{\code{assets}}{Contains detailed information for each isolated margin account asset with the following flattened columns:
@@ -358,7 +358,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'         \item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
         #'         \item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
         #'         \item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-        #'         \item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin_ms}).}
+        #'         \item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin("ms")}).}
         #'       }
         #'     }
         #'     \item{\code{assets}}{
@@ -431,7 +431,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - \code{bizType}: Business type (e.g., "TRANSFER").
         #'   - \code{direction}: Transaction direction ("in" or "out").
         #'   - \code{createdAt}: Transaction timestamp in milliseconds.
-        #'   - \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin_ms}).}
+        #'   - \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
         #'   - \code{context}: Additional context for the transaction.
         #'   - \code{currentPage}: Current page number from the response.
         #'   - \code{pageSize}: Page size from the response.

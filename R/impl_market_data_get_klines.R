@@ -100,8 +100,8 @@ split_time_range_by_candles <- function(
     }
     check_allowed_frequency_s(candle_duration_s)
 
-    from_s <- utils2$time_convert_to_kucoin_s(from)
-    to_s <- utils2$time_convert_to_kucoin_s(to)
+    from_s <- utils2$time_convert_to_kucoin(from, "s")
+    to_s <- utils2$time_convert_to_kucoin(to, "s")
     total_seconds <- to_s - from_s
 
     segment_seconds <- max_candles * candle_duration_s
@@ -203,8 +203,8 @@ fetch_klines_segment <- coro::async(function(
     query <- list(
         symbol = symbol,
         type = freq,
-        startAt = utils2$time_convert_to_kucoin_s(from),
-        endAt   = utils2$time_convert_to_kucoin_s(to)
+        startAt = utils2$time_convert_to_kucoin(from, "s"),
+        endAt   = utils2$time_convert_to_kucoin(to, "s")
     )
     qs <- build_query(query)
 

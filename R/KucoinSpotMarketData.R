@@ -591,7 +591,7 @@ KucoinSpotMarketData <- R6::R6Class(
         #'    Converts the ticker array (an array of ticker objects) into a `data.table`.
         #'
         #' 4. **Snapshot Time Augmentation:**  
-        #'    Adds the global snapshot time (in milliseconds) as well as a converted POSIXct datetime (using `time_convert_from_kucoin_ms()`).
+        #'    Adds the global snapshot time (in milliseconds) as well as a converted POSIXct datetime (using `time_convert_from_kucoin("ms")`).
         #'
         #' **API Documentation:**  
         #' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
@@ -653,7 +653,7 @@ KucoinSpotMarketData <- R6::R6Class(
         #'
         #' 4. **Timestamp Conversion:**  
         #'    Converts the original trade timestamp from nanoseconds into a POSIXct datetime using the helper function
-        #'    `time_convert_from_kucoin_ms()` after dividing by 1e6 (to convert nanoseconds to milliseconds).
+        #'    `time_convert_from_kucoin("ms")` after dividing by 1e6 (to convert nanoseconds to milliseconds).
         #'
         #' **API Documentation:**  
         #' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
@@ -712,7 +712,7 @@ KucoinSpotMarketData <- R6::R6Class(
         #'    - Combines these two tables into one single \code{data.table}.
         #'
         #' 4. **Timestamp Conversion:**  
-        #'    Adds the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin_ms()}).
+        #'    Adds the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin("ms")}).
         #'
         #' **API Documentation:**  
         #' [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
@@ -781,7 +781,7 @@ KucoinSpotMarketData <- R6::R6Class(
         #'    - Combines the two tables into a single flat \code{data.table}.
         #'
         #' 7. **Timestamp Conversion:**  
-        #'    Appends the global snapshot timestamp (in milliseconds) and a corresponding POSIXct datetime (via \code{time_convert_from_kucoin_ms()}).
+        #'    Appends the global snapshot timestamp (in milliseconds) and a corresponding POSIXct datetime (via \code{time_convert_from_kucoin("ms")}).
         #'
         #' **Return Value Details:**
         #'
@@ -851,7 +851,7 @@ KucoinSpotMarketData <- R6::R6Class(
         #'    Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
         #'    \describe{
         #'      \item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
-        #'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin_ms()}.}
+        #'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin("ms")}.}
         #'    }
         #'
         #' **API Documentation:**  
