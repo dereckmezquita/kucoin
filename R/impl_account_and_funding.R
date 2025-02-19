@@ -277,9 +277,9 @@ get_spot_account_type_impl <- coro::async(function(
 #'   - \strong{id} (string): Account ID.
 #'   - \strong{currency} (string): Currency code.
 #'   - \strong{type} (string): Account type (e.g., "main", "trade", or "balance").
-#'   - \strong{balance} (string): Total funds in the account.
-#'   - \strong{available} (string): Funds available for withdrawal or trading.
-#'   - \strong{holds} (string): Funds on hold.
+#'   - \strong{balance} (numeric): Total funds in the account.
+#'   - \strong{available} (numeric): Funds available for withdrawal or trading.
+#'   - \strong{holds} (numeric): Funds on hold.
 #'
 #' @details
 #' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts}  
