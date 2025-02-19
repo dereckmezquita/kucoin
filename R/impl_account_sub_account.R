@@ -64,6 +64,40 @@ box::use(
 #' **Raw Response Schema:**  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
 #' - `data` (object): Contains the sub-account details as described above.
+#' 
+#' The JSON response looks like:
+#' \preformatted{
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "currentPage": 1,
+#'         "pageSize": 10,
+#'         "totalNum": 1,
+#'         "totalPage": 1,
+#'         "items": [
+#'             {
+#'                 "userId": "63743f07e0c5230001761d08",
+#'                 "uid": 169579801,
+#'                 "subName": "testapi6",
+#'                 "status": 2,
+#'                 "type": 0,
+#'                 "access": "All",
+#'                 "createdAt": 1668562696000,
+#'                 "remarks": "remarks",
+#'                 "tradeTypes": [
+#'                     "Spot",
+#'                     "Futures",
+#'                     "Margin"
+#'                 ],
+#'                 "openedTradeTypes": [
+#'                     "Spot"
+#'                 ],
+#'                 "hostedStatus": null
+#'             }
+#'         ]
+#'     }
+#' }
+#' }
 #'
 #' For more information, please refer to the [Add SubAccount API Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount).
 #'
