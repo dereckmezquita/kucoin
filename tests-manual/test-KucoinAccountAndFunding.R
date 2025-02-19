@@ -71,8 +71,8 @@ async_main <- coro::async(function() {
     print(dt_futures)
 
     # Retrieve spot ledger info (account ledgers for spot/margin)
-    query_ledgers <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", currentPage = 1, pageSize = 50)
-    dt_ledgers <- await(account$get_spot_ledger(query_ledgers))
+    query_ledgers <- list(currency = "BTC")
+    dt_ledgers <- await(account$get_spot_ledger(query_ledgers, page_size = 50, max_pages = Inf))
     cat("Spot Ledger Info (data.table):\n")
     print(dt_ledgers)
 })
