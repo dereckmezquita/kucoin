@@ -41,7 +41,7 @@ test_that("add_subaccount_impl aborts using stubbed process_kucoin_response", {
     # Generate a unique subaccount name.
     subName  <- paste0("TestSub", format(Sys.time(), "%Y%m%d%H%M%S"))
     password <- "Test1234"   # Must be 7-24 characters, letters and numbers
-    access   <- "Spot"         # Allowed values: "Spot", "Futures", "Margin"
+    access   <- "Spot"       # Allowed values: "Spot", "Futures", "Margin"
     remarks  <- "Test sub-account creation"
 
     # Load the saved HTTP response from the RDS file.
