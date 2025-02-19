@@ -423,6 +423,19 @@ get_spot_account_dt_impl <- coro::async(function(
 #'   - \code{balance} (string): Total funds in the account.
 #'   - \code{available} (string): Funds available for withdrawal or trading.
 #'   - \code{holds} (string): Funds on hold.
+#' 
+#' The response JSON data looks like this:
+#' \preformatted{{
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "currency": "USDT",
+#'         "balance": "26.66759503",
+#'         "available": "26.66759503",
+#'         "holds": "0"
+#'     }
+#' }
+#' }}
 #'
 #' For more detailed information, please see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot).
 #'
