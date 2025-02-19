@@ -46,8 +46,7 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
                 "maxDefaultSubQuantity", "maxSpotSubQuantity", "maxMarginSubQuantity",
                 "maxFuturesSubQuantity", "maxOptionSubQuantity"
             )
-            expect_equal(sort(names(dt)), sort(expected_cols), 
-                         info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            expect_equal(sort(names(dt)), sort(expected_cols), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
@@ -72,10 +71,12 @@ test_that("get_apikey_info_impl returns valid API key info from live API", {
         then(function(dt) {
             result <<- dt
             expect_true(is.data.table(dt))
-            expected_cols <- c("uid", "subName", "remark", "apiKey", 
-                               "apiVersion", "permission", "ipWhitelist", "isMaster", "createdAt")
-            expect_true(all(expected_cols %in% names(dt)),
-                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            expected_cols <- c(
+                "uid", "subName", "remark", "apiKey", 
+                "apiVersion", "permission", "ipWhitelist",
+                "isMaster", "createdAt"
+            )
+            expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
@@ -127,8 +128,7 @@ test_that("get_spot_account_dt_impl returns a valid spot account list from live 
             result <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("id", "currency", "type", "balance", "available", "holds")
-            expect_true(all(expected_cols %in% names(dt)),
-                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
@@ -158,7 +158,7 @@ test_that("get_spot_account_detail_impl returns valid spot account detail from l
         run_now(timeoutSecs = 0.1)
     }
     skip_if(is.null(account_list) || nrow(account_list) == 0, "No spot accounts available")
-    
+
     error <- NULL
     detail <- NULL
     accountId <- account_list$id[1]
@@ -168,8 +168,7 @@ test_that("get_spot_account_detail_impl returns valid spot account detail from l
             detail <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("currency", "balance", "available", "holds")
-            expect_true(all(expected_cols %in% names(dt)),
-                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
@@ -245,16 +244,17 @@ test_that("get_spot_ledger_impl returns valid ledger data from live API", {
     error <- NULL
     result <- NULL
     query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER")
-    
+
     impl$get_spot_ledger_impl(keys, base_url, query, page_size = 50, max_pages = 2)$
         then(function(dt) {
             result <<- dt
             expect_true(is.data.table(dt))
-            expected_cols <- c("id", "currency", "amount", "fee", "balance", 
-                               "accountType", "bizType", "direction", 
-                               "createdAt", "createdAtDatetime", "context")
-            expect_true(all(expected_cols %in% names(dt)),
-                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            expected_cols <- c(
+                "id", "currency", "amount", "fee", "balance", 
+                "accountType", "bizType", "direction",
+                "createdAt", "createdAtDatetime", "context"
+            )
+            expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
