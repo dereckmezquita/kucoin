@@ -288,6 +288,31 @@ get_spot_account_type_impl <- coro::async(function(
 #' - \code{code} (string): Status code, where "200000" indicates success.
 #' - \code{data} (array): An array of account objects as described above.
 #'
+#' The response JSON data looks like this:
+#' \preformatted{{
+#' {
+#'     "code": "200000",
+#'     "data": [
+#'         {
+#'             "id": "548674591753",
+#'             "currency": "USDT",
+#'             "type": "trade",
+#'             "balance": "26.66759503",
+#'             "available": "26.66759503",
+#'             "holds": "0"
+#'         },
+#'         {
+#'             "id": "63355cd156298d0001b66e61",
+#'             "currency": "USDT",
+#'             "type": "main",
+#'             "balance": "0.01",
+#'             "available": "0.01",
+#'             "holds": "0"
+#'         }
+#'     ]
+#' }
+#' }}
+#'
 #' For more detailed information, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot).
 #'
 #' @examples
@@ -332,7 +357,8 @@ get_spot_account_dt_impl <- coro::async(function(
         response <- httr::GET(url, headers, httr::timeout(3))
 
         parsed_response <- process_kucoin_response(response, url)
-        return(data.table::as.data.table(parsed_response$data))
+        # $data: list of lists
+        return(data.table::rbindlist(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
     })
