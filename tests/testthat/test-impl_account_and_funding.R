@@ -129,14 +129,17 @@ test_that("get_spot_account_dt_impl returns a valid spot account list from live 
     skip_if(skip_live, "No API key set in environment; skipping live API test")
     error <- NULL
     result <- NULL
-    query <- list(currency = "USDT", type = "main")  # Adjust query as needed
+    query <- list(currency = "KCS", type = "main")
 
     impl$get_spot_account_dt_impl(keys, base_url, query)$
         then(function(dt) {
             result <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("id", "currency", "type", "balance", "available", "holds")
+            # check if all expected columns are present
             expect_true(all(expected_cols %in% names(dt)), info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
+            # check col types; balance, available, holds, are numeric
+            expect_true(all(sapply(dt[, c("balance", "available", "holds")], is.numeric)))
         })$
         catch(function(e) {
             error <<- e
