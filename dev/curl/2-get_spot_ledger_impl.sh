@@ -13,17 +13,17 @@ API_VERSION="2"
 # Use server time
 TIMESTAMP=$SERVER_TIME
 
-# Set time range (last 24 hours)
-END_TIME=$TIMESTAMP
-START_TIME=$((TIMESTAMP - 86400000))  # 24 hours in milliseconds
+# Set time range (30 days ago to 29 days ago - keeping within 24h window)
+END_TIME=$((TIMESTAMP - (29 * 24 * 3600 * 1000)))  # 29 days ago
+START_TIME=$((END_TIME - (24 * 3600 * 1000)))      # 30 days ago
 
 # Print time range for debugging
 echo "Time range:"
-echo "Start time: $START_TIME"
-echo "End time: $END_TIME"
+echo "Start time: $START_TIME ($(date -r $((START_TIME/1000)) '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'date conversion failed'))"
+echo "End time: $END_TIME ($(date -r $((END_TIME/1000)) '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'date conversion failed'))"
 
-# Endpoint with query parameters
-ENDPOINT="/api/v1/accounts/ledgers?currency=BTC&direction=in&bizType=TRANSFER&startAt=${START_TIME}&endAt=${END_TIME}&pageSize=50&currentPage=1"
+# Endpoint with query parameters including time range
+ENDPOINT="/api/v1/accounts/ledgers?startAt=${START_TIME}&endAt=${END_TIME}&pageSize=50&currentPage=1"
 METHOD="GET"
 
 # Create string to sign
@@ -42,10 +42,10 @@ echo "Full endpoint: ${ENDPOINT}"
 echo "Signature: ${SIGNATURE}"
 echo "Encrypted passphrase: ${ENCRYPTED_PASSPHRASE}"
 
-# Make the request with uppercase headers
+# Make the request with uppercase headers and format JSON output
 curl -v "https://api.kucoin.com${ENDPOINT}" \
   -H "KC-API-KEY: ${API_KEY}" \
   -H "KC-API-SIGN: ${SIGNATURE}" \
   -H "KC-API-TIMESTAMP: ${TIMESTAMP}" \
   -H "KC-API-PASSPHRASE: ${ENCRYPTED_PASSPHRASE}" \
-  -H "KC-API-KEY-VERSION: ${API_VERSION}"
+  -H "KC-API-KEY-VERSION: ${API_VERSION}" | jq '.'
