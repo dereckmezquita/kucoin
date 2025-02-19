@@ -9,12 +9,26 @@ box::use(
     utils = ../../R/utils
 )
 
+# Global delay (in seconds) between tests
+delay_seconds <- 2
+
 # Retrieve API keys and base URL only once.
 keys <- utils$get_api_keys()
 base_url <- utils$get_base_url()
 
 # Determine whether to skip live tests.
 skip_live <- is.null(keys$api_key) || keys$api_key == ""
+
+# Helper to format errors in a more descriptive way.
+format_error <- function(e) {
+    return(paste0(
+        "Error message: ",
+        conditionMessage(e),
+        "\nFull error output:\n",
+        paste(capture.output(print(e)),
+        collapse = "\n")
+    ))
+}
 
 # Test: Get Account Summary Info
 test_that("get_account_summary_info_impl returns valid data from live API", {
@@ -32,11 +46,12 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
                 "maxDefaultSubQuantity", "maxSpotSubQuantity", "maxMarginSubQuantity",
                 "maxFuturesSubQuantity", "maxOptionSubQuantity"
             )
-            expect_equal(sort(names(dt)), sort(expected_cols))
+            expect_equal(sort(names(dt)), sort(expected_cols), 
+                         info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
 
     while (!loop_empty()) {
@@ -44,6 +59,7 @@ test_that("get_account_summary_info_impl returns valid data from live API", {
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get API Key Info
@@ -58,18 +74,20 @@ test_that("get_apikey_info_impl returns valid API key info from live API", {
             expect_true(is.data.table(dt))
             expected_cols <- c("uid", "subName", "remark", "apiKey", 
                                "apiVersion", "permission", "ipWhitelist", "isMaster", "createdAt")
-            expect_true(all(expected_cols %in% names(dt)))
+            expect_true(all(expected_cols %in% names(dt)),
+                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
-    
+
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Spot Account Type
@@ -86,14 +104,15 @@ test_that("get_spot_account_type_impl returns a boolean value from live API", {
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
-    
+
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Spot Account List (Data Table)
@@ -108,11 +127,12 @@ test_that("get_spot_account_dt_impl returns a valid spot account list from live 
             result <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("id", "currency", "type", "balance", "available", "holds")
-            expect_true(all(expected_cols %in% names(dt)))
+            expect_true(all(expected_cols %in% names(dt)),
+                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
 
     while (!loop_empty()) {
@@ -120,19 +140,19 @@ test_that("get_spot_account_dt_impl returns a valid spot account list from live 
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Spot Account Detail
 test_that("get_spot_account_detail_impl returns valid spot account detail from live API", {
     skip_if(skip_live, "No API key set in environment; skipping live API test")
-    # First, retrieve the list of spot accounts.
     account_list <- NULL
     impl$get_spot_account_dt_impl(keys, base_url)$
         then(function(dt) {
             account_list <<- dt
         })$
         catch(function(e) {
-            fail(paste("Failed to retrieve spot account list:", conditionMessage(e)))
+            fail(format_error(e))
         })
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
@@ -148,17 +168,19 @@ test_that("get_spot_account_detail_impl returns valid spot account detail from l
             detail <<- dt
             expect_true(is.data.table(dt))
             expected_cols <- c("currency", "balance", "available", "holds")
-            expect_true(all(expected_cols %in% names(dt)))
+            expect_true(all(expected_cols %in% names(dt)),
+                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(detail))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Cross Margin Account Info
@@ -179,13 +201,14 @@ test_that("get_cross_margin_account_impl returns valid cross margin account info
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Isolated Margin Account Info
@@ -206,13 +229,14 @@ test_that("get_isolated_margin_account_impl returns valid isolated margin accoun
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
 
 # Test: Get Spot Ledger Data
@@ -220,7 +244,6 @@ test_that("get_spot_ledger_impl returns valid ledger data from live API", {
     skip_if(skip_live, "No API key set in environment; skipping live API test")
     error <- NULL
     result <- NULL
-    # Adjust query parameters as needed (e.g., currency, direction, bizType, etc.)
     query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER")
     
     impl$get_spot_ledger_impl(keys, base_url, query, page_size = 50, max_pages = 2)$
@@ -230,15 +253,17 @@ test_that("get_spot_ledger_impl returns valid ledger data from live API", {
             expected_cols <- c("id", "currency", "amount", "fee", "balance", 
                                "accountType", "bizType", "direction", 
                                "createdAt", "createdAtDatetime", "context")
-            expect_true(all(expected_cols %in% names(dt)))
+            expect_true(all(expected_cols %in% names(dt)),
+                        info = paste("Actual columns: ", paste(names(dt), collapse = ", ")))
         })$
         catch(function(e) {
             error <<- e
-            fail(paste("Promise rejected with error:", conditionMessage(e)))
+            fail(format_error(e))
         })
     while (!loop_empty()) {
         run_now(timeoutSecs = 0.1)
     }
     expect_null(error)
     expect_true(!is.null(result))
+    Sys.sleep(delay_seconds)
 })
