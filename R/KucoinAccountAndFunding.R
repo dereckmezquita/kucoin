@@ -442,7 +442,13 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'
         #' @export
         get_spot_ledger = function(query = list(), page_size = 50, max_pages = Inf) {
-            return(impl$get_spot_ledger_impl(self$keys, self$base_url, page_size, max_pages, query))
+            return(impl$get_spot_ledger_impl(
+                keys = self$keys,
+                base_url = self$base_url,
+                query = query,
+                page_size = page_size,
+                max_pages = max_pages
+            ))
         }
     )
 )
