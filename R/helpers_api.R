@@ -310,7 +310,9 @@ auto_paginate <- coro::async(function(
             } else {
                 page_items <- response
             }
-            accumulator[[length(accumulator) + 1]] <- page_items
+            # Append page_items to accumulator, flattening as we go
+            # Flatten by concatenating directly
+            accumulator <- c(accumulator, page_items)
             currentPage <- response[[paginate_fields$currentPage]]
             totalPage   <- response[[paginate_fields$totalPage]]
             # If we've reached max_pages, or there is no next page, break.
