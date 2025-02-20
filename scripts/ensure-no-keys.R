@@ -6,16 +6,16 @@ files <- fs$dir_ls(fs$path_abs("./api-responses"), recurse = TRUE, glob = "*.Rds
 api_keys_file <- files[grepl("*.ignore.Rds", files)][[1]]
 sensitive_data <- readRDS(api_keys_file)
 
-# Function to recursively check for API keys and collect full data
+# Function to recursively check for API keys - returns TRUE if found
 check_for_api_keys <- function(data, path = "") {
-    findings <- list()
+    has_keys <- FALSE
     if (is.list(data)) {
         for (name in names(data)) {
             # Check specific known API key fields
             if (grepl("api[-_]?key|kc-api", tolower(name))) {
-                finding_path <- sprintf("API key found at path: %s$%s", path, name)
-                cat(sprintf("WARNING: %s\n", finding_path))
-                findings[[finding_path]] <- data  # Store the full data object
+                has_keys <- TRUE
+                cat(sprintf("WARNING: API key found at path: %s$%s\n", path, name))
+                # Don't return immediately - check entire structure
             }
 
             # Check for suspicious string patterns that might be API keys
@@ -24,9 +24,8 @@ check_for_api_keys <- function(data, path = "") {
                 nchar(data[[name]]) > 20 &&
                 grepl("[A-Za-z0-9_-]{20,}", data[[name]])
             ) {
-                finding_path <- sprintf("Potential API key found at path: %s$%s", path, name)
-                cat(sprintf("WARNING: %s\n", finding_path))
-                findings[[finding_path]] <- data  # Store the full data object
+                has_keys <- TRUE
+                cat(sprintf("WARNING: Potential API key found at path: %s$%s\n", path, name))
             }
 
             # Recursively check nested lists
@@ -34,11 +33,12 @@ check_for_api_keys <- function(data, path = "") {
             if (path == "") {
                 new_path <- name
             } 
-            nested_findings <- check_for_api_keys(data[[name]], new_path)
-            findings <- c(findings, nested_findings)
+            if (check_for_api_keys(data[[name]], new_path)) {
+                has_keys <- TRUE
+            }
         }
     }
-    return(findings)
+    return(has_keys)
 }
 
 # List to store all data with potential sensitive information
@@ -52,19 +52,21 @@ for (i in seq_along(files)) {
     data <- readRDS(file)
     cat(sprintf("Checking file: %s\n", file))
 
-    # Check for API keys and store full data if found
-    file_findings <- check_for_api_keys(data)
-    if (length(file_findings) > 0) {
+    # Check for API keys and store data if found
+    if (check_for_api_keys(data)) {
         cat("WARNING: This file contains potential sensitive data\n")
-        all_sensitive_data[[basename(file)]] <- file_findings
+        all_sensitive_data[[basename(file)]] <- data
     }
     str(data, max.level = 1)
+    cat("\n")  # Add spacing between files
 }
 
 # Print summary
 if (length(all_sensitive_data) > 0) {
-    cat("\nSummary: Found potential sensitive data in", length(all_sensitive_data), "files\n")
+    cat("Summary: Found potential sensitive data in", length(all_sensitive_data), "files\n")
     cat("Sensitive data is stored in 'all_sensitive_data' for inspection\n")
+    cat("Files with sensitive data:\n")
+    cat(paste(" -", names(all_sensitive_data), "\n"))
 } else {
-    cat("\nNo potential sensitive data found in any files.\n")
+    cat("Summary: No potential sensitive data found in any files.\n")
 }
