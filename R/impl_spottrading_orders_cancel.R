@@ -314,3 +314,109 @@ cancel_partial_order_impl <- coro::async(function(
         rlang::abort(sprintf("Error in cancel_partial_order_impl: %s", conditionMessage(e)))
     })
 })
+
+#' Cancel All Orders By Symbol (Implementation)
+#'
+#' Cancels all spot orders for a specified symbol on the KuCoin Spot trading system asynchronously.
+#' This endpoint sends a cancellation request for all orders associated with the given symbol and returns a success indicator if the request is accepted.
+#' Note that this endpoint only initiates cancellation; the actual status of individual orders must be checked via order status endpoints or WebSocket subscription.
+#'
+#' @section Description:
+#' This function interacts with the KuCoin API endpoint `DELETE /api/v1/hf/orders?symbol={symbol}` to cancel all spot orders for a specific trading pair (e.g., "BTC-USDT").
+#' It is useful for quickly canceling multiple orders for a symbol, such as when adjusting trading strategies or managing risk in a specific market.
+#'
+#' @section Differences from Other Cancellation Endpoints:
+#' - **Cancel Order By OrderId**: Targets a single order using its unique order ID.
+#' - **Cancel Order By ClientOid**: Targets a single order using a client-assigned ID.
+#' - **Cancel Partial Order**: Cancels a portion of a single order.
+#' - **Cancel All Orders By Symbol**: Cancels **all** orders for a specified symbol in one request, offering efficiency for bulk cancellations.
+#'
+#' Use this function when you need to clear all open orders for a trading pair in a single operation.
+#'
+#' @section Workflow:
+#' 1. **Parameter Validation**: Ensures `symbol` is a non-empty string.
+#' 2. **Request Construction**: Builds the endpoint URL with `symbol` as a query parameter.
+#' 3. **Authentication**: Generates private API headers using the provided `keys`.
+#' 4. **API Request**: Sends a DELETE request to the KuCoin API with a 3-second timeout.
+#' 5. **Response Processing**: Parses the response and returns a `data.table` with the result if successful.
+#'
+#' @section API Details:
+#' - **Endpoint**: `DELETE https://api.kucoin.com/api/v1/hf/orders?symbol={symbol}`
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: Spot
+#' - **Rate Limit Pool**: Spot
+#' - **Rate Limit Weight**: 2
+#' - **Official Documentation**: [KuCoin Cancel All Orders By Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/orders/cancel-all-orders-by-symbol)
+#'
+#' @param keys List; API configuration parameters (e.g., from `get_api_keys()`). Contains API key, secret, and passphrase. Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API (e.g., "https://api.kucoin.com"). Defaults to `get_base_url()`.
+#' @param symbol Character string; the trading pair symbol (e.g., "BTC-USDT"). Required.
+#' @return Promise resolving to a `data.table` with:
+#'   - `result` (character): "success" if the cancellation request is accepted.
+#' @section Examples:
+#' ```r
+#' library(coro)
+#' library(data.table)
+#'
+#' main_async <- coro::async(function() {
+#'   # Cancel all orders for BTC-USDT
+#'   result <- await(cancel_all_orders_by_symbol_impl(sound = "BTC-USDT"))
+#'   print(result)
+#' })
+#'
+#' # Run the async function
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' ```
+#' **Expected Output**:
+#' ```
+#'    result
+#' 1: success
+#' ```
+#'
+#' @importFrom coro async await
+#' @importFrom data.table data.table
+#' @importFrom httr DELETE timeout
+#' @importFrom rlang abort
+#' @export
+cancel_all_orders_by_symbol_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    symbol
+) {
+    tryCatch({
+        # Validate parameters
+        if (is.null(symbol) || !is.character(symbol) || nchar(symbol) == 0) {
+            rlang::abort("Parameter 'symbol' must be a non-empty string (e.g., 'BTC-USDT').")
+        }
+
+        # Construct endpoint and query string
+        endpoint <- "/api/v1/hf/orders"
+        query_params <- list(symbol = symbol)
+        query_string <- paste0("symbol=", symbol) # Simplified; assumes build_query exists elsewhere
+        endpoint_with_query <- paste0(endpoint, "?", query_string)
+        full_url <- paste0(base_url, endpoint_with_query)
+
+        # Generate authentication headers (assumes build_headers is defined)
+        headers <- await(build_headers("DELETE", endpoint_with_query, NULL, keys))
+
+        # Send DELETE request
+        response <- httr::DELETE(
+            url = full_url,
+            headers,
+            httr::timeout(3)
+        )
+
+        # Process response (assumes process_kucoin_response is defined)
+        parsed_response <- process_kucoin_response(response, full_url)
+        if (parsed_response$code != "200000") {
+            rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
+        }
+
+        # Return result as data.table
+        data.table::data.table(result = parsed_response$data)
+    }, error = function(e) {
+        rlang::abort(sprintf("Error in cancel_all_orders_by_symbol_impl: %s", conditionMessage(e)))
+    })
+})
