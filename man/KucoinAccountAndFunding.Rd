@@ -466,6 +466,8 @@ A data.table where each row represents an isolated margin account asset with the
 }
 }
 }
+Retrieves isolated margin account information by invoking the internal implementation.
+Retrieve Spot Ledger Records.
 }
 }
 \if{html}{\out{<hr>}}

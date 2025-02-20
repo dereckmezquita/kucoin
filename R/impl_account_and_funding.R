@@ -66,7 +66,7 @@
 #´   main_async()
 #'   while(!later::loop_empty()) {
 #'     later::run_now()
-#    }
+#'   }
 #' }
 #'
 #' @md
