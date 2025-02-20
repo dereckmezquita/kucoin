@@ -9,8 +9,15 @@
 KucoinSubAccount <- R6::R6Class(
     "KucoinSubAccount",
     public = list(
+        #' @field keys A list containing the KuCoin API keys (apiKey, secret, and passphrase).
         keys = NULL,
+        #' @field base_url A string representing the base URL for KuCoin API endpoints.
         base_url = NULL,
+
+        #' Initialize KucoinSubAccount
+        #' @param keys A list containing the KuCoin API keys (apiKey, secret, and passphrase).
+        #' @param base_url A string representing the base URL for KuCoin API endpoints.
+        #' @return A new KucoinSubAccount object.
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
             self$keys <- keys
             self$base_url <- base_url

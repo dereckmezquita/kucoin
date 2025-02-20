@@ -63,3 +63,23 @@ and appending the endpoint.
 
 For more detailed information, please see the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin API Documentation}.
 }
+\examples{
+\dontrun{
+  # Retrieve API keys from the environment using get_api_keys()
+  keys <- get_api_keys()
+
+  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
+  base_url <- "https://api.kucoin.com"
+
+  # Execute the asynchronous request using coro::run:
+  main_async <- coro::async(function() {
+    dt <- await(get_account_summary_info_impl(keys, base_url))
+    print(dt)
+  })
+
+  while(!later::loop_empty()) {
+    later::run_now()
+  }
+}
+
+}

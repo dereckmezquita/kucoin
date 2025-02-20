@@ -14,7 +14,9 @@
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
     public = list(
+        #' @field keys A named list containing the API keys for KuCoin.
         keys = NULL,
+        #' @field base_url The base URL for the KuCoin API.
         base_url = NULL,
 
         #' Initialize KucoinSpotMarketData
