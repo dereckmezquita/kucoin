@@ -1,10 +1,10 @@
 # File: ./R/impl_market_data_new.R
 
-box::use(
-    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-    ./utils[ build_query, get_api_keys, get_base_url ],
-    ./utils_time_convert_kucoin[ verify_symbol, time_convert_from_kucoin ]
-)
+# box::use(
+#     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+#     ./utils[ build_query, get_api_keys, get_base_url ],
+#     ./utils_time_convert_kucoin[ verify_symbol, time_convert_from_kucoin ]
+# )
 
 #' Get Announcements (Implementation)
 #'

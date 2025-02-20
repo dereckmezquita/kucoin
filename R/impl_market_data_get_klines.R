@@ -1,10 +1,10 @@
 # File: ./R/impl_market_data_new.R
 
-box::use(
-    ./helpers_api[ process_kucoin_response ],
-    ./utils[ build_query, get_base_url ],
-    ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ]
-)
+# box::use(
+#     ./helpers_api[ process_kucoin_response ],
+#     ./utils[ build_query, get_base_url ],
+#     ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ]
+# )
 
 #' Get Klines market data allowed frequencies
 #' @export
