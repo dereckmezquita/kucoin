@@ -336,7 +336,15 @@ auto_paginate_old <- coro::async(function(
             return(aggregate_fn(accumulator))
         } else if (!is.null(currentPage) && !is.null(totalPage) && (currentPage < totalPage)) {
             query$currentPage <- currentPage + 1
-            return(await(auto_paginate(fetch_page, query, items_field, accumulator, aggregate_fn, max_pages)))
+            return(await(auto_paginate(
+                fetch_page      = fetch_page,
+                query           = query,
+                items_field     = items_field,
+                paginate_fields = paginate_fields,
+                aggregate_fn    = aggregate_fn,
+                max_pages       = max_pages,
+                accumulator     = accumulator
+            )))
         } else {
             return(aggregate_fn(accumulator))
         }
