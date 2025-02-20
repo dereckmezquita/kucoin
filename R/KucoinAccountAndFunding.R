@@ -386,8 +386,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'       }
         #'     }
         #'   }
-        #'
-        #' @export
         get_isolated_margin_account = function(query = list()) {
         #'   Retrieves isolated margin account information by invoking the internal implementation.
             return(impl$get_isolated_margin_account_impl(self$keys, self$base_url, query))
@@ -439,8 +437,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - \code{totalPage}: Total number of pages.
         #'
         #' For further details, please refer to the [Spot Ledger API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
-        #'
-        #' @export
         get_spot_ledger = function(query = list(), page_size = 50, max_pages = Inf) {
             return(impl$get_spot_ledger_impl(
                 keys = self$keys,
