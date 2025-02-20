@@ -18,112 +18,76 @@ get_subaccount_list_summary_impl(
 \item \code{api_key}: Your KuCoin API key.
 \item \code{api_secret}: Your KuCoin API secret.
 \item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., "2").
+\item \code{key_version}: The version of the API key (e.g. \code{"2"}).
 }}
 
-\item{base_url}{A character string representing the base URL for the API. Defaults to the value from \code{get_base_url()}.}
+\item{base_url}{A character string representing the base URL for the API. Defaults to the value returned by \code{get_base_url()}.}
 
 \item{page_size}{An integer specifying the number of results per page. Default is 100 (minimum 1, maximum 100).}
 
 \item{max_pages}{An integer specifying the maximum number of pages to fetch. Default is \code{Inf} (fetch all available pages).}
 }
 \value{
-A promise that resolves to a single \code{data.table} containing the aggregated sub-account summary information.
+A promise that resolves to a single \code{data.table} containing the aggregated sub‐account summary information.
 The resulting table includes:
 \itemize{
 \item \strong{currentPage} (integer): The current page number.
 \item \strong{pageSize} (integer): The number of results per page.
-\item \strong{totalNum} (integer): The total number of sub-accounts.
+\item \strong{totalNum} (integer): The total number of sub‐accounts.
 \item \strong{totalPage} (integer): The total number of pages.
-\item \strong{items}: An array of sub-account summary objects, where each row includes fields such as:
-\itemize{
-\item \code{userId}, \code{uid}, \code{subName}, \code{status}, \code{type}, \code{access}, \code{createdAt}, and \code{remarks}.
-}
-\item If a \code{createdAt} column is present, a new column \code{createdDatetime} is added with human-readable POSIXct datetime values.
+\item \strong{items}: An array of sub‐account summary objects, where each row includes fields such as:
+\code{userId}, \code{uid}, \code{subName}, \code{status}, \code{type}, \code{access}, \code{createdAt} and \code{remarks}.
+If a \code{createdAt} column is present, a new column \code{createdDatetime} is added with human‐readable POSIXct datetime values.
 }
 }
 \description{
-This asynchronous function retrieves a paginated summary of sub-accounts from KuCoin and aggregates
-the results into a single \code{data.table}. It sends HTTP GET requests to the KuCoin sub-account summary
-endpoint and automatically handles pagination. In the final aggregated \code{data.table}, each row represents
-the summary information for one sub-account. Additionally, if the response contains a \code{createdAt} column
-(with timestamps in milliseconds), these values are converted into human-readable POSIXct datetime objects.
+Get SubAccount Summary Information Implementation
 }
 \details{
-\subsection{Endpoint Overview}{
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v2/sub/user}
-
-\strong{Purpose:}
-This endpoint is used to retrieve a summary of all sub-accounts associated with your KuCoin account.
-The response is paginated and includes metadata such as the current page number, page size, total number
-of sub-accounts, and total pages.
-
-\strong{Response Schema:}
-The API returns a JSON object with the following structure:
-\itemize{
-\item \strong{code}: A string status code; \code{"200000"} indicates success.
-\item \strong{data}: An object containing:
-\itemize{
-\item \code{currentPage} (integer): The current page number.
-\item \code{pageSize} (integer): The number of results per page.
-\item \code{totalNum} (integer): The total number of sub-accounts.
-\item \code{totalPage} (integer): The total number of pages.
-\item \code{items}: An array where each element corresponds to a sub-account summary with fields such as:
-\itemize{
-\item \code{userId}: The unique identifier of the master account.
-\item \code{uid}: The unique identifier of the sub-account.
-\item \code{subName}: The sub-account name.
-\item \code{status}: The current status of the sub-account.
-\item \code{type}: The type of sub-account.
-\item \code{access}: The permission type granted (e.g., "All", "Spot", "Futures", "Margin").
-\item \code{createdAt}: The timestamp (in milliseconds) when the sub-account was created.
-\item \code{remarks}: Remarks or notes associated with the sub-account.
-}
-}
-}
-
-For more details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info}{KuCoin Sub-Account Summary Documentation}.
-}
-
-\subsection{Function Workflow}{
-\enumerate{
-\item \strong{Pagination Initialization:}
-\itemize{
-\item The function begins by setting an initial query with \code{currentPage = 1} and the specified \code{page_size}.
-}
-\item \strong{Page Fetching:}
-\itemize{
-\item An asynchronous helper function (\code{fetch_page}) is defined to send a GET request for a given page.
-\item It constructs the URL with the current query parameters and sends the request with the required authentication headers.
-}
-\item \strong{Automatic Pagination:}
-\itemize{
-\item The function leverages the \code{auto_paginate} utility to repeatedly call \code{fetch_page}.
-\item Results from each page are aggregated until all pages have been retrieved or the specified maximum number of pages (\code{max_pages}) is reached.
-}
-\item \strong{Aggregation and Datetime Conversion:}
-\itemize{
-\item The responses from all pages are combined into a single \code{data.table} using \code{data.table::rbindlist()}.
-\item If the resulting table contains a \code{createdAt} column, its millisecond timestamps are converted to POSIXct datetime objects
-(stored in a new column named \code{createdDatetime}).
-}
-}
-}
-
-\subsection{Parameters}{
-
 \strong{Endpoint:} \verb{GET https://api.kucoin.com/api/v2/sub/user}
 
 \strong{Raw Response Schema:}
 \itemize{
 \item \code{code} (string): Status code, where \code{"200000"} indicates success.
-\item \code{data} (object): Contains the pagination metadata and an \code{items} array with sub-account summary details.
+\item \code{data} (object): Contains the pagination metadata and an \code{items} array with sub‐account summary details.
 }
 
-For further details, please see the \href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info}{KuCoin Sub-Account Summary API Documentation}.
+The JSON response looks like:
+\preformatted{
+{
+    "code": "200000",
+    "data": {
+        "currentPage": 1,
+        "pageSize": 10,
+        "totalNum": 1,
+        "totalPage": 1,
+        "items": [
+            {
+                "userId": "63743f07e0c5230001761d08",
+                "uid": 169579801,
+                "subName": "testapi6",
+                "status": 2,
+                "type": 0,
+                "access": "All",
+                "createdAt": 1668562696000,
+                "remarks": "remarks",
+                "tradeTypes": [
+                    "Spot",
+                    "Futures",
+                    "Margin"
+                ],
+                "openedTradeTypes": [
+                    "Spot"
+                ],
+                "hostedStatus": null
+            }
+        ]
+    }
 }
+}
+
+For further details, please see the
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info}{KuCoin Sub‐Account Summary API Documentation}.
 }
 \examples{
 \dontrun{
@@ -131,9 +95,9 @@ For further details, please see the \href{https://www.kucoin.com/docs-new/rest/a
   keys <- get_api_keys()
   base_url <- get_base_url()
 
-  # Execute the asynchronous request using coro::run:
+  # Execute the asynchronous request using coro::async:
   main_async <- coro::async(function() {
-    # Fetch all sub-account summaries using the default page size (100)
+    # Fetch all sub‐account summaries using the default page size (100)
     dt_all <- await(get_subaccount_list_summary_impl(keys, base_url))
     print(dt_all)
 

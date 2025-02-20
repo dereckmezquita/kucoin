@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_sub_account.R
 \name{get_subaccount_detail_balance_impl}
 \alias{get_subaccount_detail_balance_impl}
-\title{Get SubAccount Detail - Balance Implementation}
+\title{Get SubAccount Detail – Balance Implementation}
 \usage{
 get_subaccount_detail_balance_impl(
   keys = get_api_keys(),
@@ -18,109 +18,24 @@ get_subaccount_detail_balance_impl(
 \item \code{api_key}: Your KuCoin API key.
 \item \code{api_secret}: Your KuCoin API secret.
 \item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., \code{"2"}).
+\item \code{key_version}: The version of the API key (e.g. \code{"2"}).
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.}
+\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses
+\code{get_base_url()}.}
 
-\item{subUserId}{A string representing the sub-account user ID for which the balance details are to be retrieved.}
+\item{subUserId}{A string representing the sub‐account user ID for which the balance details are to be retrieved.}
 
 \item{includeBaseAmount}{A boolean flag indicating whether to include currencies with a zero balance in the response.
 \itemize{
 \item \strong{Default:} \code{FALSE}
-}
-\subsection{Return Value}{
-
-Returns a promise that resolves to a \code{data.table} containing the detailed balance information for the specified sub-account.
-Each row represents a currency in one of the account types, with an additional column \code{"accountType"} indicating the source
-array, as well as columns for \code{subUserId} and \code{subName} extracted from the parent response.
 }}
 }
+\value{
+A promise that resolves to a \code{data.table} containing the detailed balance information for the specified sub‐account.
+Each row represents a currency in one of the account types, with an additional column \code{accountType} indicating the source
+array, as well as columns for \code{subUserId} and \code{subName} extracted from the parent response.
+}
 \description{
-This asynchronous function retrieves the balance details for a specific sub-account from KuCoin. It sends a GET
-request to the KuCoin API endpoint for sub-account details and processes the returned JSON response. The endpoint
-provides separate arrays for each account type under the sub-account (typically including \code{mainAccounts},
-\code{tradeAccounts}, \code{marginAccounts}, and \code{tradeHFAccounts}). For each non-empty array, the function converts the data
-into a \code{data.table}, adds an \code{"accountType"} column to indicate the type, and then aggregates all the tables into a
-single \code{data.table}. Finally, it appends the sub-account's user ID and name to every row.
-}
-\details{
-\subsection{Endpoint Overview}{
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/sub-accounts/\{subUserId\}?includeBaseAmount=\{includeBaseAmount\}}
-
-\strong{Purpose:}
-This endpoint retrieves detailed balance information for a specific sub-account. The response is structured to provide
-separate balance details for various account categories (e.g., funding, spot, margin, and high-frequency trading accounts).
-
-\strong{Query Parameter:}
-\itemize{
-\item \code{includeBaseAmount} (boolean): Indicates whether to include currencies with a zero balance in the response.
-\itemize{
-\item \strong{Default:} \code{FALSE} (only non-zero balances are returned)
-}
-}
-
-\strong{Response Schema:}
-On success, the API returns a JSON object with:
-\itemize{
-\item \strong{code} (string): Status code, where \code{"200000"} indicates success.
-\item \strong{data} (object): Contains:
-\itemize{
-\item \code{subUserId}: The sub-account's user ID.
-\item \code{subName}: The sub-account name.
-\item \code{mainAccounts}: An array of objects detailing funding account balances.
-\item \code{tradeAccounts}: An array of objects detailing spot account balances.
-\item \code{marginAccounts}: An array of objects detailing margin account balances.
-\item \code{tradeHFAccounts}: An array (often deprecated) for high-frequency trading accounts.
-}
-}
-
-Each account object typically includes fields such as:
-\itemize{
-\item \code{currency}: The currency code.
-\item \code{balance}: Total balance.
-\item \code{available}: Amount available for trading or withdrawal.
-\item \code{holds}: Amount locked or held.
-\item Additional fields like \code{baseCurrency}, \code{baseCurrencyPrice}, \code{baseAmount}, and \code{tag}.
-}
-
-For more detailed information, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance}{KuCoin Sub-Account Detail Balance Documentation}.
-}
-
-\subsection{Function Workflow}{
-\enumerate{
-\item \strong{URL and Query String Construction:}
-\itemize{
-\item Constructs the endpoint URL by appending the \code{subUserId} to \verb{/api/v1/sub-accounts/}.
-\item Adds the query parameter \code{includeBaseAmount} (defaults to \code{FALSE} unless specified otherwise).
-}
-\item \strong{Header Generation:}
-\itemize{
-\item Asynchronously generates the necessary authentication headers by calling \code{build_headers()}.
-}
-\item \strong{HTTP Request:}
-\itemize{
-\item Sends a GET request to the constructed URL using \code{httr::GET()} with a 3-second timeout.
-}
-\item \strong{Response Processing:}
-\itemize{
-\item Parses the JSON response using \code{process_kucoin_response()}.
-\item For each account type array (e.g., \code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, \code{tradeHFAccounts}):
-\itemize{
-\item Converts the array into a \code{data.table}.
-\item Adds an \code{"accountType"} column to label the data.
-}
-}
-\item \strong{Aggregation and Metadata Addition:}
-\itemize{
-\item Aggregates all non-empty \code{data.table}s into a single \code{data.table} using \code{data.table::rbindlist()}.
-\item Adds the \code{subUserId} and \code{subName} (from the parent response object) as new columns.
-}
-}
-}
-
-\subsection{Parameters}{
-}
+Get SubAccount Detail – Balance Implementation
 }
