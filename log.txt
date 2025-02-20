@@ -6,9 +6,6 @@ Building the package...
 * checking DESCRIPTION meta-information ... OK
 * installing the package to build vignettes
 * creating vignettes ... OK
-* excluding invalid files
-Subdirectory 'R' contains invalid file names:
-  ‘merged_files.txt’
 * checking for LF line-endings in source and make files and shell scripts
 * checking for empty or unneeded directories
 Removed empty directory ‘kucoin/api-responses’
@@ -29,7 +26,7 @@ Checking the package with --as-cran...
 * checking extension type ... Package
 * this is package ‘kucoin’ version ‘2.0.0’
 * package encoding: UTF-8
-* checking CRAN incoming feasibility ... [4s/36s] NOTE
+* checking CRAN incoming feasibility ... [4s/41s] NOTE
 Maintainer: ‘Dereck Mezquita <dereck@mezquita.io>’
 
 New submission
@@ -71,7 +68,7 @@ Namespace in Imports field not imported from: ‘R6’
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
-* checking R code for possible problems ... [4s/119s] NOTE
+* checking R code for possible problems ... NOTE
 add_subaccount_impl: no visible global function definition for
   ‘get_api_keys’
 add_subaccount_impl: no visible global function definition for

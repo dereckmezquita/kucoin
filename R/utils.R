@@ -8,7 +8,7 @@
 #' @return A logical value; TRUE if the symbol is valid, FALSE otherwise.
 #' @export
 verify_symbol <- function(ticker) {
-    if (!grepl("^[A-Z|a-z|0-9]+-[A-Z|a-z|0-9]+$", ticker)) {
+    if (!grepl("^[A-Za-z0-9]+-[A-Za-z0-9]+$", ticker)) {
         return(FALSE)
     }
     return(TRUE)
