@@ -10,13 +10,17 @@
 #     ],
 #     ./utils[ get_api_keys, get_base_url ]
 # )
-
 #' @export
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
     public = list(
         keys = NULL,
         base_url = NULL,
+
+        #' Initialize KucoinSpotMarketData
+        #' @param keys A named list containing the
+        #' @param base_url The base URL for the KuCoin API.
+        #' @return NULL
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
             self$keys <- keys
             self$base_url <- base_url
@@ -74,19 +78,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   \item \code{\link{get_market_list_impl}} for retrieving the list of available markets.
         #'   \item \code{\link{get_24hr_stats_impl}} for retrieving 24-hour market statistics.
         #' }
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve the latest announcements:
-        #'   announcements <- spot_data$get_announcements(query = list(annType = "latest-announcements"))
-        #'   print(announcements)
-        #'
-        #'   # Retrieve announcements within a specific time range:
-        #'   announcements <- spot_data$get_announcements(query = list(startTime = 1729594043000, endTime = 1729697729000))
-        #'   print(announcements)
-        #' }
-        #'
-        #' @export
         get_announcements = function(query = list(), page_size = 50, max_pages = Inf) {
             return(get_announcements_impl(
                 base_url = self$base_url,
@@ -357,15 +348,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/currencies}  
         #'
         #' This method uses a public API endpoint and does not require authentication.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve all available currencies:
-        #'   dt_all_currencies <- await(market_data$get_all_currencies())
-        #'   print(dt_all_currencies)
-        #' }
-        #'
-        #' @export
         get_all_currencies = function() {
             return(get_all_currencies_impl(base_url = self$base_url))
         },
@@ -491,19 +473,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols}  
         #'
         #' This method uses a public API endpoint and does not require authentication.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve all trading symbols:
-        #'   dt_symbols <- await(market_data$get_all_symbols())
-        #'   print(dt_symbols)
-        #'
-        #'   # Retrieve trading symbols filtered by market "ALTS":
-        #'   dt_symbols_alts <- await(market_data$get_all_symbols(market = "ALTS"))
-        #'   print(dt_symbols_alts)
-        #' }
-        #'
-        #' @export
         get_all_symbols = function(market = NULL) {
             return(get_all_symbols_impl(
                 base_url = self$base_url,
@@ -556,15 +525,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=<symbol>}  
         #'
         #' This method uses a public endpoint and does not require authentication.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve ticker information for BTC-USDT:
-        #'   dt_ticker <- await(market_data$get_ticker(symbol = "BTC-USDT"))
-        #'   print(dt_ticker)
-        #' }
-        #'
-        #' @export
         get_ticker = function(symbol) {
             return(get_ticker_impl(
                 base_url = self$base_url,
@@ -619,15 +579,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'           \item{globalTime_ms}{(integer) The snapshot timestamp in milliseconds.}
         #'           \item{snapshotTime}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
         #'         }
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve all market tickers:
-        #'   dt_tickers <- await(market_data$get_all_tickers())
-        #'   print(dt_tickers)
-        #' }
-        #'
-        #' @export
         get_all_tickers = function() {
             return(get_all_tickers_impl(base_url = self$base_url))
         },
@@ -674,15 +625,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/histories?symbol=<symbol>}  
         #'
         #' This method uses a public endpoint and does not require authentication.
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve the trade history for the BTC-USDT trading pair:
-        #'   dt_trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
-        #'   print(dt_trade_history)
-        #' }
-        #'
-        #' @export
         get_trade_history = function(symbol) {
             return(get_trade_history_impl(
                 base_url = self$base_url,
@@ -729,19 +671,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'           \item{price}{(string) The aggregated price at the given level.}
         #'           \item{size}{(string) The aggregated size at that price level.}
         #'         }
-        #'
-        #' @examples
-        #' \dontrun{
-        #'   # Retrieve the top 20 levels of the orderbook for BTC-USDT:
-        #'   dt_orderbook <- await(market_data$get_part_orderbook(symbol = "BTC-USDT", size = 20))
-        #'   print(dt_orderbook)
-        #'
-        #'   # Retrieve the top 100 levels of the orderbook for BTC-USDT:
-        #'   dt_orderbook_100 <- await(market_data$get_part_orderbook(symbol = "BTC-USDT", size = 100))
-        #'   print(dt_orderbook_100)
-        #' }
-        #'
-        #' @export
         get_part_orderbook = function(symbol, size = 20) {
             return(get_part_orderbook_impl(
                 base_url = self$base_url,

@@ -8,81 +8,79 @@ build_headers(
   method,
   endpoint,
   body,
-  config,
+  keys,
   .__coro_env_parent__ = <environment>
 )
 }
-\arguments{
-\item{method}{A character string specifying the HTTP method (e.g., "GET", "POST").}
-
-\item{endpoint}{A character string representing the API endpoint (e.g., "/api/v1/orders").}
-
-\item{body}{A character string containing the request body in JSON format. If no payload is required,
-pass an empty string (`""`). This parameter is included in the signature calculation.}
-
-\item{config}{A list containing configuration settings for the API. The list must include:
-\describe{
-  \item{api_key}{Your KuCoin API key.}
-  \item{api_secret}{Your KuCoin API secret used for signing requests.}
-  \item{api_passphrase}{Your KuCoin API passphrase.}
-  \item{key_version}{The API key version (e.g., "2").}
-  \item{base_url}{(Optional) The base URL for the API; if not provided, \code{get_base_url()} is used.}
-}}
-}
-\value{
-A list of HTTP headers (created by \code{httr::add_headers()}) that contains the authentication fields
-required for making a request to the KuCoin API.
-}
 \description{
-Asynchronously builds the HTTP request headers required for authenticated requests to the KuCoin API.
-These headers include the API key, a signature, the current timestamp, an encrypted passphrase,
-the API key version, and the content type.
+Asynchronously constructs the HTTP request headers required for making authenticated requests to the KuCoin API.
+These headers include your API key, an HMAC-SHA256 signature computed over a prehash string, a timestamp,
+an encrypted passphrase, the API key version, and the content type. The headers ensure both the security and
+integrity of API requests.
 }
 \details{
-The function performs the following steps:
-
+\subsection{Workflow Overview:}{
 \enumerate{
-  \item **Retrieve the Server Time:**  
-        Calls \code{get_server_time()} (using the base URL from \code{get_base_url()}) to obtain the current
-        server timestamp (in milliseconds). This timestamp is required in every request.
-
-  \item **Construct the Prehash String:**  
-        The prehash is constructed by concatenating the timestamp, the HTTP method (in uppercase),
-        the API endpoint, and the request body. Note that the \code{body} parameter must be provided even if
-        it is empty (e.g., for GET requests) to ensure that the signature reflects all parts of the request.
-
-  \item **Generate the Signature:**  
-        Computes an HMAC-SHA256 signature of the prehash string using the API secret. The raw signature is
-        then encoded in base64.
-
-  \item **Encrypt the Passphrase:**  
-        Similarly, the API passphrase is HMAC-signed (using the API secret) and the result is encoded in base64.
-
-  \item **Build the Headers:**  
-        Returns a list of HTTP headers (via \code{httr::add_headers()}) that includes all the required authentication
-        fields.
+\item \strong{Retrieve Server Time:}
+Calls \code{get_server_time()} with the base URL (obtained via \code{get_base_url()}) to fetch the current
+server timestamp in milliseconds.
+\item \strong{Construct the Prehash String:}
+Concatenates the timestamp, the uppercase HTTP method, the API endpoint, and the request body to form a string
+that will be used for signing.
+\item \strong{Generate the Signature:}
+Computes an HMAC-SHA256 signature using your API secret and the prehash string. The raw signature is then
+encoded in base64.
+\item \strong{Encrypt the Passphrase:}
+Signs your API passphrase with the API secret (also via HMAC-SHA256) and encodes the result in base64.
+\item \strong{Assemble the Headers:}
+Returns a list of headers (using \code{httr::add_headers()}) that includes:
+\itemize{
+\item \code{KC-API-KEY}
+\item \code{KC-API-SIGN}
+\item \code{KC-API-TIMESTAMP}
+\item \code{KC-API-PASSPHRASE}
+\item \code{KC-API-KEY-VERSION}
+\item \code{Content-Type}
 }
 }
-\note{
-This function is asynchronous. When calling it from synchronous code, use \code{coro::await()}
-to retrieve the result.
+
+\strong{Parameters:}
+\itemize{
+\item \strong{method:} A character string specifying the HTTP method (e.g., "GET", "POST").
+\item \strong{endpoint:} A character string representing the API endpoint (e.g., "/api/v1/orders").
+\item \strong{body:} A character string containing the JSON-formatted request body; use an empty string (\code{""}) if no payload is required.
+\item \strong{keys:} A list of API credentials and configuration parameters. It must include:
+\itemize{
+\item \code{api_key}: Your KuCoin API key.
+\item \code{api_secret}: Your KuCoin API secret.
+\item \code{api_passphrase}: Your KuCoin API passphrase.
+\item \code{key_version}: The API key version (e.g., "2").
+Optionally, a \code{base_url} may be provided, though this function relies on \code{get_base_url()} to determine the base URL.
 }
-\examples{
-\dontrun{
-  config <- list(
-    api_key = "your_api_key",
-    api_secret = "your_api_secret",
-    api_passphrase = "your_api_passphrase",
-    key_version = "2",
-    base_url = "https://api.kucoin.com"
+}
+
+\strong{Return Value:}
+Returns a list of HTTP headers created using \code{httr::add_headers()}.
+
+\strong{Usage Example:}
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{\dontrun{
+  keys <- list(
+      api_key = "your_api_key",
+      api_secret = "your_api_secret",
+      api_passphrase = "your_api_passphrase",
+      key_version = "2"
+      # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
   )
 
-  # Build headers for a POST request with a JSON body.
-  headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', config))
+  # Build headers for a POST request with a JSON payload.
+  headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
   print(headers)
 
-  # For a GET request with no payload, pass an empty string:
-  headers <- coro::await(build_headers("GET", "/api/v1/orders", "", config))
+  # Build headers for a GET request with no payload:
+  headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
+  print(headers)
 }
-
+}\if{html}{\out{</div>}}
+}
 }

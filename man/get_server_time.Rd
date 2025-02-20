@@ -10,21 +10,24 @@ get_server_time(base_url = get_base_url())
 \item{base_url}{The base URL for the KuCoin Futures API. Defaults to the result of \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a numeric Unix timestamp in milliseconds or rejects with an error condition.
+A promise that resolves to a numeric Unix timestamp in milliseconds or rejects with an error.
 }
 \description{
-Retrieves the current API server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
-This function performs an asynchronous GET request and returns a promise that either resolves to the
-server timestamp or rejects with an error condition. The server time is a critical component when
-making authenticated requests to KuCoin's API. For these requests (e.g., placing orders or fetching
-account data), the API requires you to include a timestamp header that is within 5 seconds of the actual
-server time. This helps ensure that requests are timely and protects against replay attacks.
+Retrieves the current server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
+The server time is critical for authenticated requests to KuCoin, as the API requires that the
+timestamp header in each request is within 5 seconds of the actual server time. This function sends
+an asynchronous GET request and returns a promise that resolves to the timestamp. If the request fails,
+the promise is rejected with an error.
 }
 \details{
-The helper function \code{get_base_url()} is used to retrieve the base URL for the Futures domain.
+\strong{API Endpoint:}
+\verb{GET https://api.kucoin.com/api/v1/timestamp}
 
-For further details, refer to the official KuCoin API documentation:
-\url{https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time}
+\strong{Usage:}
+The server time is used to generate signatures and validate request freshness, helping prevent replay attacks.
+
+\strong{Official Documentation:}
+\href{https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time}{KuCoin Futures Get Server Time}
 }
 \examples{
 \dontrun{
