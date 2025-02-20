@@ -8,6 +8,7 @@ testthat-problems.rds
 dev/keys/
 
 *.log
+log.txt
 
 # dev files
 .env
