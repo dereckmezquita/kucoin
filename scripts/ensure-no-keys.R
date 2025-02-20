@@ -1,4 +1,5 @@
 box::use(fs)
+box::use(uuid)
 
 files <- fs$dir_ls(fs$path_abs("./api-responses"), recurse = TRUE, glob = "*.Rds")
 
@@ -55,7 +56,7 @@ for (i in seq_along(files)) {
     # Check for API keys and store data if found
     if (check_for_api_keys(data)) {
         cat("WARNING: This file contains potential sensitive data\n")
-        all_sensitive_data[[basename(file)]] <- data
+        all_sensitive_data[[file]] <- data
     }
     str(data, max.level = 1)
     cat("\n")  # Add spacing between files
@@ -70,3 +71,13 @@ if (length(all_sensitive_data) > 0) {
 } else {
     cat("Summary: No potential sensitive data found in any files.\n")
 }
+
+sensitive_file_name <- "./api-responses/impl_account_and_funding/parsed_response-get_apikey_info_impl.Rds"
+sensitive_data <- readRDS(sensitive_file_name)
+
+# set the key to something random
+sensitive_data$data$apiKey <- uuid$UUIDgenerate()
+sensitive_data$data$uid <- uuid$UUIDgenerate()
+
+# save the file
+saveRDS(sensitive_data, sensitive_file_name)
