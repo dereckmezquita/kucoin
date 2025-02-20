@@ -160,33 +160,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' - `fetch_klines_segment()`: Retrieves klines data for a given time segment using an asynchronous GET request.
         #' - `promises::promise_all()`: When running concurrently, waits for all segment promises to fulfill.
         #'
-        #' @examples
-        #' \dontrun{
-        #'   # Create an instance of KucoinSpotMarketData
-        #'   spot_data <- KucoinSpotMarketData$new()
-        #'
-        #'   # Retrieve 15-minute klines for BTC-USDT for the last 24 hours concurrently:
-        #'   klines_data <- await(spot_data$get_klines(
-        #'       symbol = "BTC-USDT",
-        #'       freq = "15min",
-        #'       from = lubridate::now() - 24*3600,
-        #'       to = lubridate::now(),
-        #'       concurrent = TRUE,
-        #'       delay_ms = 0,
-        #'       retries = 3
-        #'   ))
-        #'   print(klines_data)
-        #'
-        #'   # Retrieve the same data sequentially with a 200ms delay between requests:
-        #'   klines_data_seq <- await(spot_data$get_klines(
-        #'       symbol = "BTC-USDT",
-        #'       freq = "15min",
-        #'       concurrent = FALSE,
-        #'       delay_ms = 200
-        #'   ))
-        #'   print(klines_data_seq)
-        #' }
-        #'
         #' This method uses a public API endpoint that does not require authentication.
         get_klines = function(
             symbol,

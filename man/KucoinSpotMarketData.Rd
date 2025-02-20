@@ -6,68 +6,6 @@
 \description{
 An R6 class to interface with the KuCoin spot market data API.
 }
-\examples{
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_klines`
-## ------------------------------------------------
-
-\dontrun{
-  # Create an instance of KucoinSpotMarketData
-  spot_data <- KucoinSpotMarketData$new()
-
-  # Retrieve 15-minute klines for BTC-USDT for the last 24 hours concurrently:
-  klines_data <- await(spot_data$get_klines(
-      symbol = "BTC-USDT",
-      freq = "15min",
-      from = lubridate::now() - 24*3600,
-      to = lubridate::now(),
-      concurrent = TRUE,
-      delay_ms = 0,
-      retries = 3
-  ))
-  print(klines_data)
-
-  # Retrieve the same data sequentially with a 200ms delay between requests:
-  klines_data_seq <- await(spot_data$get_klines(
-      symbol = "BTC-USDT",
-      freq = "15min",
-      concurrent = FALSE,
-      delay_ms = 200
-  ))
-  print(klines_data_seq)
-}
-
-This method uses a public API endpoint that does not require authentication.
-Retrieve Currency Details
-
-This asynchronous method retrieves detailed information for a specified currency from the KuCoin API.
-It returns a promise that resolves to a \code{data.table} containing various details about the currency,
-such as its unique code, name, full name, precision, margin and debit support, and chain information (if applicable).
-
-**Workflow Overview:**
-
-1. **Input Validation:**  
-   The method verifies that a non-empty currency code is provided.
-
-2. **Query String Construction:**  
-   If a \code{chain} parameter is specified, it is incorporated into the query string via the \code{build_query()} helper.
-
-3. **URL Construction:**  
-   Constructs the full API URL by concatenating the base URL (stored in the class), the endpoint path 
-   \code{/api/v3/currencies/} (with the provided currency code as a path parameter), and the optional query string.
-
-4. **HTTP Request and Response Processing:**  
-   Sends a GET request to the constructed URL (with a 10-second timeout) and processes the response
-   using \code{process_kucoin_response()} to ensure the request was successful.
-
-5. **Data Conversion:**  
-   Converts the returned data (a named list of currency details) into a \code{data.table} for easy consumption.
-
-**API Documentation:**  
-[KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
-
-}
 \seealso{
 \itemize{
   \item \code{\link{get_market_list_impl}} for retrieving the list of available markets.
@@ -276,48 +214,6 @@ This method internally uses the following helper functions:
 - `split_time_range_by_candles()`: Splits the time range into segments to ensure each API request returns at most 1500 candles.
 - `fetch_klines_segment()`: Retrieves klines data for a given time segment using an asynchronous GET request.
 - `promises::promise_all()`: When running concurrently, waits for all segment promises to fulfill.
-}
-
-\subsection{Returns}{
-A promise that resolves to a `data.table` containing the aggregated historical klines data. The table includes:
-        \describe{
-          \item{timestamp}{Numeric, the raw timestamp in seconds.}
-          \item{open}{Numeric, the opening price.}
-          \item{close}{Numeric, the closing price.}
-          \item{high}{Numeric, the highest price in the interval.}
-          \item{low}{Numeric, the lowest price in the interval.}
-          \item{volume}{Numeric, the trading volume.}
-          \item{turnover}{Numeric, the trading turnover.}
-          \item{datetime}{POSIXct, the timestamp converted to a datetime object.}
-        }
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-  # Create an instance of KucoinSpotMarketData
-  spot_data <- KucoinSpotMarketData$new()
-
-  # Retrieve 15-minute klines for BTC-USDT for the last 24 hours concurrently:
-  klines_data <- await(spot_data$get_klines(
-      symbol = "BTC-USDT",
-      freq = "15min",
-      from = lubridate::now() - 24*3600,
-      to = lubridate::now(),
-      concurrent = TRUE,
-      delay_ms = 0,
-      retries = 3
-  ))
-  print(klines_data)
-
-  # Retrieve the same data sequentially with a 200ms delay between requests:
-  klines_data_seq <- await(spot_data$get_klines(
-      symbol = "BTC-USDT",
-      freq = "15min",
-      concurrent = FALSE,
-      delay_ms = 200
-  ))
-  print(klines_data_seq)
-}
 
 This method uses a public API endpoint that does not require authentication.
 Retrieve Currency Details
@@ -347,12 +243,21 @@ such as its unique code, name, full name, precision, margin and debit support, a
 
 **API Documentation:**  
 [KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Returns}{
+A promise that resolves to a `data.table` containing the aggregated historical klines data. The table includes:
+        \describe{
+          \item{timestamp}{Numeric, the raw timestamp in seconds.}
+          \item{open}{Numeric, the opening price.}
+          \item{close}{Numeric, the closing price.}
+          \item{high}{Numeric, the highest price in the interval.}
+          \item{low}{Numeric, the lowest price in the interval.}
+          \item{volume}{Numeric, the trading volume.}
+          \item{turnover}{Numeric, the trading turnover.}
+          \item{datetime}{POSIXct, the timestamp converted to a datetime object.}
+        }
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_currency"></a>}}

@@ -30,10 +30,10 @@ refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Document
 
 This method utilises the internal asynchronous function \code{get_account_summary_info_impl} to execute the following steps:
 \enumerate{
-\item \strong{URL Construction:} The full API URL is constructed by appending the endpoint to the base URL.
-\item \strong{Header Preparation:} Authentication headers are built based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} A \code{GET} request is sent to the KuCoin API to retrieve account summary information.
-\item \strong{Response Processing:} The API response is processed, and the \code{"data"} field is converted into a \code{data.table}.
+\item{\strong{URL Construction:} The full API URL is constructed by appending the endpoint to the base URL.}
+\item{\strong{Header Preparation:} Authentication headers are built based on the HTTP method, endpoint, and request body.}
+\item{\strong{API Request:} A \code{GET} request is sent to the KuCoin API to retrieve account summary information.}
+\item{\strong{Response Processing:} The API response is processed, and the \code{"data"} field is converted into a \code{data.table}.}
 }
 
 For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin API Documentation}.
@@ -41,10 +41,10 @@ Retrieve API Key Information
 
 This method utilises the internal asynchronous function \code{get_apikey_info_impl} to perform the following operations:
 \enumerate{
-\item \strong{URL Construction:} The complete API URL is formed by combining the base URL with the endpoint \verb{/api/v1/user/api-key}.
-\item \strong{Header Preparation:} Authentication headers are generated based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} An asynchronous GET request is sent to the KuCoin API.
-\item \strong{Response Processing:} The JSON response is processed, and the \code{"data"} field is converted into a \code{data.table}.
+\item{\strong{URL Construction:} The complete API URL is formed by combining the base URL with the endpoint \verb{/api/v1/user/api-key}.}
+\item{\strong{Header Preparation:} Authentication headers are generated based on the HTTP method, endpoint, and request body.}
+\item{\strong{API Request:} An asynchronous GET request is sent to the KuCoin API.}
+\item{\strong{Response Processing:} The JSON response is processed, and the \code{"data"} field is converted into a \code{data.table}.}
 }
 
 For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info}{KuCoin API Documentation}.
@@ -52,13 +52,13 @@ Retrieve Spot Account Type.
 
 This method leverages the internal asynchronous function \code{get_spot_account_dt_impl} to perform several operations:
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v1/accounts} along with any query
+\item{\strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v1/accounts} along with any query }
 parameters (e.g., filtering by currency or account type) to the base URL.
-\item \strong{Header Preparation:} Generates the required authentication headers using the HTTP method, full endpoint,
+\item{\strong{Header Preparation:} Generates the required authentication headers using the HTTP method, full endpoint,}
 and an empty request body.
-\item \strong{API Request:} Sends an asynchronous GET request to the constructed URL with a specified timeout to manage network delays.
-\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field from the JSON response and converting it into a \code{data.table}.
-\item \strong{Error Handling:} Catches and handles errors encountered during any of the above steps, providing a descriptive error message.
+\item{\strong{API Request:} Sends an asynchronous GET request to the constructed URL with a specified timeout to manage network delays.}
+\item{\strong{Response Processing:} Processes the API response by extracting the \code{"data"} field from the JSON response and converting it into a \code{data.table}.}
+\item{\strong{Error Handling:} Catches and handles errors encountered during any of the above steps, providing a descriptive error message.}
 }
 
 For further details, including rate limits, authentication requirements, and response schema, please refer to the
@@ -66,22 +66,22 @@ For further details, including rate limits, authentication requirements, and res
 
 This method leverages the internal asynchronous function \code{get_spot_account_detail_impl} to perform the following steps:
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by embedding the provided \code{accountId} into the endpoint \verb{/api/v1/accounts/} and appending it to the base URL.
-\item \strong{Header Preparation:} Generates the required authentication headers based on the HTTP method, endpoint, and an empty request body to ensure secure access.
-\item \strong{API Request:} Dispatches an asynchronous GET request to the constructed URL with a defined timeout to manage network delays.
-\item \strong{Response Processing:} Processes the API response using a helper function (\code{process_kucoin_response}). This function extracts the \code{"data"} field from the JSON payload and converts it into a \code{data.table}.
-\item \strong{Error Handling:} Captures any errors encountered during the process and returns a descriptive error message.
+\item{\strong{URL Construction:} Constructs the full API URL by embedding the provided \code{accountId} into the endpoint \verb{/api/v1/accounts/} and appending it to the base URL.}
+\item{\strong{Header Preparation:} Generates the required authentication headers based on the HTTP method, endpoint, and an empty request body to ensure secure access.}
+\item{\strong{API Request:} Dispatches an asynchronous GET request to the constructed URL with a defined timeout to manage network delays.}
+\item{\strong{Response Processing:} Processes the API response using a helper function (\code{process_kucoin_response}). This function extracts the \code{"data"} field from the JSON payload and converts it into a \code{data.table}.}
+\item{\strong{Error Handling:} Captures any errors encountered during the process and returns a descriptive error message.}
 }
 
 This method leverages the internal asynchronous function \code{get_cross_margin_account_impl} to perform the following steps:
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v3/margin/accounts} along with any query parameters to the base URL.
-\item \strong{Header Preparation:} Generates the necessary authentication headers using the provided API keys.
-\item \strong{API Request:} Sends an asynchronous GET request to the specified endpoint.
-\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field and converting it into two separate data tables:
+\item{\strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v3/margin/accounts} along with any query parameters to the base URL.}
+\item{\strong{Header Preparation:} Generates the necessary authentication headers using the provided API keys.}
+\item{\strong{API Request:} Sends an asynchronous GET request to the specified endpoint.}
+\item{\strong{Response Processing:} Processes the API response by extracting the \code{"data"} field and converting it into two separate data tables:}
 \itemize{
-\item A summary data table containing overall cross margin account information.
-\item A detailed data table containing the list of margin account objects.
+\item{A summary data table containing overall cross margin account information.}
+\item{A detailed data table containing the list of margin account objects.}
 }
 }
 }
