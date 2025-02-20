@@ -204,3 +204,113 @@ cancel_order_by_client_oid_impl <- coro::async(function(
         rlang::abort(sprintf("Error in cancel_order_by_client_oid_impl: %s", conditionMessage(e)))
     })
 })
+
+#' Cancel Partial Order (Implementation)
+#'
+#' Cancels a specified quantity of a spot order by its order ID on the KuCoin Spot trading system asynchronously.
+#' This function sends a cancellation request for the specified size and returns the order ID and canceled size if the request is successfully sent.
+#' Note that the actual cancellation status must be checked via order status or WebSocket subscription.
+#'
+#' ### Description
+#' This endpoint cancels a specified quantity of an existing order based on its `orderId`. Unlike full cancellation endpoints, it allows partial cancellation, leaving the remaining order quantity active. The order execution priority (price first, time first) is not affected by this operation.
+#'
+#' ### Differences from Other Cancellation Functions
+#' - **Cancel Order By OrderId**: Cancels the entire order using the order ID.
+#' - **Cancel Order By ClientOid**: Cancels the entire order using the client-assigned ID.
+#' - **Cancel Partial Order**: Cancels only a specified quantity of the order, useful for reducing order size without full cancellation.
+#'
+#' ### Workflow
+#' 1. **Parameter Validation**: Ensures `orderId`, `symbol`, and `cancelSize` are non-empty strings, with `symbol` being a valid trading pair.
+#' 2. **Request Construction**: Builds the API endpoint with `orderId` in the path and `symbol` and `cancelSize` as query parameters.
+#' 3. **Authentication**: Generates headers using API credentials via `build_headers()`.
+#' 4. **API Request**: Sends a DELETE request to the KuCoin API with a 3-second timeout.
+#' 5. **Response Processing**: Parses the response and returns the `orderId` and `cancelSize` if successful.
+#'
+#' ### API Endpoint
+#' `DELETE https://api.kucoin.com/api/v1/hf/orders/cancel/{orderId}?symbol={symbol}&cancelSize={cancelSize}`
+#'
+#' ### Rate Limit
+#' - **Weight**: 2 (higher than full cancellation endpoints, which are typically 1).
+#'
+#' ### Official Documentation
+#' [KuCoin Cancel Partial Order](https://www.kucoin.com/docs-new/rest/spot-trading/orders/cancel-partial-order)
+#'
+#' @param keys List; API configuration parameters from `get_api_keys()`. Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param orderId Character string; the unique order ID to partially cancel. Required.
+#' @param symbol Character string; the trading pair symbol (e.g., "BTC-USDT"). Required.
+#' @param cancelSize Character string; the quantity of the order to cancel (e.g., "0.00001"). Required.
+#' @return Promise resolving to a `data.table` containing:
+#'   - `orderId` (character): The order ID that was partially canceled.
+#'   - `cancelSize` (character): The quantity that was canceled.
+#' @examples
+#' \dontrun{
+#' main_async <- coro::async(function() {
+#'   # Partially cancel an order
+#'   result <- await(cancel_partial_order_impl(
+#'     orderId = "6711f73c1ef16c000717bb31",
+#'     symbol = "BTC-USDT",
+#'     cancelSize = "0.00001"
+#'   ))
+#'   print(result)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
+#' @importFrom data.table data.table
+#' @importFrom httr DELETE timeout
+#' @importFrom rlang abort
+#' @export
+cancel_partial_order_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    orderId,
+    symbol,
+    cancelSize
+) {
+    tryCatch({
+        # Validate parameters
+        if (is.null(orderId) || !is.character(orderId) || nchar(orderId) == 0) {
+            rlang::abort("Parameter 'orderId' must be a non-empty string.")
+        }
+        if (is.null(symbol) || !verify_symbol(symbol)) {
+            rlang::abort("Parameter 'symbol' must be a valid ticker (e.g., 'BTC-USDT').")
+        }
+        if (is.null(cancelSize) || !is.character(cancelSize) || nchar(cancelSize) == 0) {
+            rlang::abort("Parameter 'cancelSize' must be a non-empty string.")
+        }
+
+        # Construct endpoint and query string
+        endpoint <- paste0("/api/v1/hf/orders/cancel/", orderId)
+        query_params <- list(symbol = symbol, cancelSize = cancelSize)
+        query_string <- build_query(query_params)
+        endpoint_with_query <- paste0(endpoint, "?", query_string)
+        full_url <- paste0(base_url, endpoint_with_query)
+
+        # Generate authentication headers
+        headers <- await(build_headers("DELETE", endpoint_with_query, NULL, keys))
+
+        # Send DELETE request
+        response <- httr::DELETE(
+            url = full_url,
+            headers,
+            httr::timeout(3)
+        )
+
+        # Process response
+        parsed_response <- process_kucoin_response(response, full_url)
+        if (parsed_response$code != "200000") {
+            rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
+        }
+
+        # Return result as data.table
+        result_dt <- data.table::data.table(
+            orderId = parsed_response$data$orderId,
+            cancelSize = parsed_response$data$cancelSize
+        )
+        return(result_dt)
+    }, error = function(e) {
+        rlang::abort(sprintf("Error in cancel_partial_order_impl: %s", conditionMessage(e)))
+    })
+})
