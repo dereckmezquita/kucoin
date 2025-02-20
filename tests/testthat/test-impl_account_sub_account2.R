@@ -1,16 +1,14 @@
 # tests/testthat/test-impl_account_sub_account_stub.R
 if (interactive()) setwd("./tests/testthat")
 
-options(box.path = c("stubs/R", "../../"))
-
-box::use(
-    testthat[ test_that, skip_if, expect_true, expect_null, expect_match ],
-    later[ loop_empty, run_now ],
-    promises[ then, catch ],
-    data.table[ is.data.table ],
-    subimpl = R/impl_account_sub_account,
-    utils   = R/utils
-)
+# box::use(
+#     testthat[ test_that, skip_if, expect_true, expect_null, expect_match ],
+#     later[ loop_empty, run_now ],
+#     promises[ then, catch ],
+#     data.table[ is.data.table ],
+#     subimpl = R/impl_account_sub_account,
+#     utils   = R/utils
+# )
 
 # Global delay (in seconds) between tests
 delay_seconds <- 2
