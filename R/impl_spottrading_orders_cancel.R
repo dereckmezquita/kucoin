@@ -1,0 +1,102 @@
+# File: ./R/impl_spottrading_orders_cancel.R
+
+box::use(
+    ./helpers_api[process_kucoin_response, build_headers],
+    ./utils[build_query, get_base_url, verify_symbol, get_api_keys],
+    coro[async, await],
+    data.table[data.table],
+    httr[DELETE, timeout],
+    rlang[abort]
+)
+
+#' Cancel Order By OrderId (Implementation)
+#'
+#' Cancels a spot order by its order ID on the KuCoin Spot trading system asynchronously.
+#' This function sends a cancellation request and returns the order ID if the request is successfully sent.
+#' Note that the actual cancellation status must be checked via order status or Websocket subscription.
+#'
+#' ### Workflow Overview
+#' 1. **Parameter Validation**: Ensures `orderId` and `symbol` are provided and valid.
+#' 2. **Request Construction**: Builds the API endpoint with `orderId` and `symbol` as a query parameter.
+#' 3. **Authentication**: Generates headers with API credentials using `build_headers()`.
+#' 4. **API Request**: Sends a DELETE request to the KuCoin API with a 3-second timeout.
+#' 5. **Response Processing**: Parses the response and returns the order ID if successful.
+#'
+#' ### API Endpoint
+#' `DELETE https://api.kucoin.com/api/v1/hf/orders/{orderId}?symbol={symbol}`
+#'
+#' ### Usage
+#' Used to cancel a specific spot trading order on KuCoin by its order ID.
+#'
+#' ### Official Documentation
+#' [KuCoin Cancel Order By OrderId](https://www.kucoin.com/docs-new/rest/spot-trading/orders/cancel-order-by-orderld)
+#'
+#' @param keys List; API configuration parameters from `get_api_keys()`. Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param orderId Character string; the unique order ID to cancel. Required.
+#' @param symbol Character string; the trading pair symbol (e.g., "BTC-USDT"). Required.
+#' @return Promise resolving to a `data.table` containing:
+#'   - `orderId` (character): The order ID that was requested to be cancelled.
+#' @examples
+#' \dontrun{
+#' main_async <- coro::async(function() {
+#'   # Cancel an order
+#'   result <- await(cancel_order_by_order_id_impl(
+#'     orderId = "671124f9365ccb00073debd4",
+#'     symbol = "BTC-USDT"
+#'   ))
+#'   print(result)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
+#' @importFrom data.table data.table
+#' @importFrom httr DELETE timeout
+#' @importFrom rlang abort
+#' @export
+cancel_order_by_order_id_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    orderId,
+    symbol
+) {
+    tryCatch({
+        # Validate parameters
+        if (is.null(orderId) || !is.character(orderId) || nchar(orderId) == 0) {
+            rlang::abort("Parameter 'orderId' must be a non-empty string.")
+        }
+        if (is.null(symbol) || !verify_symbol(symbol)) {
+            rlang::abort("Parameter 'symbol' must be a valid ticker (e.g., 'BTC-USDT').")
+        }
+
+        # Construct endpoint and query string
+        endpoint <- paste0("/api/v1/hf/orders/", orderId)
+        query_params <- list(symbol = symbol)
+        query_string <- build_query(query_params)
+        endpoint_with_query <- paste0(endpoint, "?", query_string)
+        full_url <- paste0(base_url, endpoint_with_query)
+
+        # Generate authentication headers
+        headers <- await(build_headers("DELETE", endpoint_with_query, NULL, keys))
+
+        # Send DELETE request
+        response <- httr::DELETE(
+            url = full_url,
+            headers,
+            httr::timeout(3)
+        )
+
+        # Process response
+        parsed_response <- process_kucoin_response(response, full_url)
+        if (parsed_response$code != "200000") {
+            rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
+        }
+
+        # Return result as data.table
+        result_dt <- data.table::data.table(orderId = parsed_response$data$orderId)
+        return(result_dt)
+    }, error = function(e) {
+        rlang::abort(sprintf("Error in cancel_order_by_order_id_impl: %s", conditionMessage(e)))
+    })
+})
