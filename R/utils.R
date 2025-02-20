@@ -1,4 +1,4 @@
-# File: utils.R
+# File: ./R/utils.R
 
 #' Verify Symbol Format
 #'
