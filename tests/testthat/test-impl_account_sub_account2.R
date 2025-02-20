@@ -33,7 +33,7 @@ test_that("add_subaccount_impl aborts using stubbed process_kucoin_response", {
     remarks  <- "Test sub-account creation"
 
     # Load the saved HTTP response from the RDS file.
-    saved_response <- readRDS("../../api-responses/add_subaccount_impl.Rds")
+    saved_response <- readRDS("./api-responses/add_subaccount_impl.Rds")
 
     # --- Mock the HTTP POST call ---
     testthat::local_mocked_bindings(

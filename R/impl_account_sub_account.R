@@ -8,6 +8,12 @@
 
 #' Add SubAccount Implementation
 #'
+#' @importFrom coro async await
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
+#'
 #' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request to the 
 #' `/api/v2/sub/user/created` endpoint. It is designed for internal use as a method in an R6 class and is **not**
 #' intended for direct consumption by end-users. The function performs the following steps:
@@ -21,7 +27,7 @@
 #'    - `subName`: The desired sub‐account name (7–32 characters; must include at least one letter and one number; no spaces).
 #'    - `access`: The permission type for the sub‐account (allowed values: `"Spot"`, `"Futures"`, `"Margin"`).
 #'    - `remarks` (optional): Remarks or notes about the sub‐account (if provided, 1–24 characters).
-
+#'
 #'    This list is converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE`.
 #'
 #' 3. **Header Preparation:**  
@@ -159,6 +165,11 @@ add_subaccount_impl <- coro::async(function(
 })
 
 #' Get SubAccount Summary Information Implementation
+#'
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table rbindlist as.data.table
+#' @importFrom rlang abort
 #'
 #' This asynchronous function retrieves a paginated summary of sub-accounts from KuCoin and aggregates 
 #' the results into a single `data.table`. It sends HTTP GET requests to the KuCoin sub-account summary 
@@ -308,7 +319,7 @@ get_subaccount_list_summary_impl <- coro::async(function(
                     el$openTradeTypes <- paste(el$openTradeTypes, collapse = ";")
                     return(el)
                 })
-                # rbindlist can conver list of list to data.table
+                # rbindlist can convert list of lists to data.table
                 return(data.table::rbindlist(els, fill = TRUE))
             },
             max_pages = max_pages
@@ -323,6 +334,11 @@ get_subaccount_list_summary_impl <- coro::async(function(
 })
 
 #' Get SubAccount Detail - Balance Implementation
+#'
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table rbindlist
+#' @importFrom rlang abort
 #'
 #' This asynchronous function retrieves the balance details for a specific sub-account from KuCoin. It sends a GET
 #' request to the KuCoin API endpoint for sub-account details and processes the returned JSON response. The endpoint
