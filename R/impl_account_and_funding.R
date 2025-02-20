@@ -479,7 +479,7 @@ get_spot_account_detail_impl <- coro::async(function(
         response <- httr::GET(url, headers, httr::timeout(3))
         parsed_response <- process_kucoin_response(response, url)
 
-        account_detal_dt <- data.table::as.data.table(parsed_response$data)
+        account_detail_dt <- data.table::as.data.table(parsed_response$data)
         if (nrow(account_detal_dt) == 0) {
             return(data.table::data.table(
                 currency  = character(0),
@@ -489,14 +489,14 @@ get_spot_account_detail_impl <- coro::async(function(
             ))
         }
 
-        account_detal_dt[, `:=`(
+        account_detail_dt[, `:=`(
             currency  = as.character(currency),
             balance   = as.numeric(balance),
             available = as.numeric(available),
             holds     = as.numeric(holds)
         )]
 
-        return(account_detal_dt)
+        return(account_detail_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_detail_impl:", conditionMessage(e)))
     })
