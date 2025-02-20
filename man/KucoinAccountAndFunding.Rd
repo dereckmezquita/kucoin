@@ -3,15 +3,16 @@
 \name{KucoinAccountAndFunding}
 \alias{KucoinAccountAndFunding}
 \title{KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints}
-\description{
-KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints
-
-KucoinAccountAndFunding Class for KuCoin Account & Funding Endpoints
+\value{
+Not applicable (class definition; see individual methods for return values).
 }
-\details{
+\description{
 The \code{KucoinAccountAndFunding} class provides a comprehensive, asynchronous interface for interacting with the
 Account & Funding endpoints of the KuCoin API. It leverages the \code{coro} package to perform non-blocking HTTP requests
-and returns promises that often resolve to \code{data.table} objects. This class covers a wide range of functionalities, including:
+and returns promises that often resolve to \code{data.table} objects. This class covers a wide range of functionalities,
+including:
+}
+\details{
 \itemize{
 \item Retrieving a complete account summary (VIP level, sub-account counts, and various limits).
 \item Fetching detailed API key information (key details, permissions, IP whitelist, creation time, etc.).
@@ -22,70 +23,32 @@ and returns promises that often resolve to \code{data.table} objects. This class
 \item Fetching isolated margin account data for specific trading pairs.
 \item Obtaining detailed ledger records (transaction histories) for spot and margin accounts.
 }
+\subsection{Workflow Overview}{
 
-\strong{Usage:}
-The class is initialized with API credentials, which can be automatically loaded using \code{get_api_keys()}. The base URL
-is determined by \code{get_base_url()}. For detailed information on each endpoint and the expected response schema, please
-refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}.
-
-This method utilises the internal asynchronous function \code{get_account_summary_info_impl} to execute the following steps:
-\enumerate{
-\item \strong{URL Construction:} The full API URL is constructed by appending the endpoint to the base URL.
-\item \strong{Header Preparation:} Authentication headers are built based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} A \code{GET} request is sent to the KuCoin API to retrieve account summary information.
-\item \strong{Response Processing:} The API response is processed, and the \code{"data"} field is converted into a \code{data.table}.
+Not applicable (class definition overview).
 }
 
-For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin API Documentation}.
-Retrieve API Key Information
+\subsection{API Endpoint}{
 
-This method utilises the internal asynchronous function \code{get_apikey_info_impl} to perform the following operations:
-\enumerate{
-\item \strong{URL Construction:} The complete API URL is formed by combining the base URL with the endpoint \verb{/api/v1/user/api-key}.
-\item \strong{Header Preparation:} Authentication headers are generated based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} An asynchronous GET request is sent to the KuCoin API.
-\item \strong{Response Processing:} The JSON response is processed, and the \code{"data"} field is converted into a \code{data.table}.
+Not applicable (class-level documentation; see individual methods).
 }
 
-For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info}{KuCoin API Documentation}.
-Retrieve Spot Account Type.
+\subsection{Usage}{
 
-This method leverages the internal asynchronous function \code{get_spot_account_dt_impl} to perform several operations:
-\enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v1/accounts} along with any query parameters (e.g., filtering by currency or account type) to the base URL.
-\item \strong{Header Preparation:} Generates the required authentication headers using the HTTP method, full endpoint, and an empty request body.
-\item \strong{API Request:} Sends an asynchronous GET request to the constructed URL with a specified timeout to manage network delays.
-\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field from the JSON response and converting it into a \code{data.table}.
-\item \strong{Error Handling:} Catches and handles errors encountered during any of the above steps, providing a descriptive error message.
+Utilised by users to interact with KuCoin's Account & Funding endpoints. The class is initialised with API credentials,
+automatically loaded via \code{get_api_keys()} if not provided, and a base URL from \code{get_base_url()}. For detailed endpoint
+information and response schemas, refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}.
 }
 
-For further details, including rate limits, authentication requirements, and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot}{Spot Account List Documentation}.
+\subsection{Official Documentation}{
 
-This method leverages the internal asynchronous function \code{get_spot_account_detail_impl} to perform the following steps:
-\enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by embedding the provided \code{accountId} into the endpoint \verb{/api/v1/accounts/} and appending it to the base URL.
-\item \strong{Header Preparation:} Generates the required authentication headers based on the HTTP method, endpoint, and an empty request body to ensure secure access.
-\item \strong{API Request:} Dispatches an asynchronous GET request to the constructed URL with a defined timeout to manage network delays.
-\item \strong{Response Processing:} Processes the API response using a helper function (\code{process_kucoin_response}). This function extracts the \code{"data"} field from the JSON payload and converts it into a \code{data.table}.
-\item \strong{Error Handling:} Captures any errors encountered during the process and returns a descriptive error message.
-}
-
-This method leverages the internal asynchronous function \code{get_cross_margin_account_impl} to perform the following steps:
-\enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v3/margin/accounts} along with any query parameters to the base URL.
-\item \strong{Header Preparation:} Generates the necessary authentication headers using the provided API keys.
-\item \strong{API Request:} Sends an asynchronous GET request to the specified endpoint.
-\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field and converting it into two separate data tables:
-\itemize{
-\item A summary data table containing overall cross margin account information.
-\item A detailed data table containing the list of margin account objects.
-}
+\href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}
 }
 }
 \section{Methods}{
 
 \itemize{
-\item \strong{initialize(keys, base_url):} Initializes the object with API credentials and the base URL.
+\item \strong{initialize(keys, base_url):} Initialises the object with API credentials and the base URL.
 \item \strong{get_account_summary_info():} Retrieves a comprehensive summary of the user's account.
 \item \strong{get_apikey_info():} Retrieves detailed information about the API key.
 \item \strong{get_spot_account_type():} Determines whether the spot account is high-frequency or low-frequency.
@@ -93,18 +56,327 @@ This method leverages the internal asynchronous function \code{get_cross_margin_
 \item \strong{get_spot_account_detail(accountId):} Retrieves detailed information for a specific spot account.
 \item \strong{get_cross_margin_account(query):} Retrieves cross margin account information based on specified filters.
 \item \strong{get_isolated_margin_account(query):} Retrieves isolated margin account data for specific trading pairs.
-\item \strong{get_spot_ledger(query):} Retrieves detailed ledger records for spot and margin accounts, including pagination.
+\item \strong{get_spot_ledger(query, page_size, max_pages):} Retrieves detailed ledger records for spot and margin accounts, including pagination.
 }
 }
 
+\examples{
+\dontrun{
+main_async <- coro::async(function() {
+  # Initialise the class
+  account <- KucoinAccountAndFunding$new()
+
+  # Get account summary
+  summary <- await(account$get_account_summary_info())
+  print("Account Summary:")
+  print(summary)
+
+  # Get API key info
+  key_info <- await(account$get_apikey_info())
+  print("API Key Info:")
+  print(key_info)
+
+  # Check spot account type
+  is_high_freq <- await(account$get_spot_account_type())
+  cat("Spot Account High-Frequency:", is_high_freq, "\n")
+
+  # List spot accounts and filter for USDT main accounts
+  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
+  print("Spot Accounts (USDT Main):")
+  print(spot_accounts)
+
+  # Get details for the first USDT main account (if any)
+  if (nrow(spot_accounts) > 0) {
+    account_id <- spot_accounts[1, id]
+    account_detail <- await(account$get_spot_account_detail(account_id))
+    print("Spot Account Detail:")
+    print(account_detail)
+  }
+
+  # Get cross margin account info
+  cross_margin <- await(account$get_cross_margin_account(list(quoteCurrency = "USDT")))
+  print("Cross Margin Summary:")
+  print(cross_margin$summary)
+  print("Cross Margin Accounts:")
+  print(cross_margin$accounts)
+
+  # Get isolated margin account info for BTC-USDT
+  isolated_margin <- await(account$get_isolated_margin_account(list(symbol = "BTC-USDT")))
+  print("Isolated Margin Summary:")
+  print(isolated_margin$summary)
+  print("Isolated Margin Assets:")
+  print(isolated_margin$assets)
+
+  # Get spot ledger records for BTC transfers in the last day
+  query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) * 1000)
+  ledger <- await(account$get_spot_ledger(query, page_size = 50, max_pages = 2))
+  print("Spot Ledger Records:")
+  print(ledger)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_account_summary_info`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  summary <- await(account$get_account_summary_info())
+  print(summary)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve API Key Information
+
+### Description
+Retrieves detailed metadata about the API key used for authentication from the KuCoin API asynchronously. This includes account UID, sub-account name (if applicable), remarks, permissions, IP whitelist, and creation timestamp. This method calls `get_apikey_info_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with the endpoint `/api/v1/user/api-key`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Processes the response with `process_kucoin_response()`, converting the `"data"` field into a `data.table`.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/user/api-key`
+
+### Usage
+Utilised by users to inspect the properties and permissions of their KuCoin API key, aiding in security and configuration audits.
+
+### Official Documentation
+[KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_spot_account_type`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  is_high_freq <- await(account$get_spot_account_type())
+  cat("Spot Account High-Frequency:", is_high_freq, "\n")
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Account List
+
+### Description
+Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a `data.table` and calls `get_spot_account_dt_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v1/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` array into a `data.table`, handling empty responses with a typed empty table.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts`
+
+### Usage
+Utilised by users to list all spot accounts, filterable by currency or type, for account management or monitoring.
+
+### Official Documentation
+[KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_spot_account_dt`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
+  print(spot_accounts)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Account Details
+
+### Description
+Retrieves detailed financial metrics for a specific spot account identified by its `accountId` from the KuCoin API asynchronously. This method calls `get_spot_account_detail_impl` and requires an account ID, obtainable via `get_spot_account_dt()`.
+
+### Workflow Overview
+1. **URL Construction**: Embeds `accountId` into `/api/v1/accounts/{accountId}` and combines with the base URL.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` field into a `data.table`, handling empty responses.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts/{accountId}`
+
+### Usage
+Utilised by users to obtain detailed metrics for a specific spot account, such as balance and availability, after identifying the account ID.
+
+### Official Documentation
+[KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_spot_account_detail`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT")))
+  if (nrow(spot_accounts) > 0) {
+    account_id <- spot_accounts[1, id]
+    detail <- await(account$get_spot_account_detail(account_id))
+    print(detail)
+  }
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Cross Margin Account Information
+
+### Description
+Retrieves detailed information about the cross margin account asynchronously, including overall metrics and individual accounts. Cross margin allows collateral use across multiple trading pairs. This method calls `get_cross_margin_account_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v3/margin/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Splits the `"data"` field into `summary` and `accounts` `data.table` objects.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v3/margin/accounts`
+
+### Usage
+Utilised by users to monitor cross margin account status, including total assets, liabilities, and per-currency details.
+
+### Official Documentation
+[KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_cross_margin_account`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  cross_margin <- await(account$get_cross_margin_account(list(quoteCurrency = "USDT")))
+  print(cross_margin$summary)
+  print(cross_margin$accounts)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Isolated Margin Account Information
+
+### Description
+Retrieves isolated margin account details for specific trading pairs from the KuCoin API asynchronously, segregating collateral by pair. This method calls `get_isolated_margin_account_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v3/isolated/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` field into `summary` and flattened `assets` `data.table` objects, adding a `datetime` column.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v3/isolated/accounts`
+
+### Usage
+Utilised by users to monitor isolated margin accounts, providing detailed asset and liability data per trading pair.
+
+### Official Documentation
+[KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_isolated_margin_account`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  isolated_margin <- await(account$get_isolated_margin_account(list(symbol = "BTC-USDT")))
+  print(isolated_margin$summary)
+  print(isolated_margin$assets)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Ledger Records
+
+### Description
+Retrieves detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination, aggregating transaction histories into a `data.table`. This method calls `get_spot_ledger_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v1/accounts/ledgers`, merging query parameters with pagination settings.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()` within an inner async function.
+3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function.
+4. **Response Processing**: Aggregates `"items"` from each page into a `data.table`, adding a `createdAtDatetime` column.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts/ledgers`
+
+### Usage
+Utilised by users to retrieve transaction histories for spot and margin accounts, filterable by currency, direction, and time range.
+
+### Official Documentation
+[KuCoin Get Account Ledgers Spot Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin)
+
+
+## ------------------------------------------------
+## Method `KucoinAccountAndFunding$get_spot_ledger`
+## ------------------------------------------------
+
+\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) * 1000)
+  ledger <- await(account$get_spot_ledger(query, page_size = 50, max_pages = 2))
+  print(ledger)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{keys}}{A list of API configuration parameters from \code{get_api_keys()}, including \code{api_key}, \code{api_secret},
+\item{\code{keys}}{List of API configuration parameters from \code{get_api_keys()}, including \code{api_key}, \code{api_secret},
 \code{api_passphrase}, and \code{key_version}.}
 
-\item{\code{base_url}}{A character string representing the base URL for the KuCoin API (obtained via \code{get_base_url()}).
-Initialize a new KucoinAccountAndFunding object.}
+\item{\code{base_url}}{Character string representing the base URL for the KuCoin API, obtained via \code{get_base_url()}.
+Initialise a New KucoinAccountAndFunding Object
+\subsection{Description}{
+
+Initialises a \code{KucoinAccountAndFunding} object with API credentials and a base URL for interacting with KuCoin's Account & Funding endpoints asynchronously. If credentials or the base URL are not provided, they are sourced from \code{get_api_keys()} and \code{get_base_url()}, respectively.
+}
+
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Credential Assignment}: Assigns the provided or default API keys to \code{self$keys}.
+\item \strong{URL Assignment}: Assigns the provided or default base URL to \code{self$base_url}.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (initialisation method).
+}
+
+\subsection{Usage}{
+
+Utilised to create an instance of the class with necessary authentication details for accessing KuCoin API endpoints.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/introduction}{KuCoin API Authentication}
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -127,8 +399,6 @@ Initialize a new KucoinAccountAndFunding object.}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-new"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes the KucoinAccountAndFunding object with API credentials and the base URL. If no credentials are provided,
-they are automatically loaded using \code{get_api_keys()}. Similarly, the base URL is determined using \code{get_base_url()}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$new(keys = get_api_keys(), base_url = get_base_url())}\if{html}{\out{</div>}}
 }
@@ -136,74 +406,105 @@ they are automatically loaded using \code{get_api_keys()}. Similarly, the base U
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{keys}}{A list of API configuration parameters. Defaults to \code{get_api_keys()}.}
+\item{\code{keys}}{List containing API configuration parameters from \code{get_api_keys()}, including:
+\itemize{
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
+}}
 
-\item{\code{base_url}}{(Optional) A character string representing the base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
+\item{\code{base_url}}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A new instance of the \code{KucoinAccountAndFunding} class.
-Retrieve Account Summary Information
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_account_summary_info"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_account_summary_info}{}}}
 \subsection{Method \code{get_account_summary_info()}}{
-This method retrieves a comprehensive summary of the user's account from KuCoin. It includes details such as the user's VIP level,
-the total number of sub-accounts, and a breakdown of sub-accounts by type (spot, margin, futures, options), along with various limits.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v2/user-info}
-
-Internally, this method calls the asynchronous implementation function \code{get_account_summary_info_impl} to handle the API request and response processing.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_account_summary_info()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the account summary data with the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \code{level} (integer): The user's VIP level.
+\item \code{level} (integer): User's VIP level.
 \item \code{subQuantity} (integer): Total number of sub-accounts.
-\item \code{spotSubQuantity} (integer): Number of sub-accounts with spot trading permissions.
-\item \code{marginSubQuantity} (integer): Number of sub-accounts with margin trading permissions.
-\item \code{futuresSubQuantity} (integer): Number of sub-accounts with futures trading permissions.
-\item \code{optionSubQuantity} (integer): Number of sub-accounts with option trading permissions.
-\item \code{maxSubQuantity} (integer): Maximum allowed sub-accounts (calculated as the sum of \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
-\item \code{maxDefaultSubQuantity} (integer): Maximum default open sub-accounts based on VIP level.
-\item \code{maxSpotSubQuantity} (integer): Maximum additional sub-accounts with spot trading permissions.
-\item \code{maxMarginSubQuantity} (integer): Maximum additional sub-accounts with margin trading permissions.
-\item \code{maxFuturesSubQuantity} (integer): Maximum additional sub-accounts with futures trading permissions.
-\item \code{maxOptionSubQuantity} (integer): Maximum additional sub-accounts with option trading permissions.
+\item \code{spotSubQuantity} (integer): Number of spot trading sub-accounts.
+\item \code{marginSubQuantity} (integer): Number of margin trading sub-accounts.
+\item \code{futuresSubQuantity} (integer): Number of futures trading sub-accounts.
+\item \code{optionSubQuantity} (integer): Number of option trading sub-accounts.
+\item \code{maxSubQuantity} (integer): Maximum allowed sub-accounts (sum of \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
+\item \code{maxDefaultSubQuantity} (integer): Maximum default sub-accounts based on VIP level.
+\item \code{maxSpotSubQuantity} (integer): Maximum additional spot sub-accounts.
+\item \code{maxMarginSubQuantity} (integer): Maximum additional margin sub-accounts.
+\item \code{maxFuturesSubQuantity} (integer): Maximum additional futures sub-accounts.
+\item \code{maxOptionSubQuantity} (integer): Maximum additional option sub-accounts.
 }
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  summary <- await(account$get_account_summary_info())
+  print(summary)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve API Key Information
+
+### Description
+Retrieves detailed metadata about the API key used for authentication from the KuCoin API asynchronously. This includes account UID, sub-account name (if applicable), remarks, permissions, IP whitelist, and creation timestamp. This method calls `get_apikey_info_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with the endpoint `/api/v1/user/api-key`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Processes the response with `process_kucoin_response()`, converting the `"data"` field into a `data.table`.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/user/api-key`
+
+### Usage
+Utilised by users to inspect the properties and permissions of their KuCoin API key, aiding in security and configuration audits.
+
+### Official Documentation
+[KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_apikey_info"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_apikey_info}{}}}
 \subsection{Method \code{get_apikey_info()}}{
-This method retrieves detailed API key information from the KuCoin API. It fetches metadata about the API key used for authentication, including the account UID, sub-account name (if applicable), remarks, API key string, API version, permissions, IP whitelist, whether the key belongs to the master account, and the creation timestamp.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/user/api-key}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_apikey_info()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the API key information with the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \code{uid} (integer): The account UID.
-\item \code{subName} (character, optional): The sub-account name, if applicable. This field is not provided for master accounts.
-\item \code{remark} (character): Remarks associated with the API key.
-\item \code{apiKey} (character): The API key string.
-\item \code{apiVersion} (integer): The API version.
-\item \code{permission} (character): A comma-separated list of permissions. Possible values include: \emph{General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn}.
-\item \code{ipWhitelist} (character, optional): The IP whitelist, if applicable.
-\item \code{isMaster} (logical): Indicates whether the API key belongs to the master account.
-\item \code{createdAt} (integer): The API key creation time in milliseconds.
+\item \code{uid} (integer): Account UID.
+\item \code{subName} (character, optional): Sub-account name (if applicable).
+\item \code{remark} (character): API key remarks.
+\item \code{apiKey} (character): API key string.
+\item \code{apiVersion} (integer): API version.
+\item \code{permission} (character): Comma-separated permissions list (e.g., \code{"General, Spot"}).
+\item \code{ipWhitelist} (character, optional): IP whitelist.
+\item \code{isMaster} (logical): Master account indicator.
+\item \code{createdAt} (integer): Creation timestamp in milliseconds.
 }
 }
 }
@@ -211,38 +512,58 @@ A promise that resolves to a \code{data.table} containing the API key informatio
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_account_type"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_account_type}{}}}
 \subsection{Method \code{get_spot_account_type()}}{
-Determines whether the spot account is high-frequency or low-frequency. This distinction affects the endpoints used
-for asset transfers and balance queries.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/hf/accounts/opened}
-
-\strong{Return Value:}
-\itemize{
-\item \code{TRUE}: Indicates a high-frequency spot account.
-\item \code{FALSE}: Indicates a low-frequency spot account.
-}
-
-For additional details, refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot}{Spot Account Type Documentation}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_account_type()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A promise that resolves to a boolean.
-Retrieve Spot Account List.
+Promise resolving to a logical value:
+\itemize{
+\item \code{TRUE}: High-frequency spot account.
+\item \code{FALSE}: Low-frequency spot account.
 }
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  is_high_freq <- await(account$get_spot_account_type())
+  cat("Spot Account High-Frequency:", is_high_freq, "\n")
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Account List
+
+### Description
+Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a `data.table` and calls `get_spot_account_dt_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v1/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` array into a `data.table`, handling empty responses with a typed empty table.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts`
+
+### Usage
+Utilised by users to list all spot accounts, filterable by currency or type, for account management or monitoring.
+
+### Official Documentation
+[KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_account_dt"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_account_dt}{}}}
 \subsection{Method \code{get_spot_account_dt()}}{
-Retrieves a list of all spot accounts associated with the KuCoin account. Users can filter results by currency
-(e.g., "USDT") and account type (e.g., "main" or "trade"). The returned data is aggregated into a \code{data.table},
-where each row represents a distinct spot account with key financial metrics.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/accounts}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_account_dt(query = list())}\if{html}{\out{</div>}}
 }
@@ -250,31 +571,66 @@ where each row represents a distinct spot account with key financial metrics.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{query}}{A named list of query parameters for filtering the account list. For example, \code{list(currency = "USDT", type = "main")}.}
+\item{\code{query}}{Named list of query parameters, e.g., \code{list(currency = "USDT", type = "main")}. Supported:
+\itemize{
+\item \code{currency} (character, optional): Filter by currency (e.g., \code{"USDT"}).
+\item \code{type} (character, optional): Filter by account type (\code{"main"}, \code{"trade"}).
+}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the spot account list with the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \code{id} (character): The unique account ID.
-\item \code{currency} (character): The currency code associated with the account.
-\item \code{type} (character): The account type (e.g., "main", "trade", or "balance").
-\item \code{balance} (character): The total funds held in the account.
-\item \code{available} (character): The funds available for withdrawal or trading.
-\item \code{holds} (character): The funds on hold (not available for immediate use).
-Retrieve Spot Account Detail.
+\item \code{id} (character): Account ID.
+\item \code{currency} (character): Currency code.
+\item \code{type} (character): Account type (e.g., \code{"main"}, \code{"trade"}).
+\item \code{balance} (numeric): Total funds.
+\item \code{available} (numeric): Available funds.
+\item \code{holds} (numeric): Funds on hold.
 }
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
+  print(spot_accounts)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Account Details
+
+### Description
+Retrieves detailed financial metrics for a specific spot account identified by its `accountId` from the KuCoin API asynchronously. This method calls `get_spot_account_detail_impl` and requires an account ID, obtainable via `get_spot_account_dt()`.
+
+### Workflow Overview
+1. **URL Construction**: Embeds `accountId` into `/api/v1/accounts/{accountId}` and combines with the base URL.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` field into a `data.table`, handling empty responses.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts/{accountId}`
+
+### Usage
+Utilised by users to obtain detailed metrics for a specific spot account, such as balance and availability, after identifying the account ID.
+
+### Official Documentation
+[KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_account_detail"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_account_detail}{}}}
 \subsection{Method \code{get_spot_account_detail()}}{
-Retrieves detailed information for a specific spot account identified by its account ID. The response provides comprehensive financial metrics including the account's currency, total balance, available funds, and funds on hold.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/accounts/\{accountId\}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_account_detail(accountId)}\if{html}{\out{</div>}}
 }
@@ -282,31 +638,64 @@ Retrieves detailed information for a specific spot account identified by its acc
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{accountId}}{A string representing the unique account ID for which detailed spot account information is requested. Try using \code{KucoinAccountAndFunding$get_spot_account_dt()} to get the account ID.
-Retrieve Cross Margin Account Information.}
+\item{\code{accountId}}{Character string; unique account ID (e.g., from \code{get_spot_account_dt()}).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \code{currency} (character): The currency of the account.
-\item \code{balance} (character): The total funds in the account.
-\item \code{available} (character): The funds available for withdrawal or trading.
-\item \code{holds} (character): The funds on hold and not available for immediate use.
+\item \code{currency} (character): Currency of the account.
+\item \code{balance} (numeric): Total funds.
+\item \code{available} (numeric): Available funds.
+\item \code{holds} (numeric): Funds on hold.
+}
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT")))
+  if (nrow(spot_accounts) > 0) {
+    account_id <- spot_accounts[1, id]
+    detail <- await(account$get_spot_account_detail(account_id))
+    print(detail)
+  }
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Cross Margin Account Information
+
+### Description
+Retrieves detailed information about the cross margin account asynchronously, including overall metrics and individual accounts. Cross margin allows collateral use across multiple trading pairs. This method calls `get_cross_margin_account_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v3/margin/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Splits the `"data"` field into `summary` and `accounts` `data.table` objects.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v3/margin/accounts`
+
+### Usage
+Utilised by users to monitor cross margin account status, including total assets, liabilities, and per-currency details.
+
+### Official Documentation
+[KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
+
+}
+\if{html}{\out{</div>}}
+
 }
 
-For further details, including rate limits, authentication requirements, and the full response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot}{Spot Account Detail Documentation}.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_cross_margin_account"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_cross_margin_account}{}}}
 \subsection{Method \code{get_cross_margin_account()}}{
-Retrieves detailed information about the cross margin account, which allows for the use of collateral across multiple trading pairs. The response includes overall metrics (total assets, total liabilities, and debt ratio) and a list of individual margin accounts with detailed breakdowns.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v3/margin/accounts}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_cross_margin_account(query = list())}\if{html}{\out{</div>}}
 }
@@ -314,97 +703,79 @@ Retrieves detailed information about the cross margin account, which allows for 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{query}}{A named list of query parameters to filter the account information. Supported parameters include:
+\item{\code{query}}{Named list of query parameters:
 \itemize{
-\item \code{quoteCurrency} (string, optional): Filter by quote currency (default is "USDT").
-\item \code{queryType} (string, optional): Filter by account type ("MARGIN", "MARGIN_V2", or "ALL"; default is "MARGIN").
+\item \code{quoteCurrency} (character, optional): Quote currency (e.g., \code{"USDT"}, \code{"KCS"}, \code{"BTC"}; default \code{"USDT"}).
+\item \code{queryType} (character, optional): Account type (\code{"MARGIN"}, \code{"MARGIN_V2"}, \code{"ALL"}; default \code{"MARGIN"}).
 }}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a named list with two elements:
+Promise resolving to a named list containing:
 \itemize{
-\item \code{summary}: A \code{data.table} containing the overall cross margin account summary with the following columns:
+\item \code{summary}: \code{data.table} with:
 \itemize{
-\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
-\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
-\item \code{debtRatio} (string): The debt ratio.
-\item \code{status} (string): The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").
+\item \code{totalAssetOfQuoteCurrency} (character): Total assets.
+\item \code{totalLiabilityOfQuoteCurrency} (character): Total liabilities.
+\item \code{debtRatio} (character): Debt ratio.
+\item \code{status} (character): Position status (e.g., \code{"EFFECTIVE"}).
 }
-\item \code{accounts}: A \code{data.table} containing detailed margin account information. Each row represents a margin account and includes the following columns:
+\item \code{accounts}: \code{data.table} with:
 \itemize{
-\item \code{currency} (string): Currency code.
-\item \code{total} (string): Total funds in the account.
-\item \code{available} (string): Funds available for withdrawal or trading.
-\item \code{hold} (string): Funds on hold.
-\item \code{liability} (string): Current liabilities.
-\item \code{maxBorrowSize} (string): Maximum borrowable amount.
-\item \code{borrowEnabled} (boolean): Indicates whether borrowing is enabled.
-\item \code{transferInEnabled} (boolean): Indicates whether transfers into the account are enabled.
+\item \code{currency} (character): Currency code.
+\item \code{total} (character): Total funds.
+\item \code{available} (character): Available funds.
+\item \code{hold} (character): Funds on hold.
+\item \code{liability} (character): Liabilities.
+\item \code{maxBorrowSize} (character): Maximum borrowable amount.
+\item \code{borrowEnabled} (logical): Borrowing enabled.
+\item \code{transferInEnabled} (logical): Transfer-in enabled.
 }
+}
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  cross_margin <- await(account$get_cross_margin_account(list(quoteCurrency = "USDT")))
+  print(cross_margin$summary)
+  print(cross_margin$accounts)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Isolated Margin Account Information
+
+### Description
+Retrieves isolated margin account details for specific trading pairs from the KuCoin API asynchronously, segregating collateral by pair. This method calls `get_isolated_margin_account_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v3/isolated/accounts` and a query string from `build_query()`.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+4. **Response Processing**: Converts the `"data"` field into `summary` and flattened `assets` `data.table` objects, adding a `datetime` column.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v3/isolated/accounts`
+
+### Usage
+Utilised by users to monitor isolated margin accounts, providing detailed asset and liability data per trading pair.
+
+### Official Documentation
+[KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
+
+}
+\if{html}{\out{</div>}}
+
 }
 
-For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin}{Cross Margin API Documentation}.
-Retrieve Isolated Margin Account Information.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_isolated_margin_account"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_isolated_margin_account}{}}}
 \subsection{Method \code{get_isolated_margin_account()}}{
-Retrieves isolated margin account details for specific trading pairs. Isolated margin allows you to limit risk exposure to an individual trading pair by segregating collateral. The response includes detailed asset and liability information for each trading pair.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v3/isolated/accounts}
-
-\strong{Workflow:}
-\itemize{
-\item Constructs the URL by appending \verb{/api/v3/isolated/accounts} and any query parameters to the base URL.
-\item Generates authentication headers.
-\item Sends an asynchronous GET request.
-\item Processes the response and converts the \code{"data"} field into a flat structure consisting of two data.tables:
-\itemize{
-\item \strong{summary:} Contains overall isolated margin account information, including:
-\itemize{
-\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
-\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
-\item \code{timestamp} (integer): The raw timestamp in milliseconds.
-\item \code{datetime} (POSIXct): The converted date-time (via \code{time_convert_from_kucoin("ms")}).
-}
-\item \strong{assets:} Contains detailed information for each isolated margin account asset with the following columns:
-\itemize{
-\item \code{symbol} (string): Trading pair symbol (e.g., "BTC-USDT").
-\item \code{status} (string): Position status.
-\item \code{debtRatio} (string): Debt ratio.
-\item \code{base_currency} (string): Currency code from the base asset.
-\item \code{base_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the base asset.
-\item \code{base_transferInEnabled} (boolean): Indicates whether transfers into the base asset account are enabled.
-\item \code{base_liability} (string): Liability for the base asset.
-\item \code{base_total} (string): Total amount of the base asset.
-\item \code{base_available} (string): Available amount of the base asset.
-\item \code{base_hold} (string): Base asset amount on hold.
-\item \code{base_maxBorrowSize} (string): Maximum borrowable amount for the base asset.
-\item \code{quote_currency} (string): Currency code from the quote asset.
-\item \code{quote_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the quote asset.
-\item \code{quote_transferInEnabled} (boolean): Indicates whether transfers into the quote asset account are enabled.
-\item \code{quote_liability} (string): Liability for the quote asset.
-\item \code{quote_total} (string): Total amount of the quote asset.
-\item \code{quote_available} (string): Available amount of the quote asset.
-\item \code{quote_hold} (string): Quote asset amount on hold.
-\item \code{quote_maxBorrowSize} (string): Maximum borrowable amount for the quote asset.
-}
-}
-}
-
-\strong{Query Parameters:}
-\itemize{
-\item \code{symbol}: (Optional) Specify a trading pair (e.g., \code{"BTC-USDT"}); if omitted, data for all pairs is returned.
-\item \code{quoteCurrency}: (Optional) Filter by quote currency (default is \code{"USDT"}).
-\item \code{queryType}: (Optional) Allowed values: \code{"ISOLATED"}, \code{"ISOLATED_V2"}, \code{"ALL"}; default is \code{"ISOLATED"}.
-}
-
-For more details, refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin}{Isolated Margin API Documentation}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_isolated_margin_account(query = list())}\if{html}{\out{</div>}}
 }
@@ -412,71 +783,91 @@ For more details, refer to the \href{https://www.kucoin.com/docs-new/rest/accoun
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{query}}{A named list of query parameters.}
+\item{\code{query}}{Named list of query parameters:
+\itemize{
+\item \code{symbol} (character, optional): Trading pair (e.g., \code{"BTC-USDT"}).
+\item \code{quoteCurrency} (character, optional): Quote currency (e.g., \code{"USDT"}, \code{"KCS"}, \code{"BTC"}; default \code{"USDT"}).
+\item \code{queryType} (character, optional): Type (\code{"ISOLATED"}, \code{"ISOLATED_V2"}, \code{"ALL"}; default \code{"ISOLATED"}).
+}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a named list with two elements:
+Promise resolving to a named list containing:
 \itemize{
-\item \code{summary}: A \code{data.table} with the following columns:
+\item \code{summary}: \code{data.table} with:
 \itemize{
-\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
-\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
-\item \code{timestamp} (integer): The raw timestamp in milliseconds.
-\item \code{datetime} (POSIXct): The converted date-time (via \code{time_convert_from_kucoin("ms")}).
+\item \code{totalAssetOfQuoteCurrency} (character): Total assets.
+\item \code{totalLiabilityOfQuoteCurrency} (character): Total liabilities.
+\item \code{timestamp} (integer): Timestamp in milliseconds.
+\item \code{datetime} (POSIXct): Converted datetime.
 }
-\item \code{assets}: A \code{data.table} where each row represents an isolated margin account asset with the following columns:
+\item \code{assets}: \code{data.table} with:
 \itemize{
-\item \code{symbol} (string): Trading pair symbol (e.g., "BTC-USDT").
-\item \code{status} (string): Position status.
-\item \code{debtRatio} (string): Debt ratio.
-\item \code{base_currency} (string): Currency code from the base asset.
-\item \code{base_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the base asset.
-\item \code{base_transferInEnabled} (boolean): Indicates whether transfers into the base asset account are enabled.
-\item \code{base_liability} (string): Liability for the base asset.
-\item \code{base_total} (string): Total amount of the base asset.
-\item \code{base_available} (string): Available amount of the base asset.
-\item \code{base_hold} (string): Base asset amount on hold.
-\item \code{base_maxBorrowSize} (string): Maximum borrowable amount for the base asset.
-\item \code{quote_currency} (string): Currency code from the quote asset.
-\item \code{quote_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the quote asset.
-\item \code{quote_transferInEnabled} (boolean): Indicates whether transfers into the quote asset account are enabled.
-\item \code{quote_liability} (string): Liability for the quote asset.
-\item \code{quote_total} (string): Total amount of the quote asset.
-\item \code{quote_available} (string): Available amount of the quote asset.
-\item \code{quote_hold} (string): Quote asset amount on hold.
-\item \code{quote_maxBorrowSize} (string): Maximum borrowable amount for the quote asset.
-Retrieve Spot Ledger Records.
+\item \code{symbol} (character): Trading pair.
+\item \code{status} (character): Position status.
+\item \code{debtRatio} (character): Debt ratio.
+\item \code{base_currency} (character): Base currency code.
+\item \code{base_borrowEnabled} (logical): Base borrowing enabled.
+\item \code{base_transferInEnabled} (logical): Base transfer-in enabled.
+\item \code{base_liability} (character): Base liability.
+\item \code{base_total} (character): Base total funds.
+\item \code{base_available} (character): Base available funds.
+\item \code{base_hold} (character): Base funds on hold.
+\item \code{base_maxBorrowSize} (character): Base max borrowable.
+\item \code{quote_currency} (character): Quote currency code.
+\item \code{quote_borrowEnabled} (logical): Quote borrowing enabled.
+\item \code{quote_transferInEnabled} (logical): Quote transfer-in enabled.
+\item \code{quote_liability} (character): Quote liability.
+\item \code{quote_total} (character): Quote total funds.
+\item \code{quote_available} (character): Quote available funds.
+\item \code{quote_hold} (character): Quote funds on hold.
+\item \code{quote_maxBorrowSize} (character): Quote max borrowable.
 }
 }
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  isolated_margin <- await(account$get_isolated_margin_account(list(symbol = "BTC-USDT")))
+  print(isolated_margin$summary)
+  print(isolated_margin$assets)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+Retrieve Spot Ledger Records
+
+### Description
+Retrieves detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination, aggregating transaction histories into a `data.table`. This method calls `get_spot_ledger_impl`.
+
+### Workflow Overview
+1. **URL Construction**: Combines the base URL with `/api/v1/accounts/ledgers`, merging query parameters with pagination settings.
+2. **Header Preparation**: Constructs authentication headers using `build_headers()` within an inner async function.
+3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function.
+4. **Response Processing**: Aggregates `"items"` from each page into a `data.table`, adding a `createdAtDatetime` column.
+
+### API Endpoint
+`GET https://api.kucoin.com/api/v1/accounts/ledgers`
+
+### Usage
+Utilised by users to retrieve transaction histories for spot and margin accounts, filterable by currency, direction, and time range.
+
+### Official Documentation
+[KuCoin Get Account Ledgers Spot Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_ledger"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_ledger}{}}}
 \subsection{Method \code{get_spot_ledger()}}{
-Retrieves detailed ledger records for spot and margin accounts, including transaction histories for deposits, withdrawals, transfers, and trades. The response is paginated and includes metadata such as current page, page size, total number of records, and total pages. The results are aggregated into a single flat \code{data.table}.
-
-\strong{API Endpoint:}
-\verb{GET https://api.kucoin.com/api/v1/accounts/ledgers}
-
-\strong{Workflow:}
-\itemize{
-\item Constructs the URL by appending \verb{/api/v1/accounts/ledgers} and any user-supplied query parameters to the base URL.
-\item Generates authentication headers.
-\item Sends an asynchronous GET request.
-\item Automatically paginates through all pages using the \code{auto_paginate} helper. Pagination parameters are supplied as separate arguments.
-\item Aggregates the ledger records into a single \code{data.table}.
-}
-
-\strong{Query Parameters:}
-\itemize{
-\item \code{currency}: (Optional) Filter by one or more currencies.
-\item \code{direction}: (Optional) \code{"in"} for incoming or \code{"out"} for outgoing transactions.
-\item \code{bizType}: (Optional) The business type (e.g., \code{"DEPOSIT"}, \code{"WITHDRAW"}, \code{"TRANSFER"}, etc.).
-\item \code{startAt} / \code{endAt}: (Optional) Millisecond timestamps defining a time range.
-}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_ledger(
   query = list(),
@@ -488,36 +879,58 @@ Retrieves detailed ledger records for spot and margin accounts, including transa
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{query}}{A named list of additional query parameters (excluding pagination parameters).}
+\item{\code{query}}{Named list of query parameters (excluding pagination):
+\itemize{
+\item \code{currency} (character, optional): Filter by currency (up to 10).
+\item \code{direction} (character, optional): \code{"in"} or \code{"out"}.
+\item \code{bizType} (character, optional): Business type (e.g., \code{"DEPOSIT"}, \code{"TRANSFER"}).
+\item \code{startAt} (integer, optional): Start time in milliseconds.
+\item \code{endAt} (integer, optional): End time in milliseconds.
+}}
 
-\item{\code{page_size}}{(integer, optional) Number of results per page (default is 50; range: 10–500).}
+\item{\code{page_size}}{Integer; number of results per page (10–500, default 50).}
 
-\item{\code{max_pages}}{(integer, optional) Maximum number of pages to fetch (default is \code{Inf} to fetch all pages).}
+\item{\code{max_pages}}{Numeric; maximum number of pages to fetch (default \code{Inf} for all pages).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the aggregated ledger records. Each row represents a ledger record with the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \code{id}: Ledger record ID.
-\item \code{currency}: The currency.
-\item \code{amount}: Transaction amount.
-\item \code{fee}: Transaction fee.
-\item \code{balance}: Account balance after the transaction.
-\item \code{accountType}: The account type (e.g., "TRADE").
-\item \code{bizType}: Business type (e.g., "TRANSFER").
-\item \code{direction}: Transaction direction ("in" or "out").
-\item \code{createdAt}: Transaction timestamp in milliseconds.
-\item \code{createdAtDatetime} (POSIXct): The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).
-\item \code{context}: Additional context for the transaction.
-\item \code{currentPage}: Current page number from the response.
-\item \code{pageSize}: Page size from the response.
-\item \code{totalNum}: Total number of records.
-\item \code{totalPage}: Total number of pages.
+\item \code{id} (character): Ledger record ID.
+\item \code{currency} (character): Currency.
+\item \code{amount} (character): Transaction amount.
+\item \code{fee} (character): Transaction fee.
+\item \code{balance} (character): Post-transaction balance.
+\item \code{accountType} (character): Account type.
+\item \code{bizType} (character): Business type.
+\item \code{direction} (character): Transaction direction.
+\item \code{createdAt} (integer): Timestamp in milliseconds.
+\item \code{createdAtDatetime} (POSIXct): Converted datetime.
+\item \code{context} (character): Transaction context.
+\item \code{currentPage} (integer): Current page number.
+\item \code{pageSize} (integer): Page size.
+\item \code{totalNum} (integer): Total records.
+\item \code{totalPage} (integer): Total pages.
+}
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+main_async <- coro::async(function() {
+  account <- KucoinAccountAndFunding$new()
+  query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) * 1000)
+  ledger <- await(account$get_spot_ledger(query, page_size = 50, max_pages = 2))
+  print(ledger)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
+}
+\if{html}{\out{</div>}}
+
 }
 
-For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin}{Spot Ledger API Documentation}.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-clone"></a>}}

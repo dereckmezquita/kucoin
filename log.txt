@@ -5,3 +5,877 @@ Building the package...
 * preparing ‘kucoin’:
 * checking DESCRIPTION meta-information ... OK
 * installing the package to build vignettes
+* creating vignettes ... OK
+* checking for LF line-endings in source and make files and shell scripts
+* checking for empty or unneeded directories
+Removed empty directory ‘kucoin/api-responses’
+Removed empty directory ‘kucoin/dev’
+Removed empty directory ‘kucoin/research’
+Removed empty directory ‘kucoin/tests-manual’
+Removed empty directory ‘kucoin/tests-temp’
+* building ‘kucoin_2.0.0.tar.gz’
+Checking the package with --as-cran...
+* using log directory ‘/Users/work/Coding/dereckmezquita/finance/kucoin-R-package-playground/kucoin/kucoin.Rcheck’
+* using R version 4.4.1 (2024-06-14)
+* using platform: aarch64-apple-darwin23.4.0
+* R was compiled by
+    Apple clang version 15.0.0 (clang-1500.3.9.4)
+    GNU Fortran (Homebrew GCC 14.1.0_1) 14.1.0
+* running under: macOS 15.3
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘kucoin/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘kucoin’ version ‘2.0.0’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... [4s/23s] NOTE
+Maintainer: ‘Dereck Mezquita <dereck@mezquita.io>’
+
+New submission
+
+Unknown, possibly misspelled, fields in DESCRIPTION:
+  ‘Remotes’
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘kucoin’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... OK
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+add_subaccount_impl: no visible global function definition for
+  ‘get_api_keys’
+add_subaccount_impl: no visible global function definition for
+  ‘get_base_url’
+fetch_klines_segment: no visible global function definition for
+  ‘get_base_url’
+get_24hr_stats_impl: no visible global function definition for
+  ‘get_base_url’
+get_account_summary_info_impl: no visible global function definition
+  for ‘get_api_keys’
+get_account_summary_info_impl: no visible global function definition
+  for ‘get_base_url’
+get_all_currencies_impl: no visible global function definition for
+  ‘get_base_url’
+get_all_symbols_impl: no visible global function definition for
+  ‘get_base_url’
+get_all_tickers_impl: no visible global function definition for
+  ‘get_base_url’
+get_announcements_impl: no visible global function definition for
+  ‘get_base_url’
+get_apikey_info_impl: no visible global function definition for
+  ‘get_api_keys’
+get_apikey_info_impl: no visible global function definition for
+  ‘get_base_url’
+get_cross_margin_account_impl: no visible global function definition
+  for ‘get_api_keys’
+get_cross_margin_account_impl: no visible global function definition
+  for ‘get_base_url’
+get_currency_impl: no visible global function definition for
+  ‘get_base_url’
+get_full_orderbook_impl: no visible global function definition for
+  ‘get_api_keys’
+get_full_orderbook_impl: no visible global function definition for
+  ‘get_base_url’
+get_isolated_margin_account_impl: no visible global function definition
+  for ‘get_api_keys’
+get_isolated_margin_account_impl: no visible global function definition
+  for ‘get_base_url’
+get_klines_impl: no visible global function definition for
+  ‘get_base_url’
+get_market_list_impl: no visible global function definition for
+  ‘get_base_url’
+get_part_orderbook_impl: no visible global function definition for
+  ‘get_base_url’
+get_spot_account_detail_impl: no visible global function definition for
+  ‘get_api_keys’
+get_spot_account_detail_impl: no visible global function definition for
+  ‘get_base_url’
+get_spot_account_dt_impl: no visible global function definition for
+  ‘get_api_keys’
+get_spot_account_dt_impl: no visible global function definition for
+  ‘get_base_url’
+get_spot_account_type_impl: no visible global function definition for
+  ‘get_api_keys’
+get_spot_account_type_impl: no visible global function definition for
+  ‘get_base_url’
+get_spot_ledger_impl: no visible global function definition for
+  ‘get_api_keys’
+get_spot_ledger_impl: no visible global function definition for
+  ‘get_base_url’
+get_subaccount_detail_balance_impl: no visible global function
+  definition for ‘get_api_keys’
+get_subaccount_detail_balance_impl: no visible global function
+  definition for ‘get_base_url’
+get_subaccount_list_summary_impl: no visible global function definition
+  for ‘get_api_keys’
+get_subaccount_list_summary_impl: no visible global function definition
+  for ‘get_base_url’
+get_symbol_impl: no visible global function definition for
+  ‘get_base_url’
+get_ticker_impl: no visible global function definition for
+  ‘get_base_url’
+get_trade_history_impl: no visible global function definition for
+  ‘get_base_url’
+Undefined global functions or variables:
+  get_api_keys get_base_url
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... NOTE
+Rd file 'KucoinAccountAndFunding.Rd':
+  \examples lines wider than 100 characters:
+       query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) ... [TRUNCATED]
+     Retrieves detailed metadata about the API key used for authentication from the KuCoin API asynchronously. This includes account UID, su ... [TRUNCATED]
+     4. **Response Processing**: Processes the response with `process_kucoin_response()`, converting the `"data"` field into a `data.table`.
+     Utilised by users to inspect the properties and permissions of their KuCoin API key, aiding in security and configuration audits.
+     [KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
+     Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account ... [TRUNCATED]
+     1. **URL Construction**: Combines the base URL with `/api/v1/accounts` and a query string from `build_query()`.
+     4. **Response Processing**: Converts the `"data"` array into a `data.table`, handling empty responses with a typed empty table.
+     Utilised by users to list all spot accounts, filterable by currency or type, for account management or monitoring.
+     [KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
+     Retrieves detailed financial metrics for a specific spot account identified by its `accountId` from the KuCoin API asynchronously. This ... [TRUNCATED]
+     1. **URL Construction**: Embeds `accountId` into `/api/v1/accounts/{accountId}` and combines with the base URL.
+     4. **Response Processing**: Converts the `"data"` field into a `data.table`, handling empty responses.
+     Utilised by users to obtain detailed metrics for a specific spot account, such as balance and availability, after identifying the accou ... [TRUNCATED]
+     [KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
+     Retrieves detailed information about the cross margin account asynchronously, including overall metrics and individual accounts. Cross  ... [TRUNCATED]
+     1. **URL Construction**: Combines the base URL with `/api/v3/margin/accounts` and a query string from `build_query()`.
+     4. **Response Processing**: Splits the `"data"` field into `summary` and `accounts` `data.table` objects.
+     Utilised by users to monitor cross margin account status, including total assets, liabilities, and per-currency details.
+     [KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
+     Retrieves isolated margin account details for specific trading pairs from the KuCoin API asynchronously, segregating collateral by pair ... [TRUNCATED]
+     1. **URL Construction**: Combines the base URL with `/api/v3/isolated/accounts` and a query string from `build_query()`.
+     4. **Response Processing**: Converts the `"data"` field into `summary` and flattened `assets` `data.table` objects, adding a `datetime` ... [TRUNCATED]
+     Utilised by users to monitor isolated margin accounts, providing detailed asset and liability data per trading pair.
+     [KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
+     Retrieves detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination, aggregating transact ... [TRUNCATED]
+     1. **URL Construction**: Combines the base URL with `/api/v1/accounts/ledgers`, merging query parameters with pagination settings.
+     2. **Header Preparation**: Constructs authentication headers using `build_headers()` within an inner async function.
+     3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function.
+     4. **Response Processing**: Aggregates `"items"` from each page into a `data.table`, adding a `createdAtDatetime` column.
+     Utilised by users to retrieve transaction histories for spot and margin accounts, filterable by currency, direction, and time range.
+     [KuCoin Get Account Ledgers Spot Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-mar ... [TRUNCATED]
+       query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) ... [TRUNCATED]
+
+Rd file 'KucoinSpotMarketData.Rd':
+  \examples lines wider than 100 characters:
+       klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
+     Retrieves paginated market announcements from the KuCoin API asynchronously, aggregating results into a `data.table`.
+     1. **Query Construction**: Merges defaults (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) w ... [TRUNCATED]
+     Utilised by users to monitor market news and developments, correlating with other market data like tickers or stats.
+     [KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
+     Retrieves historical candlestick (klines) data for a trading pair from the KuCoin API asynchronously, segmenting
+     5. **Execution Mode**: Fetches concurrently with `promises::promise_all()` if `concurrent = TRUE`, or sequentially.
+     Utilised by users to fetch historical price and volume data for analysis, with options for concurrent or sequential retrieval.
+       klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
+     Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific
+     5. **Data Conversion**: Splits `"data"` into summary and `chains` data, combines into a `data.table`.
+     Utilised by users to obtain currency metadata (e.g., precision, chain support) for trading or configuration purposes.
+     Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details
+     [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
+     Retrieves detailed information for a specified trading symbol from the KuCoin API asynchronously. This method calls
+     Utilised by users to fetch metadata for a specific trading symbol, such as price increments and trading limits.
+     Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
+     Utilised by users to obtain a comprehensive list of trading symbols for market exploration or filtering.
+     [KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
+     Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
+     5. **Data Conversion**: Converts to a `data.table`, adds `symbol`, renames `time` to `time_ms`, adds `timestamp`.
+     Utilised by users to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
+     Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
+     4. **Data Conversion**: Converts `"ticker"` array to a `data.table`, adds `globalTime_ms` and `globalTime_datetime`.
+     Utilised by users to fetch a snapshot of market data across all trading pairs for monitoring or analysis.
+     [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
+     Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
+     5. **Data Conversion**: Converts to a `data.table`, adds `timestamp` via `time_convert_from_kucoin()`.
+     [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
+     Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API
+     3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level2_{size}`, and query string.
+     5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
+     [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
+     Retrieves full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring
+     5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
+     Utilised by users to fetch the complete orderbook, requiring API authentication for detailed depth data.
+     [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
+     Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously. This method
+     Utilised by users to fetch a 24-hour snapshot of market statistics, including volume and price changes.
+     [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
+     Retrieves a list of all available trading markets from the KuCoin API asynchronously as a character vector.
+     Utilised by users to identify available trading markets for filtering or querying market-specific data.
+     [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
+
+Rd file 'KucoinSubAccount.Rd':
+  \examples lines wider than 100 characters:
+     Creates a new sub-account under the master account asynchronously by sending a POST request to the KuCoin API.
+     This method constructs a JSON request body, generates authentication headers, and processes the response into a `data.table`.
+     2. **Request Body Preparation**: Builds a list with `password`, `subName`, `access`, and optional `remarks`, converted to JSON.
+     5. **Response Processing**: Validates the response and converts the `"data"` field into a `data.table`.
+     Utilised by users to create sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
+     [KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
+     Retrieves a paginated summary of all sub-accounts associated with the master account asynchronously, aggregating results into a `data.t ... [TRUNCATED]
+     1. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and specified `page_size`.
+     4. **Aggregation**: Combines results into a `data.table`, converting `createdAt` to `createdDatetime`.
+     Utilised by users to obtain a comprehensive overview of all sub-accounts, including creation details and permissions.
+     [KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-in ... [TRUNCATED]
+     Retrieves detailed balance information for a specific sub-account identified by `subUserId` asynchronously.
+     This method aggregates balances across account types into a `data.table` and calls `get_subaccount_detail_balance_impl`.
+     1. **URL Construction**: Combines the base URL with `/api/v1/sub-accounts/{subUserId}` and a query string for `includeBaseAmount`.
+     4. **Response Processing**: Aggregates non-empty account type arrays (`mainAccounts`, etc.) into a `data.table`, adding `accountType`,  ... [TRUNCATED]
+     Utilised by users to monitor detailed balances across various account types for a specific sub-account.
+     [KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
+
+These lines will be truncated in the PDF manual.
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... WARNING
+Variables with usage in Rd file 'auto_paginate.Rd' but not in code:
+  ‘acc’
+
+Variables with usage in Rd file 'auto_paginate_old.Rd' but not in code:
+  ‘acc’
+
+* checking Rd \usage sections ... WARNING
+Bad \usage lines found in Rd file 'add_subaccount_impl.Rd':
+  add_subaccount_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    password,
+    subName,
+    access,
+    remarks = NULL,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'auto_paginate.Rd':
+  auto_paginate(
+    fetch_page,
+    query = list(currentPage = 1, pageSize = 50),
+    items_field = "items",
+    paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
+    aggregate_fn = function(acc) {
+   },
+    max_pages = Inf,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'auto_paginate_old.Rd':
+  auto_paginate_old(
+    fetch_page,
+    query = list(currentPage = 1, pageSize = 50),
+    items_field = "items",
+    paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
+    aggregate_fn = function(acc) {
+   },
+    max_pages = Inf,
+    accumulator = list(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'build_headers.Rd':
+  build_headers(
+    method,
+    endpoint,
+    body,
+    keys,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'fetch_klines_segment.Rd':
+  fetch_klines_segment(
+    base_url = get_base_url(),
+    symbol,
+    freq = "15min",
+    from = lubridate::now() - 1 * 3600,
+    to = lubridate::now(),
+    retries = 3,
+    delay_ms = 0,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_24hr_stats_impl.Rd':
+  get_24hr_stats_impl(
+    base_url = get_base_url(),
+    symbol,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_account_summary_info_impl.Rd':
+  get_account_summary_info_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_all_currencies_impl.Rd':
+  get_all_currencies_impl(
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_all_symbols_impl.Rd':
+  get_all_symbols_impl(
+    base_url = get_base_url(),
+    market = NULL,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_all_tickers_impl.Rd':
+  get_all_tickers_impl(
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_announcements_impl.Rd':
+  get_announcements_impl(
+    base_url = get_base_url(),
+    query = list(),
+    page_size = 50,
+    max_pages = Inf,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_apikey_info_impl.Rd':
+  get_apikey_info_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_cross_margin_account_impl.Rd':
+  get_cross_margin_account_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_currency_impl.Rd':
+  get_currency_impl(
+    base_url = get_base_url(),
+    currency,
+    chain = NULL,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_full_orderbook_impl.Rd':
+  get_full_orderbook_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    symbol,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_isolated_margin_account_impl.Rd':
+  get_isolated_margin_account_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_klines_impl.Rd':
+  get_klines_impl(
+    base_url = get_base_url(),
+    symbol = "BTC-USDT",
+    freq = "15min",
+    from = lubridate::now() - 24 * 3600,
+    to = lubridate::now(),
+    concurrent = TRUE,
+    delay_ms = 0,
+    retries = 3,
+    verbose = FALSE,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_market_list_impl.Rd':
+  get_market_list_impl(
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_part_orderbook_impl.Rd':
+  get_part_orderbook_impl(
+    base_url = get_base_url(),
+    symbol,
+    size,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_spot_account_detail_impl.Rd':
+  get_spot_account_detail_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    accountId,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_spot_account_dt_impl.Rd':
+  get_spot_account_dt_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_spot_account_type_impl.Rd':
+  get_spot_account_type_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_spot_ledger_impl.Rd':
+  get_spot_ledger_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list(),
+    page_size = 50,
+    max_pages = Inf,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_subaccount_detail_balance_impl.Rd':
+  get_subaccount_detail_balance_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    subUserId,
+    includeBaseAmount = FALSE,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_subaccount_list_summary_impl.Rd':
+  get_subaccount_list_summary_impl(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    page_size = 100,
+    max_pages = Inf,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_symbol_impl.Rd':
+  get_symbol_impl(
+    base_url = get_base_url(),
+    symbol,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_ticker_impl.Rd':
+  get_ticker_impl(
+    base_url = get_base_url(),
+    symbol,
+    .__coro_env_parent__ = <environment>
+  )
+Bad \usage lines found in Rd file 'get_trade_history_impl.Rd':
+  get_trade_history_impl(
+    base_url = get_base_url(),
+    symbol,
+    .__coro_env_parent__ = <environment>
+  )
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... ERROR
+Warning: parse error in file 'lines':
+10: unexpected symbol
+90: ## End(Not run)
+91: Retrieve API
+             ^
+** will not attempt to run examples
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
+* checking examples ... SKIPPED
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ...
+ OK
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking re-building of vignette outputs ... OK
+* checking PDF version of manual ... OK
+* checking HTML version of manual ... NOTE
+Found the following HTML validation problems:
+KucoinAccountAndFunding.html:15:44 (KucoinAccountAndFunding.Rd:5): Error: <main> is not recognized!
+KucoinAccountAndFunding.html:15:44 (KucoinAccountAndFunding.Rd:5): Warning: discarding unexpected <main>
+KucoinAccountAndFunding.html:1031:93 (KucoinAccountAndFunding.Rd:891): Warning: replacing invalid character code 128
+KucoinAccountAndFunding.html:1031:94 (KucoinAccountAndFunding.Rd:891): Warning: replacing invalid character code 147
+KucoinAccountAndFunding.html:1437:1 (KucoinAccountAndFunding.Rd:344): Warning: discarding unexpected </main>
+KucoinAccountAndFunding.html:4:1 (KucoinAccountAndFunding.Rd:5): Warning: <link> inserting "type" attribute
+KucoinAccountAndFunding.html:12:1 (KucoinAccountAndFunding.Rd:5): Warning: <script> proprietary attribute "onload"
+KucoinAccountAndFunding.html:12:1 (KucoinAccountAndFunding.Rd:5): Warning: <script> inserting "type" attribute
+KucoinAccountAndFunding.html:17:1 (KucoinAccountAndFunding.Rd:5): Warning: <table> lacks "summary" attribute
+KucoinSpotMarketData.html:15:44 (KucoinSpotMarketData.Rd:5): Error: <main> is not recognized!
+KucoinSpotMarketData.html:15:44 (KucoinSpotMarketData.Rd:5): Warning: discarding unexpected <main>
+KucoinSpotMarketData.html:2213:1 (KucoinSpotMarketData.Rd:617): Warning: discarding unexpected </main>
+KucoinSpotMarketData.html:4:1 (KucoinSpotMarketData.Rd:5): Warning: <link> inserting "type" attribute
+KucoinSpotMarketData.html:12:1 (KucoinSpotMarketData.Rd:5): Warning: <script> proprietary attribute "onload"
+KucoinSpotMarketData.html:12:1 (KucoinSpotMarketData.Rd:5): Warning: <script> inserting "type" attribute
+KucoinSpotMarketData.html:17:1 (KucoinSpotMarketData.Rd:5): Warning: <table> lacks "summary" attribute
+KucoinSubAccount.html:15:44 (KucoinSubAccount.Rd:5): Error: <main> is not recognized!
+KucoinSubAccount.html:15:44 (KucoinSubAccount.Rd:5): Warning: discarding unexpected <main>
+KucoinSubAccount.html:284:94 (KucoinSubAccount.Rd:339): Warning: replacing invalid character code 128
+KucoinSubAccount.html:284:95 (KucoinSubAccount.Rd:339): Warning: replacing invalid character code 147
+KucoinSubAccount.html:286:89 (KucoinSubAccount.Rd:341): Warning: replacing invalid character code 128
+KucoinSubAccount.html:286:90 (KucoinSubAccount.Rd:341): Warning: replacing invalid character code 147
+KucoinSubAccount.html:290:113 (KucoinSubAccount.Rd:345): Warning: replacing invalid character code 128
+KucoinSubAccount.html:290:114 (KucoinSubAccount.Rd:345): Warning: replacing invalid character code 147
+KucoinSubAccount.html:382:92 (KucoinSubAccount.Rd:412): Warning: replacing invalid character code 128
+KucoinSubAccount.html:382:93 (KucoinSubAccount.Rd:412): Warning: replacing invalid character code 147
+KucoinSubAccount.html:768:1 (KucoinSubAccount.Rd:212): Warning: discarding unexpected </main>
+KucoinSubAccount.html:4:1 (KucoinSubAccount.Rd:5): Warning: <link> inserting "type" attribute
+KucoinSubAccount.html:12:1 (KucoinSubAccount.Rd:5): Warning: <script> proprietary attribute "onload"
+KucoinSubAccount.html:12:1 (KucoinSubAccount.Rd:5): Warning: <script> inserting "type" attribute
+KucoinSubAccount.html:17:1 (KucoinSubAccount.Rd:5): Warning: <table> lacks "summary" attribute
+add_subaccount_impl.html:15:44 (add_subaccount_impl.Rd:5): Error: <main> is not recognized!
+add_subaccount_impl.html:15:44 (add_subaccount_impl.Rd:5): Warning: discarding unexpected <main>
+add_subaccount_impl.html:70:49 (add_subaccount_impl.Rd:29): Warning: replacing invalid character code 128
+add_subaccount_impl.html:70:50 (add_subaccount_impl.Rd:29): Warning: replacing invalid character code 147
+add_subaccount_impl.html:74:53 (add_subaccount_impl.Rd:31): Warning: replacing invalid character code 128
+add_subaccount_impl.html:74:54 (add_subaccount_impl.Rd:31): Warning: replacing invalid character code 147
+add_subaccount_impl.html:82:78 (add_subaccount_impl.Rd:35): Warning: replacing invalid character code 128
+add_subaccount_impl.html:82:79 (add_subaccount_impl.Rd:35): Warning: replacing invalid character code 147
+add_subaccount_impl.html:219:1 (add_subaccount_impl.Rd:127): Warning: discarding unexpected </main>
+add_subaccount_impl.html:4:1 (add_subaccount_impl.Rd:5): Warning: <link> inserting "type" attribute
+add_subaccount_impl.html:12:1 (add_subaccount_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+add_subaccount_impl.html:12:1 (add_subaccount_impl.Rd:5): Warning: <script> inserting "type" attribute
+add_subaccount_impl.html:17:1 (add_subaccount_impl.Rd:5): Warning: <table> lacks "summary" attribute
+add_subaccount_impl.html:43:1 (add_subaccount_impl.Rd:18): Warning: <table> lacks "summary" attribute
+auto_paginate.html:15:44 (auto_paginate.Rd:5): Error: <main> is not recognized!
+auto_paginate.html:15:44 (auto_paginate.Rd:5): Warning: discarding unexpected <main>
+auto_paginate.html:97:155 (auto_paginate.Rd:48): Warning: replacing invalid character code 128
+auto_paginate.html:97:156 (auto_paginate.Rd:48): Warning: replacing invalid character code 153
+auto_paginate.html:158:1 (auto_paginate.Rd:87): Warning: discarding unexpected </main>
+auto_paginate.html:4:1 (auto_paginate.Rd:5): Warning: <link> inserting "type" attribute
+auto_paginate.html:12:1 (auto_paginate.Rd:5): Warning: <script> proprietary attribute "onload"
+auto_paginate.html:12:1 (auto_paginate.Rd:5): Warning: <script> inserting "type" attribute
+auto_paginate.html:17:1 (auto_paginate.Rd:5): Warning: <table> lacks "summary" attribute
+auto_paginate.html:45:1 (auto_paginate.Rd:20): Warning: <table> lacks "summary" attribute
+auto_paginate_old.html:15:44 (auto_paginate_old.Rd:5): Error: <main> is not recognized!
+auto_paginate_old.html:15:44 (auto_paginate_old.Rd:5): Warning: discarding unexpected <main>
+auto_paginate_old.html:163:1 (auto_paginate_old.Rd:90): Warning: discarding unexpected </main>
+auto_paginate_old.html:4:1 (auto_paginate_old.Rd:5): Warning: <link> inserting "type" attribute
+auto_paginate_old.html:12:1 (auto_paginate_old.Rd:5): Warning: <script> proprietary attribute "onload"
+auto_paginate_old.html:12:1 (auto_paginate_old.Rd:5): Warning: <script> inserting "type" attribute
+auto_paginate_old.html:17:1 (auto_paginate_old.Rd:5): Warning: <table> lacks "summary" attribute
+auto_paginate_old.html:46:1 (auto_paginate_old.Rd:21): Warning: <table> lacks "summary" attribute
+build_headers.html:15:44 (build_headers.Rd:5): Error: <main> is not recognized!
+build_headers.html:15:44 (build_headers.Rd:5): Warning: discarding unexpected <main>
+build_headers.html:151:1 (build_headers.Rd:78): Warning: discarding unexpected </main>
+build_headers.html:4:1 (build_headers.Rd:5): Warning: <link> inserting "type" attribute
+build_headers.html:12:1 (build_headers.Rd:5): Warning: <script> proprietary attribute "onload"
+build_headers.html:12:1 (build_headers.Rd:5): Warning: <script> inserting "type" attribute
+build_headers.html:17:1 (build_headers.Rd:5): Warning: <table> lacks "summary" attribute
+build_headers.html:41:1 (build_headers.Rd:16): Warning: <table> lacks "summary" attribute
+build_query.html:15:44 (build_query.Rd:5): Error: <main> is not recognized!
+build_query.html:15:44 (build_query.Rd:5): Warning: discarding unexpected <main>
+build_query.html:77:1 (build_query.Rd:34): Warning: discarding unexpected </main>
+build_query.html:4:1 (build_query.Rd:5): Warning: <link> inserting "type" attribute
+build_query.html:12:1 (build_query.Rd:5): Warning: <script> proprietary attribute "onload"
+build_query.html:12:1 (build_query.Rd:5): Warning: <script> inserting "type" attribute
+build_query.html:17:1 (build_query.Rd:5): Warning: <table> lacks "summary" attribute
+build_query.html:35:1 (build_query.Rd:10): Warning: <table> lacks "summary" attribute
+check_allowed_frequency_s.html:15:44 (check_allowed_frequency_s.Rd:5): Error: <main> is not recognized!
+check_allowed_frequency_s.html:15:44 (check_allowed_frequency_s.Rd:5): Warning: discarding unexpected <main>
+check_allowed_frequency_s.html:94:1 (check_allowed_frequency_s.Rd:44): Warning: discarding unexpected </main>
+check_allowed_frequency_s.html:4:1 (check_allowed_frequency_s.Rd:5): Warning: <link> inserting "type" attribute
+check_allowed_frequency_s.html:12:1 (check_allowed_frequency_s.Rd:5): Warning: <script> proprietary attribute "onload"
+check_allowed_frequency_s.html:12:1 (check_allowed_frequency_s.Rd:5): Warning: <script> inserting "type" attribute
+check_allowed_frequency_s.html:17:1 (check_allowed_frequency_s.Rd:5): Warning: <table> lacks "summary" attribute
+check_allowed_frequency_s.html:35:1 (check_allowed_frequency_s.Rd:10): Warning: <table> lacks "summary" attribute
+check_allowed_frequency_str.html:15:44 (check_allowed_frequency_str.Rd:5): Error: <main> is not recognized!
+check_allowed_frequency_str.html:15:44 (check_allowed_frequency_str.Rd:5): Warning: discarding unexpected <main>
+check_allowed_frequency_str.html:94:1 (check_allowed_frequency_str.Rd:44): Warning: discarding unexpected </main>
+check_allowed_frequency_str.html:4:1 (check_allowed_frequency_str.Rd:5): Warning: <link> inserting "type" attribute
+check_allowed_frequency_str.html:12:1 (check_allowed_frequency_str.Rd:5): Warning: <script> proprietary attribute "onload"
+check_allowed_frequency_str.html:12:1 (check_allowed_frequency_str.Rd:5): Warning: <script> inserting "type" attribute
+check_allowed_frequency_str.html:17:1 (check_allowed_frequency_str.Rd:5): Warning: <table> lacks "summary" attribute
+check_allowed_frequency_str.html:35:1 (check_allowed_frequency_str.Rd:10): Warning: <table> lacks "summary" attribute
+fetch_klines_segment.html:15:44 (fetch_klines_segment.Rd:5): Error: <main> is not recognized!
+fetch_klines_segment.html:15:44 (fetch_klines_segment.Rd:5): Warning: discarding unexpected <main>
+fetch_klines_segment.html:177:1 (fetch_klines_segment.Rd:90): Warning: discarding unexpected </main>
+fetch_klines_segment.html:4:1 (fetch_klines_segment.Rd:5): Warning: <link> inserting "type" attribute
+fetch_klines_segment.html:12:1 (fetch_klines_segment.Rd:5): Warning: <script> proprietary attribute "onload"
+fetch_klines_segment.html:12:1 (fetch_klines_segment.Rd:5): Warning: <script> inserting "type" attribute
+fetch_klines_segment.html:17:1 (fetch_klines_segment.Rd:5): Warning: <table> lacks "summary" attribute
+fetch_klines_segment.html:44:1 (fetch_klines_segment.Rd:19): Warning: <table> lacks "summary" attribute
+freq_to_second_map.html:15:44 (freq_to_second_map.Rd:6): Error: <main> is not recognized!
+freq_to_second_map.html:15:44 (freq_to_second_map.Rd:6): Warning: discarding unexpected <main>
+freq_to_second_map.html:87:1 (freq_to_second_map.Rd:45): Warning: discarding unexpected </main>
+freq_to_second_map.html:4:1 (freq_to_second_map.Rd:6): Warning: <link> inserting "type" attribute
+freq_to_second_map.html:12:1 (freq_to_second_map.Rd:6): Warning: <script> proprietary attribute "onload"
+freq_to_second_map.html:12:1 (freq_to_second_map.Rd:6): Warning: <script> inserting "type" attribute
+freq_to_second_map.html:17:1 (freq_to_second_map.Rd:6): Warning: <table> lacks "summary" attribute
+frequency_to_seconds.html:15:44 (frequency_to_seconds.Rd:5): Error: <main> is not recognized!
+frequency_to_seconds.html:15:44 (frequency_to_seconds.Rd:5): Warning: discarding unexpected <main>
+frequency_to_seconds.html:97:1 (frequency_to_seconds.Rd:45): Warning: discarding unexpected </main>
+frequency_to_seconds.html:4:1 (frequency_to_seconds.Rd:5): Warning: <link> inserting "type" attribute
+frequency_to_seconds.html:12:1 (frequency_to_seconds.Rd:5): Warning: <script> proprietary attribute "onload"
+frequency_to_seconds.html:12:1 (frequency_to_seconds.Rd:5): Warning: <script> inserting "type" attribute
+frequency_to_seconds.html:17:1 (frequency_to_seconds.Rd:5): Warning: <table> lacks "summary" attribute
+frequency_to_seconds.html:35:1 (frequency_to_seconds.Rd:10): Warning: <table> lacks "summary" attribute
+get_24hr_stats_impl.html:15:44 (get_24hr_stats_impl.Rd:5): Error: <main> is not recognized!
+get_24hr_stats_impl.html:15:44 (get_24hr_stats_impl.Rd:5): Warning: discarding unexpected <main>
+get_24hr_stats_impl.html:172:1 (get_24hr_stats_impl.Rd:77): Warning: discarding unexpected </main>
+get_24hr_stats_impl.html:4:1 (get_24hr_stats_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_24hr_stats_impl.html:12:1 (get_24hr_stats_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_24hr_stats_impl.html:12:1 (get_24hr_stats_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_24hr_stats_impl.html:17:1 (get_24hr_stats_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_24hr_stats_impl.html:39:1 (get_24hr_stats_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_account_summary_info_impl.html:15:44 (get_account_summary_info_impl.Rd:5): Error: <main> is not recognized!
+get_account_summary_info_impl.html:15:44 (get_account_summary_info_impl.Rd:5): Warning: discarding unexpected <main>
+get_account_summary_info_impl.html:172:1 (get_account_summary_info_impl.Rd:80): Warning: discarding unexpected </main>
+get_account_summary_info_impl.html:4:1 (get_account_summary_info_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_account_summary_info_impl.html:12:1 (get_account_summary_info_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_account_summary_info_impl.html:12:1 (get_account_summary_info_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_account_summary_info_impl.html:17:1 (get_account_summary_info_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_account_summary_info_impl.html:39:1 (get_account_summary_info_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_all_currencies_impl.html:15:44 (get_all_currencies_impl.Rd:5): Error: <main> is not recognized!
+get_all_currencies_impl.html:15:44 (get_all_currencies_impl.Rd:5): Warning: discarding unexpected <main>
+get_all_currencies_impl.html:206:1 (get_all_currencies_impl.Rd:89): Warning: discarding unexpected </main>
+get_all_currencies_impl.html:4:1 (get_all_currencies_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_all_currencies_impl.html:12:1 (get_all_currencies_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_all_currencies_impl.html:12:1 (get_all_currencies_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_all_currencies_impl.html:17:1 (get_all_currencies_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_all_currencies_impl.html:38:1 (get_all_currencies_impl.Rd:13): Warning: <table> lacks "summary" attribute
+get_all_symbols_impl.html:15:44 (get_all_symbols_impl.Rd:5): Error: <main> is not recognized!
+get_all_symbols_impl.html:15:44 (get_all_symbols_impl.Rd:5): Warning: discarding unexpected <main>
+get_all_symbols_impl.html:207:1 (get_all_symbols_impl.Rd:90): Warning: discarding unexpected </main>
+get_all_symbols_impl.html:4:1 (get_all_symbols_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_all_symbols_impl.html:12:1 (get_all_symbols_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_all_symbols_impl.html:12:1 (get_all_symbols_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_all_symbols_impl.html:17:1 (get_all_symbols_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_all_symbols_impl.html:39:1 (get_all_symbols_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_all_tickers_impl.html:15:44 (get_all_tickers_impl.Rd:5): Error: <main> is not recognized!
+get_all_tickers_impl.html:15:44 (get_all_tickers_impl.Rd:5): Warning: discarding unexpected <main>
+get_all_tickers_impl.html:173:1 (get_all_tickers_impl.Rd:76): Warning: discarding unexpected </main>
+get_all_tickers_impl.html:4:1 (get_all_tickers_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_all_tickers_impl.html:12:1 (get_all_tickers_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_all_tickers_impl.html:12:1 (get_all_tickers_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_all_tickers_impl.html:17:1 (get_all_tickers_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_all_tickers_impl.html:38:1 (get_all_tickers_impl.Rd:13): Warning: <table> lacks "summary" attribute
+get_announcements_impl.html:15:44 (get_announcements_impl.Rd:5): Error: <main> is not recognized!
+get_announcements_impl.html:15:44 (get_announcements_impl.Rd:5): Warning: discarding unexpected <main>
+get_announcements_impl.html:189:1 (get_announcements_impl.Rd:89): Warning: discarding unexpected </main>
+get_announcements_impl.html:4:1 (get_announcements_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_announcements_impl.html:12:1 (get_announcements_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_announcements_impl.html:12:1 (get_announcements_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_announcements_impl.html:17:1 (get_announcements_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_announcements_impl.html:41:1 (get_announcements_impl.Rd:16): Warning: <table> lacks "summary" attribute
+get_api_keys.html:15:44 (get_api_keys.Rd:5): Error: <main> is not recognized!
+get_api_keys.html:15:44 (get_api_keys.Rd:5): Warning: discarding unexpected <main>
+get_api_keys.html:106:1 (get_api_keys.Rd:53): Warning: discarding unexpected </main>
+get_api_keys.html:4:1 (get_api_keys.Rd:5): Warning: <link> inserting "type" attribute
+get_api_keys.html:12:1 (get_api_keys.Rd:5): Warning: <script> proprietary attribute "onload"
+get_api_keys.html:12:1 (get_api_keys.Rd:5): Warning: <script> inserting "type" attribute
+get_api_keys.html:17:1 (get_api_keys.Rd:5): Warning: <table> lacks "summary" attribute
+get_api_keys.html:40:1 (get_api_keys.Rd:15): Warning: <table> lacks "summary" attribute
+get_apikey_info_impl.html:15:44 (get_apikey_info_impl.Rd:5): Error: <main> is not recognized!
+get_apikey_info_impl.html:15:44 (get_apikey_info_impl.Rd:5): Warning: discarding unexpected <main>
+get_apikey_info_impl.html:163:1 (get_apikey_info_impl.Rd:77): Warning: discarding unexpected </main>
+get_apikey_info_impl.html:4:1 (get_apikey_info_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_apikey_info_impl.html:12:1 (get_apikey_info_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_apikey_info_impl.html:12:1 (get_apikey_info_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_apikey_info_impl.html:17:1 (get_apikey_info_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_apikey_info_impl.html:39:1 (get_apikey_info_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_base_url.html:15:44 (get_base_url.Rd:5): Error: <main> is not recognized!
+get_base_url.html:15:44 (get_base_url.Rd:5): Warning: discarding unexpected <main>
+get_base_url.html:77:1 (get_base_url.Rd:32): Warning: discarding unexpected </main>
+get_base_url.html:4:1 (get_base_url.Rd:5): Warning: <link> inserting "type" attribute
+get_base_url.html:12:1 (get_base_url.Rd:5): Warning: <script> proprietary attribute "onload"
+get_base_url.html:12:1 (get_base_url.Rd:5): Warning: <script> inserting "type" attribute
+get_base_url.html:17:1 (get_base_url.Rd:5): Warning: <table> lacks "summary" attribute
+get_base_url.html:35:1 (get_base_url.Rd:10): Warning: <table> lacks "summary" attribute
+get_cross_margin_account_impl.html:15:44 (get_cross_margin_account_impl.Rd:5): Error: <main> is not recognized!
+get_cross_margin_account_impl.html:15:44 (get_cross_margin_account_impl.Rd:5): Warning: discarding unexpected <main>
+get_cross_margin_account_impl.html:200:1 (get_cross_margin_account_impl.Rd:95): Warning: discarding unexpected </main>
+get_cross_margin_account_impl.html:4:1 (get_cross_margin_account_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_cross_margin_account_impl.html:12:1 (get_cross_margin_account_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_cross_margin_account_impl.html:12:1 (get_cross_margin_account_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_cross_margin_account_impl.html:17:1 (get_cross_margin_account_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_cross_margin_account_impl.html:40:1 (get_cross_margin_account_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_currency_impl.html:15:44 (get_currency_impl.Rd:5): Error: <main> is not recognized!
+get_currency_impl.html:15:44 (get_currency_impl.Rd:5): Warning: discarding unexpected <main>
+get_currency_impl.html:157:1 (get_currency_impl.Rd:76): Warning: discarding unexpected </main>
+get_currency_impl.html:4:1 (get_currency_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_currency_impl.html:12:1 (get_currency_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_currency_impl.html:12:1 (get_currency_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_currency_impl.html:17:1 (get_currency_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_currency_impl.html:40:1 (get_currency_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_full_orderbook_impl.html:15:44 (get_full_orderbook_impl.Rd:5): Error: <main> is not recognized!
+get_full_orderbook_impl.html:15:44 (get_full_orderbook_impl.Rd:5): Warning: discarding unexpected <main>
+get_full_orderbook_impl.html:164:1 (get_full_orderbook_impl.Rd:78): Warning: discarding unexpected </main>
+get_full_orderbook_impl.html:4:1 (get_full_orderbook_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_full_orderbook_impl.html:12:1 (get_full_orderbook_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_full_orderbook_impl.html:12:1 (get_full_orderbook_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_full_orderbook_impl.html:17:1 (get_full_orderbook_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_full_orderbook_impl.html:40:1 (get_full_orderbook_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_isolated_margin_account_impl.html:15:44 (get_isolated_margin_account_impl.Rd:5): Error: <main> is not recognized!
+get_isolated_margin_account_impl.html:15:44 (get_isolated_margin_account_impl.Rd:5): Warning: discarding unexpected <main>
+get_isolated_margin_account_impl.html:236:1 (get_isolated_margin_account_impl.Rd:107): Warning: discarding unexpected </main>
+get_isolated_margin_account_impl.html:4:1 (get_isolated_margin_account_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_isolated_margin_account_impl.html:12:1 (get_isolated_margin_account_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_isolated_margin_account_impl.html:12:1 (get_isolated_margin_account_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_isolated_margin_account_impl.html:17:1 (get_isolated_margin_account_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_isolated_margin_account_impl.html:40:1 (get_isolated_margin_account_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_klines_impl.html:15:44 (get_klines_impl.Rd:5): Error: <main> is not recognized!
+get_klines_impl.html:15:44 (get_klines_impl.Rd:5): Warning: discarding unexpected <main>
+get_klines_impl.html:190:1 (get_klines_impl.Rd:97): Warning: discarding unexpected </main>
+get_klines_impl.html:4:1 (get_klines_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_klines_impl.html:12:1 (get_klines_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_klines_impl.html:12:1 (get_klines_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_klines_impl.html:17:1 (get_klines_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_klines_impl.html:46:1 (get_klines_impl.Rd:21): Warning: <table> lacks "summary" attribute
+get_market_list_impl.html:15:44 (get_market_list_impl.Rd:5): Error: <main> is not recognized!
+get_market_list_impl.html:15:44 (get_market_list_impl.Rd:5): Warning: discarding unexpected <main>
+get_market_list_impl.html:107:1 (get_market_list_impl.Rd:53): Warning: discarding unexpected </main>
+get_market_list_impl.html:4:1 (get_market_list_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_market_list_impl.html:12:1 (get_market_list_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_market_list_impl.html:12:1 (get_market_list_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_market_list_impl.html:17:1 (get_market_list_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_market_list_impl.html:38:1 (get_market_list_impl.Rd:13): Warning: <table> lacks "summary" attribute
+get_part_orderbook_impl.html:15:44 (get_part_orderbook_impl.Rd:5): Error: <main> is not recognized!
+get_part_orderbook_impl.html:15:44 (get_part_orderbook_impl.Rd:5): Warning: discarding unexpected <main>
+get_part_orderbook_impl.html:149:1 (get_part_orderbook_impl.Rd:72): Warning: discarding unexpected </main>
+get_part_orderbook_impl.html:4:1 (get_part_orderbook_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_part_orderbook_impl.html:12:1 (get_part_orderbook_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_part_orderbook_impl.html:12:1 (get_part_orderbook_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_part_orderbook_impl.html:17:1 (get_part_orderbook_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_part_orderbook_impl.html:40:1 (get_part_orderbook_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_server_time.html:15:44 (get_server_time.Rd:5): Error: <main> is not recognized!
+get_server_time.html:15:44 (get_server_time.Rd:5): Warning: discarding unexpected <main>
+get_server_time.html:118:1 (get_server_time.Rd:56): Warning: discarding unexpected </main>
+get_server_time.html:4:1 (get_server_time.Rd:5): Warning: <link> inserting "type" attribute
+get_server_time.html:12:1 (get_server_time.Rd:5): Warning: <script> proprietary attribute "onload"
+get_server_time.html:12:1 (get_server_time.Rd:5): Warning: <script> inserting "type" attribute
+get_server_time.html:17:1 (get_server_time.Rd:5): Warning: <table> lacks "summary" attribute
+get_server_time.html:35:1 (get_server_time.Rd:10): Warning: <table> lacks "summary" attribute
+get_spot_account_detail_impl.html:15:44 (get_spot_account_detail_impl.Rd:5): Error: <main> is not recognized!
+get_spot_account_detail_impl.html:15:44 (get_spot_account_detail_impl.Rd:5): Warning: discarding unexpected <main>
+get_spot_account_detail_impl.html:154:1 (get_spot_account_detail_impl.Rd:76): Warning: discarding unexpected </main>
+get_spot_account_detail_impl.html:4:1 (get_spot_account_detail_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_spot_account_detail_impl.html:12:1 (get_spot_account_detail_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_spot_account_detail_impl.html:12:1 (get_spot_account_detail_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_spot_account_detail_impl.html:17:1 (get_spot_account_detail_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_spot_account_detail_impl.html:40:1 (get_spot_account_detail_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_spot_account_dt_impl.html:15:44 (get_spot_account_dt_impl.Rd:5): Error: <main> is not recognized!
+get_spot_account_dt_impl.html:15:44 (get_spot_account_dt_impl.Rd:5): Warning: discarding unexpected <main>
+get_spot_account_dt_impl.html:169:1 (get_spot_account_dt_impl.Rd:82): Warning: discarding unexpected </main>
+get_spot_account_dt_impl.html:4:1 (get_spot_account_dt_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_spot_account_dt_impl.html:12:1 (get_spot_account_dt_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_spot_account_dt_impl.html:12:1 (get_spot_account_dt_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_spot_account_dt_impl.html:17:1 (get_spot_account_dt_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_spot_account_dt_impl.html:40:1 (get_spot_account_dt_impl.Rd:15): Warning: <table> lacks "summary" attribute
+get_spot_account_type_impl.html:15:44 (get_spot_account_type_impl.Rd:5): Error: <main> is not recognized!
+get_spot_account_type_impl.html:15:44 (get_spot_account_type_impl.Rd:5): Warning: discarding unexpected <main>
+get_spot_account_type_impl.html:133:1 (get_spot_account_type_impl.Rd:66): Warning: discarding unexpected </main>
+get_spot_account_type_impl.html:4:1 (get_spot_account_type_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_spot_account_type_impl.html:12:1 (get_spot_account_type_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_spot_account_type_impl.html:12:1 (get_spot_account_type_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_spot_account_type_impl.html:17:1 (get_spot_account_type_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_spot_account_type_impl.html:39:1 (get_spot_account_type_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_spot_ledger_impl.html:15:44 (get_spot_ledger_impl.Rd:5): Error: <main> is not recognized!
+get_spot_ledger_impl.html:15:44 (get_spot_ledger_impl.Rd:5): Warning: discarding unexpected <main>
+get_spot_ledger_impl.html:91:47 (get_spot_ledger_impl.Rd:37): Warning: replacing invalid character code 128
+get_spot_ledger_impl.html:91:48 (get_spot_ledger_impl.Rd:37): Warning: replacing invalid character code 147
+get_spot_ledger_impl.html:227:1 (get_spot_ledger_impl.Rd:112): Warning: discarding unexpected </main>
+get_spot_ledger_impl.html:4:1 (get_spot_ledger_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_spot_ledger_impl.html:12:1 (get_spot_ledger_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_spot_ledger_impl.html:12:1 (get_spot_ledger_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_spot_ledger_impl.html:17:1 (get_spot_ledger_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_spot_ledger_impl.html:42:1 (get_spot_ledger_impl.Rd:17): Warning: <table> lacks "summary" attribute
+get_subaccount.html:15:44 (get_subaccount.Rd:5): Error: <main> is not recognized!
+get_subaccount.html:15:44 (get_subaccount.Rd:5): Warning: discarding unexpected <main>
+get_subaccount.html:88:1 (get_subaccount.Rd:43): Warning: discarding unexpected </main>
+get_subaccount.html:4:1 (get_subaccount.Rd:5): Warning: <link> inserting "type" attribute
+get_subaccount.html:12:1 (get_subaccount.Rd:5): Warning: <script> proprietary attribute "onload"
+get_subaccount.html:12:1 (get_subaccount.Rd:5): Warning: <script> inserting "type" attribute
+get_subaccount.html:17:1 (get_subaccount.Rd:5): Warning: <table> lacks "summary" attribute
+get_subaccount.html:38:1 (get_subaccount.Rd:13): Warning: <table> lacks "summary" attribute
+get_subaccount_detail_balance_impl.html:15:44 (get_subaccount_detail_balance_impl.Rd:5): Error: <main> is not recognized!
+get_subaccount_detail_balance_impl.html:15:44 (get_subaccount_detail_balance_impl.Rd:5): Warning: discarding unexpected <main>
+get_subaccount_detail_balance_impl.html:235:1 (get_subaccount_detail_balance_impl.Rd:143): Warning: discarding unexpected </main>
+get_subaccount_detail_balance_impl.html:4:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_subaccount_detail_balance_impl.html:12:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_subaccount_detail_balance_impl.html:12:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_subaccount_detail_balance_impl.html:17:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_subaccount_detail_balance_impl.html:41:1 (get_subaccount_detail_balance_impl.Rd:16): Warning: <table> lacks "summary" attribute
+get_subaccount_list_summary_impl.html:15:44 (get_subaccount_list_summary_impl.Rd:5): Error: <main> is not recognized!
+get_subaccount_list_summary_impl.html:15:44 (get_subaccount_list_summary_impl.Rd:5): Warning: discarding unexpected <main>
+get_subaccount_list_summary_impl.html:233:1 (get_subaccount_list_summary_impl.Rd:131): Warning: discarding unexpected </main>
+get_subaccount_list_summary_impl.html:4:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_subaccount_list_summary_impl.html:12:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_subaccount_list_summary_impl.html:12:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_subaccount_list_summary_impl.html:17:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_subaccount_list_summary_impl.html:41:1 (get_subaccount_list_summary_impl.Rd:16): Warning: <table> lacks "summary" attribute
+get_symbol_impl.html:15:44 (get_symbol_impl.Rd:5): Error: <main> is not recognized!
+get_symbol_impl.html:15:44 (get_symbol_impl.Rd:5): Warning: discarding unexpected <main>
+get_symbol_impl.html:202:1 (get_symbol_impl.Rd:87): Warning: discarding unexpected </main>
+get_symbol_impl.html:4:1 (get_symbol_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_symbol_impl.html:12:1 (get_symbol_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_symbol_impl.html:12:1 (get_symbol_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_symbol_impl.html:17:1 (get_symbol_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_symbol_impl.html:39:1 (get_symbol_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_ticker_impl.html:15:44 (get_ticker_impl.Rd:5): Error: <main> is not recognized!
+get_ticker_impl.html:15:44 (get_ticker_impl.Rd:5): Warning: discarding unexpected <main>
+get_ticker_impl.html:151:1 (get_ticker_impl.Rd:70): Warning: discarding unexpected </main>
+get_ticker_impl.html:4:1 (get_ticker_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_ticker_impl.html:12:1 (get_ticker_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_ticker_impl.html:12:1 (get_ticker_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_ticker_impl.html:17:1 (get_ticker_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_ticker_impl.html:39:1 (get_ticker_impl.Rd:14): Warning: <table> lacks "summary" attribute
+get_trade_history_impl.html:15:44 (get_trade_history_impl.Rd:5): Error: <main> is not recognized!
+get_trade_history_impl.html:15:44 (get_trade_history_impl.Rd:5): Warning: discarding unexpected <main>
+get_trade_history_impl.html:139:1 (get_trade_history_impl.Rd:66): Warning: discarding unexpected </main>
+get_trade_history_impl.html:4:1 (get_trade_history_impl.Rd:5): Warning: <link> inserting "type" attribute
+get_trade_history_impl.html:12:1 (get_trade_history_impl.Rd:5): Warning: <script> proprietary attribute "onload"
+get_trade_history_impl.html:12:1 (get_trade_history_impl.Rd:5): Warning: <script> inserting "type" attribute
+get_trade_history_impl.html:17:1 (get_trade_history_impl.Rd:5): Warning: <table> lacks "summary" attribute
+get_trade_history_impl.html:39:1 (get_trade_history_impl.Rd:14): Warning: <table> lacks "summary" attribute
+process_kucoin_response.html:15:44 (process_kucoin_response.Rd:5): Error: <main> is not recognized!
+process_kucoin_response.html:15:44 (process_kucoin_response.Rd:5): Warning: discarding unexpected <main>
+process_kucoin_response.html:108:1 (process_kucoin_response.Rd:50): Warning: discarding unexpected </main>
+process_kucoin_response.html:4:1 (process_kucoin_response.Rd:5): Warning: <link> inserting "type" attribute
+process_kucoin_response.html:12:1 (process_kucoin_response.Rd:5): Warning: <script> proprietary attribute "onload"
+process_kucoin_response.html:12:1 (process_kucoin_response.Rd:5): Warning: <script> inserting "type" attribute
+process_kucoin_response.html:17:1 (process_kucoin_response.Rd:5): Warning: <table> lacks "summary" attribute
+process_kucoin_response.html:35:1 (process_kucoin_response.Rd:10): Warning: <table> lacks "summary" attribute
+split_time_range_by_candles.html:15:44 (split_time_range_by_candles.Rd:5): Error: <main> is not recognized!
+split_time_range_by_candles.html:15:44 (split_time_range_by_candles.Rd:5): Warning: discarding unexpected <main>
+split_time_range_by_candles.html:60:47 (split_time_range_by_candles.Rd:24): Warning: replacing invalid character code 128
+split_time_range_by_candles.html:60:48 (split_time_range_by_candles.Rd:24): Warning: replacing invalid character code 153
+split_time_range_by_candles.html:101:121 (split_time_range_by_candles.Rd:50): Warning: replacing invalid character code 128
+split_time_range_by_candles.html:101:122 (split_time_range_by_candles.Rd:50): Warning: replacing invalid character code 153
+split_time_range_by_candles.html:131:1 (split_time_range_by_candles.Rd:65): Warning: discarding unexpected </main>
+split_time_range_by_candles.html:4:1 (split_time_range_by_candles.Rd:5): Warning: <link> inserting "type" attribute
+split_time_range_by_candles.html:12:1 (split_time_range_by_candles.Rd:5): Warning: <script> proprietary attribute "onload"
+split_time_range_by_candles.html:12:1 (split_time_range_by_candles.Rd:5): Warning: <script> inserting "type" attribute
+split_time_range_by_candles.html:17:1 (split_time_range_by_candles.Rd:5): Warning: <table> lacks "summary" attribute
+split_time_range_by_candles.html:41:1 (split_time_range_by_candles.Rd:16): Warning: <table> lacks "summary" attribute
+time_convert_from_kucoin.html:15:44 (time_convert_from_kucoin.Rd:5): Error: <main> is not recognized!
+time_convert_from_kucoin.html:15:44 (time_convert_from_kucoin.Rd:5): Warning: discarding unexpected <main>
+time_convert_from_kucoin.html:109:1 (time_convert_from_kucoin.Rd:53): Warning: discarding unexpected </main>
+time_convert_from_kucoin.html:4:1 (time_convert_from_kucoin.Rd:5): Warning: <link> inserting "type" attribute
+time_convert_from_kucoin.html:12:1 (time_convert_from_kucoin.Rd:5): Warning: <script> proprietary attribute "onload"
+time_convert_from_kucoin.html:12:1 (time_convert_from_kucoin.Rd:5): Warning: <script> inserting "type" attribute
+time_convert_from_kucoin.html:17:1 (time_convert_from_kucoin.Rd:5): Warning: <table> lacks "summary" attribute
+time_convert_from_kucoin.html:35:1 (time_convert_from_kucoin.Rd:10): Warning: <table> lacks "summary" attribute
+time_convert_to_kucoin.html:15:44 (time_convert_to_kucoin.Rd:5): Error: <main> is not recognized!
+time_convert_to_kucoin.html:15:44 (time_convert_to_kucoin.Rd:5): Warning: discarding unexpected <main>
+time_convert_to_kucoin.html:110:1 (time_convert_to_kucoin.Rd:54): Warning: discarding unexpected </main>
+time_convert_to_kucoin.html:4:1 (time_convert_to_kucoin.Rd:5): Warning: <link> inserting "type" attribute
+time_convert_to_kucoin.html:12:1 (time_convert_to_kucoin.Rd:5): Warning: <script> proprietary attribute "onload"
+time_convert_to_kucoin.html:12:1 (time_convert_to_kucoin.Rd:5): Warning: <script> inserting "type" attribute
+time_convert_to_kucoin.html:17:1 (time_convert_to_kucoin.Rd:5): Warning: <table> lacks "summary" attribute
+time_convert_to_kucoin.html:35:1 (time_convert_to_kucoin.Rd:10): Warning: <table> lacks "summary" attribute
+verify_symbol.html:15:44 (verify_symbol.Rd:5): Error: <main> is not recognized!
+verify_symbol.html:15:44 (verify_symbol.Rd:5): Warning: discarding unexpected <main>
+verify_symbol.html:59:1 (verify_symbol.Rd:23): Warning: discarding unexpected </main>
+verify_symbol.html:4:1 (verify_symbol.Rd:5): Warning: <link> inserting "type" attribute
+verify_symbol.html:12:1 (verify_symbol.Rd:5): Warning: <script> proprietary attribute "onload"
+verify_symbol.html:12:1 (verify_symbol.Rd:5): Warning: <script> inserting "type" attribute
+verify_symbol.html:17:1 (verify_symbol.Rd:5): Warning: <table> lacks "summary" attribute
+verify_symbol.html:35:1 (verify_symbol.Rd:10): Warning: <table> lacks "summary" attribute
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 1 ERROR, 2 WARNINGs, 4 NOTEs

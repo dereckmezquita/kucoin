@@ -1,75 +1,69 @@
 # File: ./R/impl_account_and_funding.R
 
 # box::use(
-#     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-#     ./utils[ build_query, get_api_keys, get_base_url ],
-#     ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
+#   ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
+#   ./utils[build_query, get_api_keys, get_base_url],
+#   ./utils_time_convert_kucoin[time_convert_from_kucoin],
+#   coro[async, await],
+#   data.table[data.table, as.data.table, rbindlist, setnames],
+#   httr[GET, timeout],
+#   rlang[abort]
 # )
 
-#' Get Account Summary Information (Implementation)
+#' Retrieve Account Summary Information (Implementation)
 #'
-#' This asynchronous function implements the retrieval of account summary information from the KuCoin API.
-#' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
-#' The function performs the following operations:
+#' Retrieves account summary information from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It fetches details such as VIP level, sub-account counts, and limits.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-#'    and appending the endpoint.
-#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, endpoint, and request body.
-#' 3. **API Request:** Sends a \code{GET} request to the KuCoin API endpoint for account summary information.
-#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v2/user-info`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()` with the HTTP method, endpoint, and an empty request body.
+#' 3. **API Request**: Sends a GET request to the KuCoin API with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()` and converts the `"data"` field into a `data.table`.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v2/user-info`
 #'
-#' @return A promise that resolves to a \code{data.table} containing the account summary data. The resulting data table is constructed from the raw API response and includes the following columns:
-#'   - \strong{level} (integer): The user's VIP level.
-#'   - \strong{subQuantity} (integer): Total number of sub-accounts.
-#'   - \strong{spotSubQuantity} (integer): Number of sub-accounts with spot trading permissions.
-#'   - \strong{marginSubQuantity} (integer): Number of sub-accounts with margin trading permissions.
-#'   - \strong{futuresSubQuantity} (integer): Number of sub-accounts with futures trading permissions.
-#'   - \strong{optionSubQuantity} (integer): Number of sub-accounts with option trading permissions.
-#'   - \strong{maxSubQuantity} (integer): Maximum allowed sub-accounts (calculated as the sum of 
-#'     \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
-#'   - \strong{maxDefaultSubQuantity} (integer): Maximum default open sub-accounts based on VIP level.
-#'   - \strong{maxSpotSubQuantity} (integer): Maximum additional sub-accounts with spot trading permissions.
-#'   - \strong{maxMarginSubQuantity} (integer): Maximum additional sub-accounts with margin trading permissions.
-#'   - \strong{maxFuturesSubQuantity} (integer): Maximum additional sub-accounts with futures trading permissions.
-#'   - \strong{maxOptionSubQuantity} (integer): Maximum additional sub-accounts with option trading permissions.
+#' ### Usage
+#' Utilised internally by the `KucoinAccountAndFunding` class to provide account summary data.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/user-info}  
+#' ### Official Documentation
+#' [KuCoin Get Account Summary Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info)
 #'
-#' **Raw Response Schema:**  
-#' - \code{code} (string): Status code, where "200000" indicates success.  
-#' - \code{data} (object): Contains the account summary details as described above.
-#'
-#' For more detailed information, please see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a `data.table` containing:
+#'   - `level` (integer): User's VIP level.
+#'   - `subQuantity` (integer): Total number of sub-accounts.
+#'   - `spotSubQuantity` (integer): Number of spot trading sub-accounts.
+#'   - `marginSubQuantity` (integer): Number of margin trading sub-accounts.
+#'   - `futuresSubQuantity` (integer): Number of futures trading sub-accounts.
+#'   - `optionSubQuantity` (integer): Number of option trading sub-accounts.
+#'   - `maxSubQuantity` (integer): Maximum allowed sub-accounts (sum of `maxDefaultSubQuantity` and `maxSpotSubQuantity`).
+#'   - `maxDefaultSubQuantity` (integer): Maximum default sub-accounts based on VIP level.
+#'   - `maxSpotSubQuantity` (integer): Maximum additional spot sub-accounts.
+#'   - `maxMarginSubQuantity` (integer): Maximum additional margin sub-accounts.
+#'   - `maxFuturesSubQuantity` (integer): Maximum additional futures sub-accounts.
+#'   - `maxOptionSubQuantity` (integer): Maximum additional option sub-accounts.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     dt <- await(get_account_summary_info_impl(keys, base_url))
-#'     print(dt)
-#'   })
-#' 
-#´   main_async()
-#'   while(!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_account_summary_info_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -84,72 +78,64 @@ get_account_summary_info_impl <- coro::async(function(
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
 
-        # Process the response and extract the "data" field.
         parsed_response <- process_kucoin_response(response, url)
-
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
     })
 })
 
-#' Get API Key Information (Implementation)
+#' Retrieve API Key Information (Implementation)
 #'
-#' This asynchronous function implements the logic for retrieving API key information from the KuCoin API.
-#' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
-#' The function constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url}),
-#' builds the authentication headers, sends the \code{GET} request to the endpoint, and processes the response,
-#' converting the \code{"data"} field into a \code{data.table}.
+#' Fetches detailed API key metadata from the KuCoin API asynchronously. This internal function is intended for use within an R6 class and is not meant for direct end-user consumption, providing details such as permissions and creation time.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v1/user/api-key`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()` and converts the `"data"` field into a `data.table`.
 #'
-#' @return A promise that resolves to a \code{data.table} containing the API key information. The resulting data table is constructed
-#' from the \code{"data"} field of the raw API response and includes the following columns:
-#'   - \strong{uid} (integer): Account UID.
-#'   - \strong{subName} (string, optional): Sub account name (if applicable; not provided for master accounts).
-#'   - \strong{remark} (string): Remarks associated with the API key.
-#'   - \strong{apiKey} (string): The API key.
-#'   - \strong{apiVersion} (integer): API version.
-#'   - \strong{permission} (string): A comma-separated list of permissions (e.g., "General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn").
-#'   - \strong{ipWhitelist} (string, optional): IP whitelist, if applicable.
-#'   - \strong{isMaster} (boolean): Indicates whether the API key belongs to the master account.
-#'   - \strong{createdAt} (integer): API key creation time in milliseconds.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/user/api-key`
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/user/api-key}  
+#' ### Usage
+#' Utilised internally by the `KucoinAccountAndFunding` class to expose API key details.
 #'
-#' **Raw Response Schema:**  
-#' - \code{code} (string): Status code, where "200000" indicates success.
-#' - \code{data} (object): Contains API key details as described above.
+#' ### Official Documentation
+#' [KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
 #'
-#' For additional details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a `data.table` containing:
+#'   - `uid` (integer): Account UID.
+#'   - `subName` (character, optional): Sub-account name (if applicable).
+#'   - `remark` (character): API key remarks.
+#'   - `apiKey` (character): API key string.
+#'   - `apiVersion` (integer): API version.
+#'   - `permission` (character): Comma-separated permissions list (e.g., "General, Spot").
+#'   - `ipWhitelist` (character, optional): IP whitelist.
+#'   - `isMaster` (logical): Master account indicator.
+#'   - `createdAt` (integer): Creation time in milliseconds.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     dt <- await(get_apikey_info_impl(keys, base_url))
-#'     print(dt)
-#'   })
-#'
-#'   main_async()
-#'   while(!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_apikey_info_impl(keys = keys, base_url = base_url))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_apikey_info_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -164,69 +150,54 @@ get_apikey_info_impl <- coro::async(function(
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
 
-        # Process the response and extract the "data" field.
         parsed_response <- process_kucoin_response(response, url)
-
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
     })
 })
 
-#' Get Spot Account Type Implementation
+#' Determine Spot Account Type (Implementation)
 #'
-#' This asynchronous function retrieves spot account type information from the KuCoin API.
-#' It is designed for internal use as a method in an R6 class and is **not** intended for direct consumption by end-users.
-#' The function performs the following operations:
+#' Determines whether the spot account is high-frequency or low-frequency from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, impacting asset transfer endpoints.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-#'    and appending the endpoint.
-#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, endpoint, and request body.
-#' 3. **API Request:** Sends a \code{GET} request to the \code{/api/v1/hf/accounts/opened} endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function and extracts the \code{"data"} field,
-#'    which is expected to be a boolean value indicating the spot account type.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v1/hf/accounts/opened`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()` and extracts the boolean `"data"` field indicating account type.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/hf/accounts/opened`
 #'
-#' @return A promise that resolves to a boolean value:
-#'   - \code{TRUE} indicates that the current user is a high-frequency spot user.
-#'   - \code{FALSE} indicates that the current user is a low-frequency spot user.
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to ascertain spot account frequency.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/hf/accounts/opened}  
+#' ### Official Documentation
+#' [KuCoin Get Account Type Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot)
 #'
-#' **Raw Response Schema:**  
-#' - \code{code} (string): Status code, where "200000" indicates success.  
-#' - \code{data} (boolean): Spot account type; \code{TRUE} means high-frequency and \code{FALSE} means low-frequency.
-#'
-#' For more information, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a logical value: `TRUE` for high-frequency, `FALSE` for low-frequency.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     is_high_freq <- await(get_spot_account_type_impl(keys, base_url))
-#'     print(is_high_freq)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   is_high_freq <- await(get_spot_account_type_impl(keys = keys, base_url = base_url))
+#'   print(is_high_freq)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom rlang abort
 #' @export
 get_spot_account_type_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -241,7 +212,6 @@ get_spot_account_type_impl <- coro::async(function(
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
 
-        # Process the response and extract the "data" field, expected to be boolean.
         parsed_response <- process_kucoin_response(response, url)
         return(parsed_response$data)
     }, error = function(e) {
@@ -249,96 +219,58 @@ get_spot_account_type_impl <- coro::async(function(
     })
 })
 
-#' Get Spot Account List Implementation
+#' Retrieve Spot Account List (Implementation)
 #'
-#' This asynchronous function retrieves a list of spot accounts from the KuCoin API.
-#' It sends a `GET` request to the `/api/v1/accounts` endpoint with optional query parameters and returns the
-#' account list as a `data.table`. This function is intended for internal use within an R6 class and is **not**
-#' meant for direct end-user consumption.
+#' Fetches a list of spot accounts from the KuCoin API asynchronously with optional filters. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, returning financial metrics in a `data.table`.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-#'    and appending the endpoint and query string.
-#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, full endpoint, and request body.
-#' 3. **API Request:** Sends a \code{GET} request to the endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v1/accounts` and a query string from `build_query()`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, converts the `"data"` array into a `data.table`, and handles empty responses with a typed empty table.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.
-#' @param query A named list of query parameters to filter the account list. Supported parameters include:
-#'   - \code{currency} (string, optional): e.g., "USDT".
-#'   - \code{type} (string, optional): Allowed values include "main" or "trade".
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/accounts`
 #'
-#' @return A promise that resolves to a \code{data.table} containing the list of spot accounts.
-#' The resulting data table is constructed from the \code{"data"} field of the raw API response, where each row represents an account with the following columns:
-#'   - \strong{id} (string): Account ID.
-#'   - \strong{currency} (string): Currency code.
-#'   - \strong{type} (string): Account type (e.g., "main", "trade", or "balance").
-#'   - \strong{balance} (numeric): Total funds in the account.
-#'   - \strong{available} (numeric): Funds available for withdrawal or trading.
-#'   - \strong{holds} (numeric): Funds on hold.
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to list spot accounts.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts}  
+#' ### Official Documentation
+#' [KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
 #'
-#' **Raw Response Schema:**  
-#' - \code{code} (string): Status code, where "200000" indicates success.
-#' - \code{data} (array): An array of account objects as described above.
-#'
-#' The response JSON data looks like this:
-#' \preformatted{{
-#' {
-#'     "code": "200000",
-#'     "data": [
-#'         {
-#'             "id": "548674591753",
-#'             "currency": "USDT",
-#'             "type": "trade",
-#'             "balance": "26.66759503",
-#'             "available": "26.66759503",
-#'             "holds": "0"
-#'         },
-#'         {
-#'             "id": "63355cd156298d0001b66e61",
-#'             "currency": "USDT",
-#'             "type": "main",
-#'             "balance": "0.01",
-#'             "available": "0.01",
-#'             "holds": "0"
-#'         }
-#'     ]
-#' }
-#' }}
-#'
-#' For more detailed information, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param query Named list of query parameters, e.g., `list(currency = "USDT", type = "main")`. Supported:
+#'   - `currency` (character, optional): Filter by currency (e.g., `"USDT"`).
+#'   - `type` (character, optional): Filter by account type (`"main"`, `"trade"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `id` (character): Account ID.
+#'   - `currency` (character): Currency code.
+#'   - `type` (character): Account type (e.g., `"main"`, `"trade"`).
+#'   - `balance` (numeric): Total funds.
+#'   - `available` (numeric): Available funds.
+#'   - `holds` (numeric): Funds on hold.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Define query parameters to filter the account list (e.g., for USDT and main account)
-#'   query <- list(currency = "USDT", type = "main")
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     dt <- await(get_spot_account_dt_impl(keys, base_url, query))
-#'     print(dt)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' query <- list(currency = "USDT", type = "main")
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_spot_account_dt_impl(keys = keys, base_url = base_url, query = query))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table data.table as.data.table rbindlist
+#' @importFrom rlang abort
 #' @export
 get_spot_account_dt_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -357,7 +289,6 @@ get_spot_account_dt_impl <- coro::async(function(
         response <- httr::GET(url, headers, httr::timeout(3))
 
         parsed_response <- process_kucoin_response(response, url)
-        # $data: list of lists
         account_dt <- data.table::rbindlist(parsed_response$data)
 
         if (nrow(account_dt) == 0) {
@@ -386,83 +317,54 @@ get_spot_account_dt_impl <- coro::async(function(
     })
 })
 
-#' Get Spot Account Detail Implementation
+#' Retrieve Spot Account Details (Implementation)
 #'
-#' This asynchronous function retrieves detailed information for a single spot account from the KuCoin API.
-#' It is designed for internal use as a method in an R6 class and is **not** intended for direct end-user consumption.
-#' The function performs the following steps:
+#' Fetches detailed financial metrics for a specific spot account from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, using the account ID.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-#'    and embedding the provided \code{accountId} into the endpoint.
-#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, endpoint, and an empty request body.
-#' 3. **API Request:** Sends a \code{GET} request to the \code{/api/v1/accounts/{accountId}} endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v1/accounts/{accountId}`, embedding `accountId`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, converts the `"data"` field into a `data.table`, and handles empty responses with a typed empty table.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.
-#' @param accountId A string representing the account ID for which the spot account details are requested.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/accounts/{accountId}`
 #'
-#' @return A promise that resolves to a \code{data.table} containing detailed information for the specified spot account.
-#' The resulting data table is constructed from the \code{"data"} field of the raw API response, and includes the following columns:
-#'   - \strong{currency} (string): The currency of the account.
-#'   - \strong{balance} (string): Total funds in the account.
-#'   - \strong{available} (string): Funds available for withdrawal or trading.
-#'   - \strong{holds} (string): Funds on hold (not available for use).
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to detail a specific spot account.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts/{accountId}}  
+#' ### Official Documentation
+#' [KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
 #'
-#' **Raw Response Schema:**  
-#' - \code{code} (string): Status code, where "200000" indicates success.
-#' - \code{data} (object): Contains the account details, including:
-#'   - \code{currency} (string): The currency of the account.
-#'   - \code{balance} (string): Total funds in the account.
-#'   - \code{available} (string): Funds available for withdrawal or trading.
-#'   - \code{holds} (string): Funds on hold.
-#' 
-#' The response JSON data looks like this:
-#' \preformatted{{
-#' {
-#'     "code": "200000",
-#'     "data": {
-#'         "currency": "USDT",
-#'         "balance": "26.66759503",
-#'         "available": "26.66759503",
-#'         "holds": "0"
-#'     }
-#' }
-#' }}
-#'
-#' For more detailed information, please see the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param accountId Character string; unique account ID (e.g., from `get_spot_account_dt()`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `currency` (character): Currency of the account.
+#'   - `balance` (numeric): Total funds.
+#'   - `available` (numeric): Available funds.
+#'   - `holds` (numeric): Funds on hold.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Specify the account ID for which details are requested, e.g., "123456789"
-#'   accountId <- "123456789"
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     dt <- await(get_spot_account_detail_impl(keys, base_url, accountId))
-#'     print(dt)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' accountId <- "123456789"
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_spot_account_detail_impl(keys = keys, base_url = base_url, accountId = accountId))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_spot_account_detail_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -480,7 +382,7 @@ get_spot_account_detail_impl <- coro::async(function(
         parsed_response <- process_kucoin_response(response, url)
 
         account_detail_dt <- data.table::as.data.table(parsed_response$data)
-        if (nrow(account_detal_dt) == 0) {
+        if (nrow(account_detail_dt) == 0) {
             return(data.table::data.table(
                 currency  = character(0),
                 balance   = numeric(0),
@@ -502,93 +404,67 @@ get_spot_account_detail_impl <- coro::async(function(
     })
 })
 
-#' Get Cross Margin Account Implementation
+#' Retrieve Cross Margin Account Information (Implementation)
 #'
-#' This asynchronous function retrieves information about the cross margin account from the KuCoin API.
-#' It sends a `GET` request to the `/api/v3/margin/accounts` endpoint with optional query parameters and
-#' returns the parsed response as a list of two data tables: one containing the overall summary and one containing the detailed margin account list.
+#' Fetches cross margin account details from the KuCoin API asynchronously, including overall metrics and individual accounts. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-#'    and appending the endpoint and query string.
-#' 2. **Header Preparation:** Builds the authentication headers based on the HTTP method, full endpoint, and request body.
-#' 3. **API Request:** Sends a `GET` request to the endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function and converts the result into two separate data tables:
-#'    - A summary data table for the overall cross margin account information.
-#'    - A detailed data table for the list of margin accounts.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/margin/accounts` and a query string from `build_query()`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, splitting the `"data"` field into `summary` and `accounts` `data.table` objects.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The version of the API key (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.
-#' @param query A named list of query parameters to filter the account information. Supported parameters include:
-#'   \describe{
-#'     \item{\code{quoteCurrency}}{(string, optional): The quote currency. Allowed values are "USDT", "KCS", or "BTC". Defaults to "USDT" if not provided.}
-#'     \item{\code{queryType}}{(string, optional): The type of account query. Allowed values are:
-#'         \itemize{
-#'           \item "MARGIN" - Only query low-frequency cross margin accounts.
-#'           \item "MARGIN_V2" - Only query high-frequency cross margin accounts.
-#'           \item "ALL" - Aggregate query, as seen on the website.
-#'         }
-#'         Defaults to "MARGIN".}
-#'   }
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/margin/accounts`
 #'
-#' @return A promise that resolves to a named list with two elements:
-#'   \describe{
-#'     \item{\code{summary}}{A data.table containing the overall cross margin account summary with the following columns:
-#'         \describe{
-#'           \item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-#'           \item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-#'           \item{\code{debtRatio}}{(string) The debt ratio.}
-#'           \item{\code{status}}{(string) The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").}
-#'         }
-#'     }
-#'     \item{\code{accounts}}{A data.table containing detailed margin account information. Each row represents a margin account with the following columns:
-#'         \describe{
-#'           \item{\code{currency}}{(string) Currency code.}
-#'           \item{\code{total}}{(string) Total funds in the account.}
-#'           \item{\code{available}}{(string) Funds available for withdrawal or trading.}
-#'           \item{\code{hold}}{(string) Funds on hold.}
-#'           \item{\code{liability}}{(string) Current liabilities.}
-#'           \item{\code{maxBorrowSize}}{(string) Maximum borrowable amount.}
-#'           \item{\code{borrowEnabled}}{(boolean) Indicates whether borrowing is enabled.}
-#'           \item{\code{transferInEnabled}}{(boolean) Indicates whether transfers into the account are enabled.}
-#'         }
-#'     }
-#'   }
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to provide cross margin account data.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/margin/accounts}
+#' ### Official Documentation
+#' [KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
 #'
-#' For further details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param query Named list of query parameters:
+#'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
+#'   - `queryType` (character, optional): Account type (`"MARGIN"`, `"MARGIN_V2"`, `"ALL"`; default `"MARGIN"`).
+#' @return Promise resolving to a named list containing:
+#'   - `summary`: `data.table` with:
+#'     - `totalAssetOfQuoteCurrency` (character): Total assets.
+#'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
+#'     - `debtRatio` (character): Debt ratio.
+#'     - `status` (character): Position status (e.g., `"EFFECTIVE"`).
+#'   - `accounts`: `data.table` with:
+#'     - `currency` (character): Currency code.
+#'     - `total` (character): Total funds.
+#'     - `available` (character): Available funds.
+#'     - `hold` (character): Funds on hold.
+#'     - `liability` (character): Liabilities.
+#'     - `maxBorrowSize` (character): Maximum borrowable amount.
+#'     - `borrowEnabled` (logical): Borrowing enabled.
+#'     - `transferInEnabled` (logical): Transfer-in enabled.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Define query parameters to filter the account information
-#'   query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
-#'
-#'   # Execute the asynchronous request using coro::run:
-#'   main_async <- coro::async(function() {
-#'     result <- await(get_cross_margin_account_impl(keys, base_url, query))
-#'     # 'result' is a list with two data.tables:
-#'     print(result$summary)
-#'     print(result$accounts)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
+#' main_async <- coro::async(function() {
+#'   result <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url, query = query))
+#'   print(result$summary)
+#'   print(result$accounts)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_cross_margin_account_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -609,114 +485,89 @@ get_cross_margin_account_impl <- coro::async(function(
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
 
-        # Extract summary fields into a data.table
         summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status")
         summary_dt <- data.table::as.data.table(data_obj[summary_fields])
-
-        # Convert the 'accounts' array into a data.table
         accounts_dt <- data.table::as.data.table(data_obj$accounts)
 
-        # Return a list of two data tables
         return(list(summary = summary_dt, accounts = accounts_dt))
     }, error = function(e) {
         rlang::abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
     })
 })
 
-#' Get Isolated Margin Account Implementation
+#' Retrieve Isolated Margin Account Information (Implementation)
 #'
-#' This asynchronous function retrieves isolated margin account information from the KuCoin API.
-#' It sends a `GET` request to the `/api/v3/isolated/accounts` endpoint with optional query parameters
-#' and returns the parsed response as a named list of two flat data.tables.
+#' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, segregating collateral by pair.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the supplied \code{base_url})
-#'    and appending the endpoint and query string.
-#' 2. **Header Preparation:** Builds the authentication headers using the provided API keys.
-#' 3. **API Request:** Sends an asynchronous GET request to the endpoint.
-#' 4. **Response Processing:** Processes the API response using a helper function and then:
-#'    \itemize{
-#'      \item Extracts overall summary fields into a data.table and adds a new column \code{datetime} by converting the raw \code{timestamp} using \code{time_convert_from_kucoin("ms")}.
-#'      \item Flattens the nested \code{baseAsset} and \code{quoteAsset} objects from each asset into separate columns with prefixes.
-#'    }
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/isolated/accounts` and a query string from `build_query()`.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
+#' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, converting the `"data"` field into `summary` and flattened `assets` `data.table` objects, adding a `datetime` column.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   \describe{
-#'     \item{\code{api_key}}{Your KuCoin API key.}
-#'     \item{\code{api_secret}}{Your KuCoin API secret.}
-#'     \item{\code{api_passphrase}}{Your KuCoin API passphrase.}
-#'     \item{\code{key_version}}{The version of the API key (e.g., "2").}
-#'   }
-#' @param base_url A character string representing the base URL for the API. If not provided, \code{get_base_url()} is used.
-#' @param query A named list of query parameters to filter the isolated margin account information. Supported parameters include:
-#'   \describe{
-#'     \item{\code{symbol}}{(string, optional) For isolated trading pairs; if omitted, queries all pairs.}
-#'     \item{\code{quoteCurrency}}{(string, optional) The quote currency. Allowed values: "USDT", "KCS", "BTC". Defaults to "USDT".}
-#'     \item{\code{queryType}}{(string, optional) The type of account query. Allowed values: "ISOLATED", "ISOLATED_V2", "ALL". Defaults to "ISOLATED".}
-#'   }
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/isolated/accounts`
 #'
-#' @return A promise that resolves to a named list with two elements:
-#'   \describe{
-#'     \item{\code{summary}}{
-#'       A data.table with the following columns:
-#'       \describe{
-#'         \item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-#'         \item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-#'         \item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-#'         \item{\code{datetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
-#'       }
-#'     }
-#'     \item{\code{assets}}{
-#'       A data.table where each row represents one isolated margin account asset. The flattened columns include:
-#'       \describe{
-#'         \item{\code{symbol}}{(string) Trading pair symbol (e.g., "BTC-USDT").}
-#'         \item{\code{status}}{(string) Position status.}
-#'         \item{\code{debtRatio}}{(string) Debt ratio.}
-#'         \item{\code{base_currency}}{(string) Currency code from the base asset.}
-#'         \item{\code{base_borrowEnabled}}{(boolean) Whether borrowing is enabled for the base asset.}
-#'         \item{\code{base_transferInEnabled}}{(boolean) Whether transfers into the base asset account are enabled.}
-#'         \item{\code{base_liability}}{(string) Liability for the base asset.}
-#'         \item{\code{base_total}}{(string) Total base asset amount.}
-#'         \item{\code{base_available}}{(string) Available base asset amount.}
-#'         \item{\code{base_hold}}{(string) Base asset amount on hold.}
-#'         \item{\code{base_maxBorrowSize}}{(string) Maximum borrowable base asset amount.}
-#'         \item{\code{quote_currency}}{(string) Currency code from the quote asset.}
-#'         \item{\code{quote_borrowEnabled}}{(boolean) Whether borrowing is enabled for the quote asset.}
-#'         \item{\code{quote_transferInEnabled}}{(boolean) Whether transfers into the quote asset account are enabled.}
-#'         \item{\code{quote_liability}}{(string) Liability for the quote asset.}
-#'         \item{\code{quote_total}}{(string) Total quote asset amount.}
-#'         \item{\code{quote_available}}{(string) Available quote asset amount.}
-#'         \item{\code{quote_hold}}{(string) Quote asset amount on hold.}
-#'         \item{\code{quote_maxBorrowSize}}{(string) Maximum borrowable quote asset amount.}
-#'       }
-#'     }
-#'   }
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to provide isolated margin account data.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/isolated/accounts}
+#' ### Official Documentation
+#' [KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
 #'
-#' For further details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param query Named list of query parameters:
+#'   - `symbol` (character, optional): Trading pair (e.g., `"BTC-USDT"`).
+#'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
+#'   - `queryType` (character, optional): Type (`"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`; default `"ISOLATED"`).
+#' @return Promise resolving to a named list containing:
+#'   - `summary`: `data.table` with:
+#'     - `totalAssetOfQuoteCurrency` (character): Total assets.
+#'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
+#'     - `timestamp` (integer): Timestamp in milliseconds.
+#'     - `datetime` (POSIXct): Converted datetime.
+#'   - `assets`: `data.table` with:
+#'     - `symbol` (character): Trading pair.
+#'     - `status` (character): Position status.
+#'     - `debtRatio` (character): Debt ratio.
+#'     - `base_currency` (character): Base currency code.
+#'     - `base_borrowEnabled` (logical): Base borrowing enabled.
+#'     - `base_transferInEnabled` (logical): Base transfer-in enabled.
+#'     - `base_liability` (character): Base liability.
+#'     - `base_total` (character): Base total funds.
+#'     - `base_available` (character): Base available funds.
+#'     - `base_hold` (character): Base funds on hold.
+#'     - `base_maxBorrowSize` (character): Base max borrowable.
+#'     - `quote_currency` (character): Quote currency code.
+#'     - `quote_borrowEnabled` (logical): Quote borrowing enabled.
+#'     - `quote_transferInEnabled` (logical): Quote transfer-in enabled.
+#'     - `quote_liability` (character): Quote liability.
+#'     - `quote_total` (character): Quote total funds.
+#'     - `quote_available` (character): Quote available funds.
+#'     - `quote_hold` (character): Quote funds on hold.
+#'     - `quote_maxBorrowSize` (character): Quote max borrowable.
 #' @examples
 #' \dontrun{
-#'   keys <- get_api_keys()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
-#'
-#'   main_async <- coro::async(function() {
-#'     result <- await(get_isolated_margin_account_impl(keys, base_url, query))
-#'     # 'result' is a list with two data.tables: summary and assets.
-#'     print(result$summary)
-#'     print(result$assets)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' query <- list(symbol = "BTC-USDT", quoteCurrency = "USDT")
+#' main_async <- coro::async(function() {
+#'   result <- await(get_isolated_margin_account_impl(keys = keys, base_url = base_url, query = query))
+#'   print(result$summary)
+#'   print(result$assets)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table rbindlist setnames
+#' @importFrom rlang abort
 #' @export
 get_isolated_margin_account_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -737,28 +588,22 @@ get_isolated_margin_account_impl <- coro::async(function(
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
 
-        # Extract summary fields into a data.table and add a converted datetime column.
         summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "timestamp")
         summary_dt <- data.table::as.data.table(data_obj[summary_fields])
         summary_dt[, datetime := time_convert_from_kucoin(timestamp, "ms")]
 
-        # Flatten the 'assets' array:
         assets_list <- lapply(data_obj$assets, function(asset) {
-            # Remove nested objects from the top-level asset list.
             top <- asset
             top$baseAsset <- NULL
             top$quoteAsset <- NULL
             dt_row <- data.table::as.data.table(top)
 
-            # Flatten baseAsset
             base <- data.table::as.data.table(asset$baseAsset)
             data.table::setnames(base, names(base), paste0("base_", names(base)))
 
-            # Flatten quoteAsset
             quote <- data.table::as.data.table(asset$quoteAsset)
             data.table::setnames(quote, names(quote), paste0("quote_", names(quote)))
 
-            # Combine all columns
             cbind(dt_row, base, quote)
         })
         assets_dt <- data.table::rbindlist(assets_list)
@@ -769,86 +614,85 @@ get_isolated_margin_account_impl <- coro::async(function(
     })
 })
 
-#' Get Spot Ledger Implementation
+#' Retrieve Spot Ledger Records (Implementation)
 #'
-#' This asynchronous function retrieves transaction records (ledgers) for spot/margin accounts from the KuCoin API.
-#' It uses the pagination helper function \code{auto_paginate} to automatically fetch all pages of results and aggregate
-#' the ledger records into a single flat \code{data.table}. Pagination is handled via separate arguments.
+#' Fetches detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, aggregating transaction histories into a `data.table`.
 #'
-#' 1. **URL Construction:** Constructs the full API URL by calling \code{get_base_url()} (or using the supplied \code{base_url})
-#'    and appending the endpoint `/api/v1/accounts/ledgers` along with any user-supplied query parameters.
-#' 2. **Header Preparation:** Builds the authentication headers using the provided API keys.
-#' 3. **API Request:** Sends an asynchronous GET request to the endpoint.
-#' 4. **Response Processing:** Uses the \code{auto_paginate} helper function to retrieve all pages of ledger records.
-#'    The pagination parameters (\code{currentPage} and \code{pageSize}) are supplied as separate arguments.
-#'    The helper aggregates the items from each page (from the \code{"items"} field) using \code{data.table::rbindlist}
-#'    and returns a single flat \code{data.table}.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v1/accounts/ledgers`, merging query parameters with pagination settings.
+#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()` within an inner async function.
+#' 3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function.
+#' 4. **Response Processing**: Aggregates `"items"` from each page into a `data.table` with `data.table::rbindlist()`, adding a `createdAtDatetime` column via `time_convert_from_kucoin()`.
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   \describe{
-#'     \item{\code{api_key}}{Your KuCoin API key.}
-#'     \item{\code{api_secret}}{Your KuCoin API secret.}
-#'     \item{\code{api_passphrase}}{Your KuCoin API passphrase.}
-#'     \item{\code{key_version}}{The version of the API key (e.g., "2").}
-#'   }
-#' @param base_url A character string representing the base URL for the API. If not provided, defaults to the value returned by \code{get_base_url()}.
-#' @param page_size (integer, optional) Number of results per page (minimum 10, maximum 500; default is 50).
-#' @param max_pages (integer, optional) The maximum number of pages to fetch. Defaults to \code{Inf} (all pages).
-#' @param query A named list of additional query parameters to filter the ledger records. Supported parameters include:
-#'   \describe{
-#'     \item{\code{currency}}{(string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.}
-#'     \item{\code{direction}}{(string, optional): Transaction direction, either `"in"` or `"out"`.}
-#'     \item{\code{bizType}}{(string, optional): Business type of the transaction (e.g., `"DEPOSIT"`, `"WITHDRAW"`, `"TRANSFER"`, `"SUB_TRANSFER"`, `"TRADE_EXCHANGE"`, etc.).}
-#'     \item{\code{startAt}}{(integer, optional): Start time in milliseconds.}
-#'     \item{\code{endAt}}{(integer, optional): End time in milliseconds.}
-#'   }
-#'   Note: The pagination parameters (\code{currentPage} and \code{pageSize}) are managed internally.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/accounts/ledgers`
 #'
-#' @return A promise that resolves to a \code{data.table} containing the aggregated ledger records.
-#' Each row represents a ledger record with the following columns:
-#'   \describe{
-#'     \item{\code{id}}{(string) Ledger record ID.}
-#'     \item{\code{currency}}{(string) The currency.}
-#'     \item{\code{amount}}{(string) Transaction amount.}
-#'     \item{\code{fee}}{(string) Transaction fee.}
-#'     \item{\code{balance}}{(string) Account balance after the transaction.}
-#'     \item{\code{accountType}}{(string) The account type (e.g., "TRADE").}
-#'     \item{\code{bizType}}{(string) Business type (e.g., "TRANSFER").}
-#'     \item{\code{direction}}{(string) Transaction direction ("in" or "out").}
-#'     \item{\code{createdAt}}{(integer) Timestamp of the transaction in milliseconds.}
-#'     \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
-#'     \item{\code{context}}{(string) Additional context provided with the transaction.}
-#'     \item{\code{currentPage}}{(integer) The current page number (from the response).}
-#'     \item{\code{pageSize}}{(integer) The page size (from the response).}
-#'     \item{\code{totalNum}}{(integer) The total number of records (from the response).}
-#'     \item{\code{totalPage}}{(integer) The total number of pages (from the response).}
-#'   }
+#' ### Usage
+#' Utilised internally by `KucoinAccountAndFunding` to retrieve ledger records for spot and margin accounts.
 #'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/accounts/ledgers}
+#' ### Official Documentation
+#' [KuCoin Get Account Ledgers Spot Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin)
 #'
-#' For further details, please refer to the [KuCoin API Documentation](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin).
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param query Named list of query parameters (excluding pagination):
+#'   - `currency` (character, optional): Filter by currency (up to 10).
+#'   - `direction` (character, optional): `"in"` or `"out"`.
+#'   - `bizType` (character, optional): Business type (e.g., `"DEPOSIT"`, `"TRANSFER"`).
+#'   - `startAt` (integer, optional): Start time in milliseconds.
+#'   - `endAt` (integer, optional): End time in milliseconds.
+#' @param page_size Integer; number of results per page (10–500, default 50).
+#' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `id` (character): Ledger record ID.
+#'   - `currency` (character): Currency.
+#'   - `amount` (character): Transaction amount.
+#'   - `fee` (character): Transaction fee.
+#'   - `balance` (character): Post-transaction balance.
+#'   - `accountType` (character): Account type.
+#'   - `bizType` (character): Business type.
+#'   - `direction` (character): Transaction direction.
+#'   - `createdAt` (integer): Timestamp in milliseconds.
+#'   - `createdAtDatetime` (POSIXct): Converted datetime.
+#'   - `context` (character): Transaction context.
+#'   - `currentPage` (integer): Current page number.
+#'   - `pageSize` (integer): Page size.
+#'   - `totalNum` (integer): Total records.
+#'   - `totalPage` (integer): Total pages.
 #' @examples
 #' \dontrun{
-#'   keys <- get_api_keys()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Define additional query parameters (do not include pagination parameters)
-#'   query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", startAt = 1728663338000, endAt = 1728692138000)
-#'
-#'   main_async <- coro::async(function() {
-#'     dt <- await(get_spot_ledger_impl(keys, base_url, page_size = 50, max_pages = 10, query = query))
-#'     print(dt)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' query <- list(
+#'   currency = "BTC",
+#'   direction = "in",
+#'   bizType = "TRANSFER",
+#'   startAt = 1728663338000L,
+#'   endAt = 1728692138000L
+#' )
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_spot_ledger_impl(
+#'     keys = keys,
+#'     base_url = base_url,
+#'     query = query,
+#'     page_size = 50L,
+#'     max_pages = 10
+#'   ))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table data.table as.data.table rbindlist
+#' @importFrom lubridate as_datetime
+#' @importFrom rlang abort
 #' @export
 get_spot_ledger_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -858,7 +702,6 @@ get_spot_ledger_impl <- coro::async(function(
     max_pages = Inf
 ) {
     tryCatch({
-        # Initialize the query with default pagination parameters merged with additional query parameters.
         initial_query <- c(list(currentPage = 1, pageSize = page_size), query)
 
         fetch_page <- coro::async(function(q) {
@@ -874,7 +717,6 @@ get_spot_ledger_impl <- coro::async(function(
             return(parsed_response$data)
         })
 
-        # Automatically paginate through all pages using the auto_paginate helper.
         result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
@@ -882,7 +724,6 @@ get_spot_ledger_impl <- coro::async(function(
             paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
             aggregate_fn = function(acc) {
                 if (length(acc) == 0 || all(sapply(acc, function(x) length(x) == 0))) {
-                    # Create empty data.table with correct columns
                     return(data.table::data.table(
                         id = character(),
                         currency = character(),

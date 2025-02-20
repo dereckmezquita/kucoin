@@ -11,59 +11,61 @@ get_ticker_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the ticker information. The data.table includes:
-\describe{
-\item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-\item{timestamp}{(POSIXct) The timestamp of the ticker data in UTC.}
-\item{time_ms}{(integer) The timestamp of the ticker data (in milliseconds).}
-\item{sequence}{(string) The sequence identifier for the ticker update.}
-\item{price}{(string) The last traded price.}
-\item{size}{(string) The last traded size.}
-\item{bestBid}{(string) The best bid price.}
-\item{bestBidSize}{(string) The best bid size.}
-\item{bestAsk}{(string) The best ask price.}
-\item{bestAskSize}{(string) The best ask size.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{symbol} (character): Trading symbol.
+\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
+\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
+\item \code{sequence} (character): Update sequence identifier.
+\item \code{price} (character): Last traded price.
+\item \code{size} (character): Last traded size.
+\item \code{bestBid} (character): Best bid price.
+\item \code{bestBidSize} (character): Best bid size.
+\item \code{bestAsk} (character): Best ask price.
+\item \code{bestAskSize} (character): Best ask size.
 }
 }
 \description{
-This asynchronous function retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API.
-The endpoint returns details such as the last traded price and size, the best bid and ask prices and sizes, as well as additional metadata.
+Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query String Construction:}
-Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-\code{/api/v1/market/orderbook/level1}, and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field.
-\item \strong{Data Conversion:}
-Converts the returned \code{data} (a named list containing ticker information) into a \code{data.table}.
+\item \strong{Query Construction}: Builds a query string with the \code{symbol} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level1}, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field.
+\item \strong{Data Conversion}: Converts \code{"data"} to a \code{data.table}, adds \code{symbol}, renames \code{time} to \code{time_ms}, and adds a \code{timestamp} column via \code{time_convert_from_kucoin()}.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/market/orderbook/level1}
+}
+
+\subsection{Usage}{
+
+Utilised to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker}{KuCoin Get Ticker}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve ticker information for the BTC-USDT trading pair:
-  dt_ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
-  print(dt_ticker)
+main_async <- coro::async(function() {
+  ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
+  print(ticker)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

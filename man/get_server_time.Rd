@@ -2,48 +2,56 @@
 % Please edit documentation in R/helpers_api.R
 \name{get_server_time}
 \alias{get_server_time}
-\title{Get Server Time from KuCoin Futures API}
+\title{Retrieve Server Time from KuCoin Futures API}
 \usage{
 get_server_time(base_url = get_base_url())
 }
 \arguments{
-\item{base_url}{The base URL for the KuCoin Futures API. Defaults to the result of \code{get_base_url()}.}
+\item{base_url}{Character string specifying the base URL for the KuCoin Futures API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a numeric Unix timestamp in milliseconds or rejects with an error.
+Promise resolving to a numeric Unix timestamp in milliseconds or rejecting with an error if the request fails.
 }
 \description{
-Retrieves the current server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
-The server time is critical for authenticated requests to KuCoin, as the API requires that the
-timestamp header in each request is within 5 seconds of the actual server time. This function sends
-an asynchronous GET request and returns a promise that resolves to the timestamp. If the request fails,
-the promise is rejected with an error.
+Retrieves the current server time as a Unix timestamp in milliseconds from the KuCoin Futures API asynchronously. This helper function is essential for authenticated requests, ensuring timestamps align with server time within a 5-second window.
 }
 \details{
-\strong{API Endpoint:}
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Construction}: Combines the base URL (default from \code{get_base_url()}) with the endpoint \verb{/api/v1/timestamp}.
+\item \strong{API Request}: Sends an asynchronous GET request with a 3-second timeout using \code{httr::GET()}.
+\item \strong{Status Check}: Validates the HTTP status code is 200, rejecting the promise if not.
+\item \strong{Response Parsing}: Extracts the response text and parses it as JSON with \code{jsonlite::fromJSON()}.
+\item \strong{Structure Validation}: Ensures \code{"code"} and \code{"data"} fields exist, rejecting if missing.
+\item \strong{Success Check}: Confirms the API code is \code{"200000"}, rejecting if not.
+\item \strong{Result Resolution}: Resolves the promise with the timestamp from the \code{"data"} field.
+}
+}
+
+\subsection{API Endpoint}{
+
 \verb{GET https://api.kucoin.com/api/v1/timestamp}
+}
 
-\strong{Usage:}
-The server time is used to generate signatures and validate request freshness, helping prevent replay attacks.
+\subsection{Usage}{
 
-\strong{Official Documentation:}
+Utilised to synchronise request timestamps for signature generation and to prevent replay attacks in authenticated API calls.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time}{KuCoin Futures Get Server Time}
 }
-\examples{
-```r
-# Asynchronously retrieve the server time.
-get_server_time()$
-    then(function(timestamp) {
-        cat("KuCoin Server Time:", timestamp, "\n")
-    })$
-    catch(function(e) {
-        message("Error retrieving server time: ", conditionMessage(e))
-    })
-
-# Run the event loop until all asynchronous tasks are processed.
-while (!later::loop_empty()) {
-    later::run_now(timeoutSecs = Inf, all = TRUE)
 }
-```
-
+\examples{
+\dontrun{
+get_server_time()$
+  then(function(timestamp) {
+    cat("KuCoin Server Time:", timestamp, "\n")
+  })$
+  catch(function(e) {
+    message("Error retrieving server time:", conditionMessage(e))
+  })
+while (!later::loop_empty()) later::run_now(timeoutSecs = Inf, all = TRUE)
+}
 }

@@ -13,33 +13,54 @@ split_time_range_by_candles(
 )
 }
 \arguments{
-\item{from}{A POSIXct object representing the start time.}
+\item{from}{POSIXct object representing the start time.}
 
-\item{to}{A POSIXct object representing the end time.}
+\item{to}{POSIXct object representing the end time.}
 
-\item{candle_duration_s}{A numeric value; the duration of one candle in seconds.}
+\item{candle_duration_s}{Numeric value; duration of one candle in seconds.}
 
-\item{max_candles}{Maximum number of candles per segment (default is 1500).}
+\item{max_candles}{Integer; maximum number of candles per segment (default 1500).}
 
-\item{overlap}{Number of seconds to extend the end of each segment (default is 1).}
+\item{overlap}{Numeric; seconds to extend each segment’s end for overlap (default 1).}
 }
 \value{
-A data.table with two columns, `from` and `to`, where each row defines a segment.
+\code{data.table} with columns \code{from} and \code{to}, each row defining a segment as POSIXct objects.
 }
 \description{
-Given a start and end time (POSIXct) and the duration of a single candle (in seconds),
-this function splits the overall time range into segments such that each segment covers at most
-`max_candles` candles.
+Splits a time range into segments based on a maximum number of candles, given a candle duration in seconds, adding an overlap to ensure data continuity.
 }
 \details{
-Note: The function extends the end of each segment by `overlap` seconds to ensure that the last candle
-when fetching data segments make sure to deduplicate the data.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Time Validation}: Ensures \code{from} is earlier than \code{to}, aborting if not.
+\item \strong{Frequency Validation}: Confirms \code{candle_duration_s} is an allowed KuCoin frequency using \code{check_allowed_frequency_s()}.
+\item \strong{Time Conversion}: Converts \code{from} and \code{to} to UNIX seconds with \code{time_convert_to_kucoin()}.
+\item \strong{Segment Calculation}: Calculates segment start times based on \code{max_candles} and \code{candle_duration_s}, extending ends by \code{overlap} seconds, capped at \code{to}.
+\item \strong{Output Construction}: Returns a \code{data.table} with \code{from} and \code{to} columns for each segment.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper segmentation function).
+}
+
+\subsection{Usage}{
+
+Utilised to divide large time ranges into manageable segments for fetching KuCoin klines data, respecting the API’s 1500-candle limit per request.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; supports KuCoin klines API pagination.
+}
 }
 \examples{
-# For a 1min candle, a segment covers 1500 minutes.
+\dontrun{
 from <- lubridate::now() - 2 * 3600
 to <- lubridate::now()
 candle_duration_s <- 60
-split_time_range_by_candles(from, to, candle_duration_s)
-
+segments <- split_time_range_by_candles(from = from, to = to, candle_duration_s = candle_duration_s)
+print(segments)
+}
 }

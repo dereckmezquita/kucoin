@@ -2,16 +2,23 @@
 % Please edit documentation in R/utils.R
 \name{verify_symbol}
 \alias{verify_symbol}
-\title{Verify Symbol Format}
+\title{Verify Ticker Symbol Format}
 \usage{
 verify_symbol(ticker)
 }
 \arguments{
-\item{ticker}{A character string representing the symbol.}
+\item{ticker}{Character string representing the ticker symbol to verify.}
 }
 \value{
-A logical value; TRUE if the symbol is valid, FALSE otherwise.
+Logical; \code{TRUE} if the symbol is valid, \code{FALSE} otherwise.
 }
 \description{
-Checks whether the ticker symbol is of the format "BTC-USDT" (uppercase alphanumeric separated by a dash).
+Checks whether a ticker symbol adheres to the format \code{"BTC-USDT"}, consisting of uppercase alphanumeric characters separated by a dash.
+}
+\examples{
+\dontrun{
+verify_symbol("BTC-USDT")  # Returns TRUE
+verify_symbol("btc-usdt")  # Returns FALSE
+verify_symbol("BTC_USDT")  # Returns FALSE
+}
 }

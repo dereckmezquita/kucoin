@@ -2,37 +2,34 @@
 % Please edit documentation in R/utils.R
 \name{build_query}
 \alias{build_query}
-\title{Build Query String for KuCoin API Request}
+\title{Build KuCoin API Query String}
 \usage{
 build_query(params)
 }
 \arguments{
-\item{params}{A named list of query parameters.}
+\item{params}{Named list of query parameters.}
 }
 \value{
-A string representing the query part of the URL. If no parameters are provided, an empty string is returned.
+Character string representing the query part of the URL. Returns an empty string (\code{""}) if no parameters are provided.
 }
 \description{
-This function constructs a URL query string from a named list of parameters. It performs the following steps:
+Constructs a URL query string from a named list of parameters for KuCoin API requests. The process involves:
 }
 \details{
-1. **Filter NULL Values:**  
-   It removes any parameters whose value is \code{NULL} from the input list.
+\enumerate{
+\item \strong{Filtering NULL Values}: Removes any parameters with \code{NULL} values from the input list.
+\item \strong{Concatenating Parameters}: Combines remaining key-value pairs into a query string, starting with a \verb{?} and formatted as \code{"key1=value1&key2=value2"}.
+}
 
-2. **Concatenate Parameters:**  
-   It concatenates the remaining key-value pairs into a properly formatted query string. The resulting string 
-   starts with a question mark and uses the format \code{"?key1=value1&key2=value2"}.
-
-**Important:**  
-When building an authenticated request, the complete URL (base endpoint plus query string) must be passed to the 
-header builder to ensure that the signature is computed over the full path.
+\strong{Important}: For authenticated requests, pass the complete URL (base endpoint + query string) to the header builder to ensure the signature includes the full path.
 }
 \examples{
 \dontrun{
-  # Example usage:
-  query <- list(currency = "USDT", type = "main")
-  qs <- build_query(query)
-  # qs will be "?currency=USDT&type=main"
-}
+# Basic usage
+params <- list(currency = "USDT", type = "main")
+build_query(params)  # Returns "?currency=USDT&type=main"
 
+# Empty list
+build_query(list())  # Returns ""
+}
 }

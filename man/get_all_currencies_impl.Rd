@@ -10,86 +10,81 @@ get_all_currencies_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a \code{data.table} containing combined currency details.
-Each row represents a unique currency/chain combination. The data.table includes:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{    **Currency Summary Fields:**
-    \\describe\{
-      \\item\{currency\}\{(string) The unique currency code.\}
-      \\item\{name\}\{(string) The short name of the currency.\}
-      \\item\{fullName\}\{(string) The full descriptive name of the currency.\}
-      \\item\{precision\}\{(integer) The number of decimal places supported by the currency.\}
-      \\item\{confirms\}\{(integer or NA) The number of block confirmations required at the currency level.\}
-      \\item\{contractAddress\}\{(string or NA) The primary contract address for tokenized currencies.\}
-      \\item\{isMarginEnabled\}\{(boolean) Indicates whether margin trading is enabled for the currency.\}
-      \\item\{isDebitEnabled\}\{(boolean) Indicates whether debit transactions are enabled for the currency.\}
-    \}
-
-    **Chain-Specific Fields:**
-    \\describe\{
-      \\item\{chainName\}\{(string or NA) The name of the blockchain network associated with the currency.\}
-      \\item\{withdrawalMinSize\}\{(string or NA) The minimum withdrawal amount permitted on this chain.\}
-      \\item\{depositMinSize\}\{(string or NA) The minimum deposit amount permitted on this chain.\}
-      \\item\{withdrawFeeRate\}\{(string or NA) The fee rate applied to withdrawals on this chain.\}
-      \\item\{withdrawalMinFee\}\{(string or NA) The minimum fee charged for a withdrawal transaction on this chain.\}
-      \\item\{isWithdrawEnabled\}\{(boolean or NA) Indicates whether withdrawals are enabled on this chain.\}
-      \\item\{isDepositEnabled\}\{(boolean or NA) Indicates whether deposits are enabled on this chain.\}
-      \\item\{confirms\}\{(integer or NA) The number of blockchain confirmations required on this chain.\}
-      \\item\{preConfirms\}\{(integer or NA) The number of pre-confirmations required for on-chain verification on this chain.\}
-      \\item\{chain_contractAddress\}\{(string or NA) The contract address specific to this chain (renamed from \code{contractAddress}).\}
-      \\item\{withdrawPrecision\}\{(integer or NA) The withdrawal precision (maximum number of decimal places for withdrawal amounts on this chain).\}
-      \\item\{maxWithdraw\}\{(string or NA) The maximum amount allowed per withdrawal transaction on this chain.\}
-      \\item\{maxDeposit\}\{(string or NA) The maximum amount allowed per deposit transaction on this chain (applicable to some chains such as Lightning Network).\}
-      \\item\{needTag\}\{(boolean or NA) Indicates whether a memo/tag is required for transactions on this chain.\}
-      \\item\{chainId\}\{(string or NA) The unique identifier for the blockchain network associated with the currency.\}
-      \\item\{depositFeeRate\}\{(string or NA) The fee rate applied to deposits on this chain, if provided by the API.\}
-      \\item\{withdrawMaxFee\}\{(string or NA) The maximum fee charged for a withdrawal on this chain, if provided by the API.\}
-      \\item\{depositTierFee\}\{(string or NA) The tiered fee structure for deposits on this chain, if provided by the API.\}
-    \}
-}\if{html}{\out{</div>}}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \strong{Summary Fields}:
+\itemize{
+\item \code{currency} (character): Unique currency code.
+\item \code{name} (character): Short name.
+\item \code{fullName} (character): Full name.
+\item \code{precision} (integer): Decimal places.
+\item \code{confirms} (integer or NA): Block confirmations.
+\item \code{contractAddress} (character or NA): Primary contract address.
+\item \code{isMarginEnabled} (logical): Margin trading status.
+\item \code{isDebitEnabled} (logical): Debit status.
+}
+\item \strong{Chain-Specific Fields}:
+\itemize{
+\item \code{chainName} (character or NA): Blockchain name.
+\item \code{withdrawalMinSize} (character or NA): Minimum withdrawal amount.
+\item \code{depositMinSize} (character or NA): Minimum deposit amount.
+\item \code{withdrawFeeRate} (character or NA): Withdrawal fee rate.
+\item \code{withdrawalMinFee} (character or NA): Minimum withdrawal fee.
+\item \code{isWithdrawEnabled} (logical or NA): Withdrawal enabled status.
+\item \code{isDepositEnabled} (logical or NA): Deposit enabled status.
+\item \code{confirms} (integer or NA): Chain-specific confirmations.
+\item \code{preConfirms} (integer or NA): Pre-confirmations.
+\item \code{chain_contractAddress} (character or NA): Chain-specific contract address.
+\item \code{withdrawPrecision} (integer or NA): Withdrawal precision.
+\item \code{maxWithdraw} (character or NA): Maximum withdrawal amount.
+\item \code{maxDeposit} (character or NA): Maximum deposit amount.
+\item \code{needTag} (logical or NA): Memo/tag requirement.
+\item \code{chainId} (character or NA): Blockchain identifier.
+\item \code{depositFeeRate} (character or NA): Deposit fee rate.
+\item \code{withdrawMaxFee} (character or NA): Maximum withdrawal fee.
+\item \code{depositTierFee} (character or NA): Tiered deposit fee.
+}
+}
 }
 \description{
-This asynchronous function retrieves a list of all currencies available on the KuCoin API.
-Each currency is returned along with its associated summary details and nested chain-specific details.
-For currencies that support multiple chains, the summary information is replicated for each chain,
-so that each row in the resulting data.table corresponds to a unique (currency, chain) combination.
-If a currency has no associated chain data, dummy chain columns (filled with NA) are appended.
+Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details into a \code{data.table}.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:}
-Constructs the URL by concatenating the base URL (obtained via \code{get_base_url()})
-with the endpoint path \code{/api/v3/currencies}.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field.
-\item \strong{Data Conversion:}
-Iterates over each row (currency) in the returned data.frame. For each currency, its summary fields are
-extracted and its nested \code{chains} data (if available) is converted to a data.table.
-\item \strong{Result Assembly:}
-If chain data exists, the summary row is replicated for each chain row and combined with the chain data.
-Otherwise, dummy chain columns (filled with \code{NA}) are appended.
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/currencies}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field.
+\item \strong{Data Iteration}: Loops through each currency, extracting summary fields and chain data (if present).
+\item \strong{Result Assembly}: Combines summary and chain data into a \code{data.table}, adding dummy chain columns with \code{NA} if no chains exist.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v3/currencies}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch comprehensive currency details, including multi-chain support, for market analysis or configuration.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies}{KuCoin Get All Currencies}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/currencies}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve all available currencies:
-  dt_all_currencies <- await(get_all_currencies_impl())
-  print(dt_all_currencies)
+main_async <- coro::async(function() {
+  currencies <- await(get_all_currencies_impl())
+  print(currencies)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

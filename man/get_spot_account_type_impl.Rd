@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_spot_account_type_impl}
 \alias{get_spot_account_type_impl}
-\title{Get Spot Account Type Implementation}
+\title{Determine Spot Account Type (Implementation)}
 \usage{
 get_spot_account_type_impl(
   keys = get_api_keys(),
@@ -11,66 +11,57 @@ get_spot_account_type_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., "2").
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a boolean value:
-\itemize{
-\item \code{TRUE} indicates that the current user is a high-frequency spot user.
-\item \code{FALSE} indicates that the current user is a low-frequency spot user.
-}
+Promise resolving to a logical value: \code{TRUE} for high-frequency, \code{FALSE} for low-frequency.
 }
 \description{
-This asynchronous function retrieves spot account type information from the KuCoin API.
-It is designed for internal use as a method in an R6 class and is \strong{not} intended for direct consumption by end-users.
-The function performs the following operations:
+Determines whether the spot account is high-frequency or low-frequency from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, impacting asset transfer endpoints.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-and appending the endpoint.
-\item \strong{Header Preparation:} Builds the authentication headers based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} Sends a \code{GET} request to the \code{/api/v1/hf/accounts/opened} endpoint.
-\item \strong{Response Processing:} Processes the API response using a helper function and extracts the \code{"data"} field,
-which is expected to be a boolean value indicating the spot account type.
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with the endpoint \verb{/api/v1/hf/accounts/opened}.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()}.
+\item \strong{API Request}: Sends a GET request with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()} and extracts the boolean \code{"data"} field indicating account type.
+}
 }
 
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/hf/accounts/opened}
+\subsection{API Endpoint}{
 
-\strong{Raw Response Schema:}
-\itemize{
-\item \code{code} (string): Status code, where "200000" indicates success.
-\item \code{data} (boolean): Spot account type; \code{TRUE} means high-frequency and \code{FALSE} means low-frequency.
+\verb{GET https://api.kucoin.com/api/v1/hf/accounts/opened}
 }
 
-For more information, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot}{KuCoin API Documentation}.
+\subsection{Usage}{
+
+Utilised internally by \code{KucoinAccountAndFunding} to ascertain spot account frequency.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot}{KuCoin Get Account Type Spot}
+}
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from the environment using get_api_keys()
-  keys <- get_api_keys()
-
-  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-  base_url <- "https://api.kucoin.com"
-
-  # Execute the asynchronous request using coro::run:
-  main_async <- coro::async(function() {
-    is_high_freq <- await(get_spot_account_type_impl(keys, base_url))
-    print(is_high_freq)
-  })
-
-  main_async()
-  while (!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+main_async <- coro::async(function() {
+  is_high_freq <- await(get_spot_account_type_impl(keys = keys, base_url = base_url))
+  print(is_high_freq)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

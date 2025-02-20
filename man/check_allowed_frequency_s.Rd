@@ -7,8 +7,39 @@
 check_allowed_frequency_s(freq_s)
 }
 \arguments{
-\item{freq_s}{A numeric value representing the frequency in seconds.}
+\item{freq_s}{Numeric value representing the frequency in seconds.}
+}
+\value{
+Invisible \code{NULL} if valid; aborts with an error if invalid.
 }
 \description{
-Check Allowed Frequency in Seconds
+Validates whether a frequency duration in seconds corresponds to an allowed KuCoin klines interval.
+}
+\details{
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Validation}: Checks if \code{freq_s} matches any value in \code{freq_to_second_map}, aborting with an error message listing allowed values if not.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper validation function).
+}
+
+\subsection{Usage}{
+
+Utilised to confirm frequency durations in seconds are valid for klines data segmentation.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin klines API documentation for frequency durations.
+}
+}
+\examples{
+\dontrun{
+check_allowed_frequency_s(60)   # Proceeds silently (matches "1min")
+check_allowed_frequency_s(120)  # Aborts with error
+}
 }

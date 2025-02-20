@@ -6,70 +6,50 @@
 #     ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
 # )
 
-#' Add SubAccount Implementation
+#' Add Sub-Account (Implementation)
 #'
-#' This asynchronous function creates a new sub‐account on KuCoin by sending a POST request to the
-#' `/api/v2/sub/user/created` endpoint. It is designed for internal use as a method in an R6 class and is
-#' not intended for direct consumption by end-users. The function performs the following steps:
+#' Creates a new sub-account on KuCoin asynchronously by sending a POST request to the `/api/v2/sub/user/created` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' 1. **URL Construction:**  
-#'    Retrieves the base URL using `get_base_url()` (or the user-supplied `base_url`) and appends the endpoint.
+#' ### Workflow Overview
+#' 1. **URL Construction**: Retrieves the base URL using `get_base_url()` (or the user-supplied `base_url`) and appends the endpoint.
+#' 2. **Request Body Preparation**: Creates a list with required parameters (`password`, `subName`, `access`, and optional `remarks`), converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE`.
+#' 3. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`, incorporating the signature, timestamp, encrypted passphrase, and API key details.
+#' 4. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
+#' 5. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, raising an error if the HTTP status is not 200 or the API code is not `"200000"`.
+#' 6. **Result Conversion**: Converts the `data` field of the successful response into a `data.table`.
 #'
-#' 2. **Request Body Preparation:**  
-#'    Creates a list with the required parameters:
-#'    - `password`: The sub‐account password (7–24 characters; must contain both letters and numbers).
-#'    - `subName`: The desired sub‐account name (7–32 characters; must include at least one letter and one number; no spaces).
-#'    - `access`: The permission type for the sub‐account (allowed values: `"Spot"`, `"Futures"`, `"Margin"`).
-#'    - `remarks` (optional): Remarks or notes about the sub‐account (if provided, 1–24 characters).
+#' ### API Endpoint
+#' `POST https://api.kucoin.com/api/v2/sub/user/created`
 #'
-#'    This list is converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE`.
+#' ### Usage
+#' Utilised internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
 #'
-#' 3. **Header Preparation:**  
-#'    Generates authentication headers asynchronously by calling `build_headers()`, which includes the necessary
-#'    signature, timestamp, encrypted passphrase, and API key details.
+#' ### Official Documentation
+#' [KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
 #'
-#' 4. **API Request:**  
-#'    Sends a POST request using `httr::POST()` with the constructed URL, headers and JSON body. A timeout of 3
-#'    seconds is applied.
-#'
-#' 5. **Response Handling:**  
-#'    Processes the JSON response using `process_kucoin_response()`. If the HTTP status is not 200 or the API returns
-#'    a code other than `"200000"`, an error is raised.
-#'
-#' 6. **Result Conversion:**  
-#'    On success, converts the `data` field of the response into a `data.table` and returns it.
-#'
-#' @param keys A list containing API configuration parameters, as returned by `get_api_keys()`. The list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `key_version`: The version of the API key (e.g. `"2"`).
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses
-#'                 `get_base_url()` to determine the base URL.
-#' @param password A string representing the sub‐account password.
-#'   - **Requirements:** Must be between 7 and 24 characters and contain both letters and numbers.
-#' @param subName A string representing the desired sub‐account name.
-#'   - **Requirements:** Must be between 7 and 32 characters, include at least one letter and one number, and not contain spaces.
-#' @param access A string representing the permission type for the sub‐account.
-#'   - **Allowed Values:** `"Spot"`, `"Futures"`, `"Margin"`.
-#' @param remarks (Optional) A string containing remarks or notes about the sub‐account.
-#'   - **Requirements:** If provided, must be between 1 and 24 characters.
-#'
-#' @return A promise that resolves to a `data.table` containing the sub‐account details. The resulting table includes at least:
-#'   - **uid** (integer): The unique identifier for the sub‐account.
-#'   - **subName** (string): The name of the sub‐account.
-#'   - **remarks** (string): Any remarks or notes provided.
-#'   - **access** (string): The permission type granted to the sub‐account.
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param password Character string; sub-account password (7–24 characters, must contain both letters and numbers).
+#' @param subName Character string; desired sub-account name (7–32 characters, must include at least one letter and one number, no spaces).
+#' @param access Character string; permission type for the sub-account (allowed values: `"Spot"`, `"Futures"`, `"Margin"`).
+#' @param remarks Character string (optional); remarks or notes about the sub-account (1–24 characters if provided).
+#' @return Promise resolving to a `data.table` containing sub-account details, including at least:
+#'   - `uid` (integer): Unique identifier for the sub-account.
+#'   - `subName` (character): Name of the sub-account.
+#'   - `remarks` (character): Any provided remarks or notes.
+#'   - `access` (character): Permission type granted to the sub-account.
 #' @details
-#' **Endpoint:** `POST https://api.kucoin.com/api/v2/sub/user/created`  
-#'
-#' **Raw Response Schema:**  
-#' - `code` (string): Status code, where `"200000"` indicates success.
-#' - `data` (object): Contains the sub‐account details as described above.
-#'
-#' The JSON response looks like:
-#' \preformatted{
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.  
+#' - `data` (object): Contains the sub-account details as described above.  
+#' 
+#' Example JSON response:  
+#' ```
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -87,51 +67,32 @@
 #'                 "access": "All",
 #'                 "createdAt": 1668562696000,
 #'                 "remarks": "remarks",
-#'                 "tradeTypes": [
-#'                     "Spot",
-#'                     "Futures",
-#'                     "Margin"
-#'                 ],
-#'                 "openedTradeTypes": [
-#'                     "Spot"
-#'                 ],
+#'                 "tradeTypes": ["Spot", "Futures", "Margin"],
+#'                 "openedTradeTypes": ["Spot"],
 #'                 "hostedStatus": null
 #'             }
 #'         ]
 #'     }
 #' }
-#' }
-#'
-#' For more information, please refer to the
-#' [Add SubAccount API Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount).
-#'
+#' ```
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'
-#'   # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-#'   base_url <- "https://api.kucoin.com"
-#'
-#'   # Execute the asynchronous request using coro::async:
-#'   main_async <- coro::async(function() {
-#'     result <- await(add_subaccount_impl(keys, base_url,
-#'         password = "1234567",
-#'         subName = "Name1234567",
-#'         access = "Spot",
-#'         remarks = "Test sub-account"
-#'     ))
-#'     print(result)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now()
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   result <- await(add_subaccount_impl(
+#'     keys = keys,
+#'     base_url = base_url,
+#'     password = "1234567",
+#'     subName = "Name1234567",
+#'     access = "Spot",
+#'     remarks = "Test sub-account"
+#'   ))
+#'   print(result)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
-#' 
 #' @importFrom coro async await
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST timeout
@@ -168,91 +129,55 @@ add_subaccount_impl <- coro::async(function(
     })
 })
 
-#' Get SubAccount Summary Information Implementation
+#' Retrieve Sub-Account Summary Information (Implementation)
 #'
-#' This asynchronous function retrieves a paginated summary of sub‐accounts from KuCoin and aggregates
-#' the results into a single `data.table`. It sends HTTP GET requests to the KuCoin sub‐account summary
-#' endpoint and automatically handles pagination. In the final aggregated `data.table`, each row represents
-#' the summary information for one sub‐account. Additionally, if the response contains a `createdAt` column
-#' (with timestamps in milliseconds), these values are converted into human‐readable POSIXct datetime objects.
+#' Retrieves a paginated summary of sub-accounts from KuCoin asynchronously and aggregates the results into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It converts millisecond timestamps in the `createdAt` column to human-readable POSIXct datetime objects where present.
 #'
-#' ## Endpoint Overview
+#' ### Workflow Overview
+#' 1. **Pagination Initialisation**: Begins by setting an initial query with `currentPage = 1` and the specified `page_size`.
+#' 2. **Page Fetching**: Defines an asynchronous helper function (`fetch_page`) to send a GET request for a given page, constructing the URL with current query parameters and authentication headers.
+#' 3. **Automatic Pagination**: Leverages `auto_paginate` to repeatedly call `fetch_page`, aggregating results until all pages are retrieved or `max_pages` is reached.
+#' 4. **Aggregation and Datetime Conversion**: Combines responses into a `data.table` using `data.table::rbindlist()`, converting `createdAt` timestamps to POSIXct in a new `createdDatetime` column if present.
 #'
-#' **API Endpoint:**  
+#' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v2/sub/user`
 #'
-#' **Purpose:**  
-#' This endpoint is used to retrieve a summary of all sub‐accounts associated with your KuCoin account.
-#' The response is paginated and includes metadata such as the current page number, page size, total number
-#' of sub‐accounts, and total pages.
+#' ### Usage
+#' Utilised internally to provide a comprehensive summary of all sub-accounts associated with a KuCoin master account.
 #'
-#' **Response Schema:**  
-#' The API returns a JSON object with the following structure:
-#' - **code**: A string status code; `"200000"` indicates success.
-#' - **data**: An object containing:
-#'   - `currentPage` (integer): The current page number.
-#'   - `pageSize` (integer): The number of results per page.
-#'   - `totalNum` (integer): The total number of sub‐accounts.
-#'   - `totalPage` (integer): The total number of pages.
-#'   - `items`: An array where each element corresponds to a sub‐account summary with fields such as:
-#'       - `userId`: The unique identifier of the master account.
-#'       - `uid`: The unique identifier of the sub‐account.
-#'       - `subName`: The sub‐account name.
-#'       - `status`: The current status of the sub‐account.
-#'       - `type`: The type of sub‐account.
-#'       - `access`: The permission type granted (e.g. `"All"`, `"Spot"`, `"Futures"`, `"Margin"`).
-#'       - `createdAt`: The timestamp (in milliseconds) when the sub‐account was created.
-#'       - `remarks`: Remarks or notes associated with the sub‐account.
+#' ### Official Documentation
+#' [KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info)
 #'
-#' For more details, please refer to the
-#' [KuCoin Sub‐Account Summary Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
-#'
-#' ## Function Workflow
-#'
-#' 1. **Pagination Initialisation:**  
-#'    The function begins by setting an initial query with `currentPage = 1` and the specified `page_size`.
-#'
-#' 2. **Page Fetching:**  
-#'    An asynchronous helper function (`fetch_page`) is defined to send a GET request for a given page.
-#'    It constructs the URL with the current query parameters and sends the request with the required authentication headers.
-#'
-#' 3. **Automatic Pagination:**  
-#'    The function leverages the `auto_paginate` utility to repeatedly call `fetch_page`.
-#'    Results from each page are aggregated until all pages have been retrieved or the specified maximum number of pages (`max_pages`) is reached.
-#'
-#' 4. **Aggregation and Datetime Conversion:**  
-#'    The responses from all pages are combined into a single `data.table` using `data.table::rbindlist()`.
-#'    If the resulting table contains a `createdAt` column, its millisecond timestamps are converted to POSIXct datetime
-#'    objects (stored in a new column named `createdDatetime`).
-#'
-#' @param keys A list containing API configuration parameters, as returned by `get_api_keys()`. This list must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `key_version`: The version of the API key (e.g. `"2"`).
-#' @param base_url A character string representing the base URL for the API. Defaults to the value returned by `get_base_url()`.
-#' @param page_size An integer specifying the number of results per page. Default is 100 (minimum 1, maximum 100).
-#' @param max_pages An integer specifying the maximum number of pages to fetch. Default is `Inf` (fetch all available pages).
-#'
-#' @return A promise that resolves to a single `data.table` containing the aggregated sub‐account summary information.
-#' The resulting table includes:
-#'   - **currentPage** (integer): The current page number.
-#'   - **pageSize** (integer): The number of results per page.
-#'   - **totalNum** (integer): The total number of sub‐accounts.
-#'   - **totalPage** (integer): The total number of pages.
-#'   - **items**: An array of sub‐account summary objects, where each row includes fields such as:
-#'       `userId`, `uid`, `subName`, `status`, `type`, `access`, `createdAt` and `remarks`.
-#'   If a `createdAt` column is present, a new column `createdDatetime` is added with human‐readable POSIXct datetime values.
-#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param page_size Integer specifying the number of results per page (minimum 1, maximum 100). Defaults to 100.
+#' @param max_pages Numeric specifying the maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
+#' @return Promise resolving to a `data.table` containing aggregated sub-account summary information, including:
+#'   - `currentPage` (integer): Current page number.
+#'   - `pageSize` (integer): Number of results per page.
+#'   - `totalNum` (integer): Total number of sub-accounts.
+#'   - `totalPage` (integer): Total number of pages.
+#'   - `userId` (character): Unique identifier of the master account.
+#'   - `uid` (integer): Unique identifier of the sub-account.
+#'   - `subName` (character): Sub-account name.
+#'   - `status` (integer): Current status of the sub-account.
+#'   - `type` (integer): Type of sub-account.
+#'   - `access` (character): Permission type granted (e.g., `"All"`, `"Spot"`, `"Futures"`, `"Margin"`).
+#'   - `createdAt` (integer): Timestamp of creation in milliseconds.
+#'   - `createdDatetime` (POSIXct): Converted human-readable datetime (if `createdAt` is present).
+#'   - `remarks` (character): Remarks or notes associated with the sub-account.
 #' @details
-#' **Endpoint:** `GET https://api.kucoin.com/api/v2/sub/user`  
-#'
-#' **Raw Response Schema:**  
-#' - `code` (string): Status code, where `"200000"` indicates success.
-#' - `data` (object): Contains the pagination metadata and an `items` array with sub‐account summary details.
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.  
+#' - `data` (object): Contains pagination metadata and an `items` array with sub-account summary details.  
 #' 
-#' The JSON response looks like:
-#' \preformatted{
+#' Example JSON response:  
+#' ```
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -270,49 +195,35 @@ add_subaccount_impl <- coro::async(function(
 #'                 "access": "All",
 #'                 "createdAt": 1668562696000,
 #'                 "remarks": "remarks",
-#'                 "tradeTypes": [
-#'                     "Spot",
-#'                     "Futures",
-#'                     "Margin"
-#'                 ],
-#'                 "openedTradeTypes": [
-#'                     "Spot"
-#'                 ],
+#'                 "tradeTypes": ["Spot", "Futures", "Margin"],
+#'                 "openedTradeTypes": ["Spot"],
 #'                 "hostedStatus": null
 #'             }
 #'         ]
 #'     }
 #' }
-#' }
-#'
-#' For further details, please see the
-#' [KuCoin Sub‐Account Summary API Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info).
-#'
+#' ```
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from the environment using get_api_keys()
-#'   keys <- get_api_keys()
-#'   base_url <- get_base_url()
-#'
-#'   # Execute the asynchronous request using coro::async:
-#'   main_async <- coro::async(function() {
-#'     # Fetch all sub‐account summaries using the default page size (100)
-#'     dt_all <- await(get_subaccount_list_summary_impl(keys, base_url))
-#'     print(dt_all)
-#'
-#'     # Fetch only 3 pages of results with a page size of 50
-#'     dt_partial <- await(get_subaccount_list_summary_impl(keys, page_size = 50, max_pages = 3))
-#'     print(dt_partial)
-#'   })
-#'
-#'   main_async()
-#'   while (!later::loop_empty()) {
-#'     later::run_now(timeoutSecs = Inf, all = TRUE)
-#'   }
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   dt_all <- await(get_subaccount_list_summary_impl(
+#'     keys = keys,
+#'     base_url = base_url
+#'   ))
+#'   print(dt_all)
+#'   dt_partial <- await(get_subaccount_list_summary_impl(
+#'     keys = keys,
+#'     base_url = base_url,
+#'     page_size = 50,
+#'     max_pages = 3
+#'   ))
+#'   print(dt_partial)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now(timeoutSecs = Inf, all = TRUE)
 #' }
-#'
-#' @md
-#' 
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table rbindlist as.data.table
@@ -371,48 +282,51 @@ get_subaccount_list_summary_impl <- coro::async(function(
     })
 })
 
-#' Get SubAccount Detail – Balance Implementation
+#' Retrieve Sub-Account Balance Details (Implementation)
 #'
-#' This asynchronous function retrieves the balance details for a specific sub‐account from KuCoin.
-#' It sends a GET request to the KuCoin API endpoint for sub‐account details and processes the returned JSON response.
-#' The endpoint provides separate arrays for each account type under the sub‐account (typically including
-#' `mainAccounts`, `tradeAccounts`, `marginAccounts` and `tradeHFAccounts`). For each non‐empty array, the function converts
-#' the data into a `data.table`, adds an `accountType` column to indicate the type, and then aggregates all the tables into a
-#' single `data.table`. Finally, it appends the sub‐account's user ID and name to every row.
+#' Retrieves balance details for a specific sub-account from KuCoin asynchronously, aggregating account types into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ## Endpoint Overview
+#' ### Workflow Overview
+#' 1. **URL and Query String Construction**: Constructs the endpoint URL by appending `subUserId` to `/api/v1/sub-accounts/` and adding the `includeBaseAmount` query parameter (defaulting to `FALSE`).
+#' 2. **Header Generation**: Generates authentication headers asynchronously via `build_headers()`.
+#' 3. **HTTP Request**: Sends a GET request to the constructed URL with a 3-second timeout using `httr::GET()`.
+#' 4. **Response Processing**: Parses the JSON response with `process_kucoin_response()`, converting each non-empty account type array (`mainAccounts`, `tradeAccounts`, `marginAccounts`, `tradeHFAccounts`) into a `data.table` with an added `accountType` column.
+#' 5. **Aggregation and Metadata Addition**: Aggregates all non-empty `data.table`s into a single `data.table` using `data.table::rbindlist()`, appending `subUserId` and `subName` to each row.
 #'
-#' **API Endpoint:**  
+#' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v1/sub-accounts/{subUserId}?includeBaseAmount={includeBaseAmount}`
 #'
-#' **Purpose:**  
-#' This endpoint retrieves detailed balance information for a specific sub‐account. The response is structured to provide
-#' separate balance details for various account categories (e.g. funding, spot, margin, and high‐frequency trading accounts).
+#' ### Usage
+#' Utilised internally to provide detailed balance information across various account categories for a specified sub-account.
 #'
-#' **Query Parameter:**  
-#' - `includeBaseAmount` (boolean): Indicates whether to include currencies with a zero balance in the response.
-#'   - **Default:** `FALSE` (only non‐zero balances are returned)
+#' ### Official Documentation
+#' [KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
 #'
-#' **Response Schema:**  
-#' On success, the API returns a JSON object with:
-#' - **code** (string): Status code, where `"200000"` indicates success.
-#' - **data** (object): Contains:
-#'   - `subUserId`: The sub‐account's user ID.
-#'   - `subName`: The sub‐account name.
-#'   - `mainAccounts`: An array of objects detailing funding account balances.
-#'   - `tradeAccounts`: An array of objects detailing spot account balances.
-#'   - `marginAccounts`: An array of objects detailing margin account balances.
-#'   - `tradeHFAccounts`: An array (often deprecated) for high‐frequency trading accounts.
-#'
-#' Each account object typically includes fields such as:
-#' - `currency`: The currency code.
-#' - `balance`: Total balance.
-#' - `available`: Amount available for trading or withdrawal.
-#' - `holds`: Amount locked or held.
-#' - Additional fields such as `baseCurrency`, `baseCurrencyPrice`, `baseAmount`, and `tag`.
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param subUserId Character string representing the sub-account user ID for which balance details are retrieved.
+#' @param includeBaseAmount Logical flag indicating whether to include currencies with a zero balance in the response. Defaults to `FALSE`.
+#' @return Promise resolving to a `data.table` containing detailed balance information for the specified sub-account, with columns including:
+#'   - `currency` (character): Currency code.
+#'   - `balance` (character): Total balance.
+#'   - `available` (character): Amount available for trading or withdrawal.
+#'   - `holds` (character): Amount locked or held.
+#'   - `accountType` (character): Source account type (e.g., `"mainAccounts"`, `"tradeAccounts"`, `"marginAccounts"`, `"tradeHFAccounts"`).
+#'   - `subUserId` (character): Sub-account user ID.
+#'   - `subName` (character): Sub-account name.
+#'   Additional fields such as `baseCurrency`, `baseCurrencyPrice`, `baseAmount`, and `tag` may be present depending on the response.
+#' @details
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.  
+#' - `data` (object): Contains `subUserId`, `subName`, and arrays for `mainAccounts`, `tradeAccounts`, `marginAccounts`, and `tradeHFAccounts`.  
 #' 
-#' The JSON response looks like:
-#' \preformatted{
+#' Example JSON response:  
+#' ```
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -457,49 +371,24 @@ get_subaccount_list_summary_impl <- coro::async(function(
 #'         "tradeHFAccounts": []
 #'     }
 #' }
+#' ```
+#' @examples
+#' \dontrun{
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' subUserId <- "63743f07e0c5230001761d08"
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_subaccount_detail_balance_impl(
+#'     keys = keys,
+#'     base_url = base_url,
+#'     subUserId = subUserId,
+#'     includeBaseAmount = TRUE
+#'   ))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' For more detailed information, please refer to the
-#' [KuCoin Sub‐Account Detail Balance Documentation](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance).
-#'
-#' ## Function Workflow
-#'
-#' 1. **URL and Query String Construction:**  
-#'    Constructs the endpoint URL by appending the `subUserId` to `/api/v1/sub-accounts/` and adding the query parameter
-#'    `includeBaseAmount` (which defaults to `FALSE` if not specified).
-#'
-#' 2. **Header Generation:**  
-#'    Asynchronously generates the necessary authentication headers by calling `build_headers()`.
-#'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using `httr::GET()` with a 3-second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Parses the JSON response using `process_kucoin_response()` and, for each account type array
-#'    (`mainAccounts`, `tradeAccounts`, `marginAccounts`, `tradeHFAccounts`), converts the array into a `data.table`
-#'    and adds an `accountType` column.
-#'
-#' 5. **Aggregation and Metadata Addition:**  
-#'    Aggregates all non‐empty `data.table`s into a single `data.table` using `data.table::rbindlist()` and appends the
-#'    sub‐account's user ID and name as new columns.
-#'
-#' @param keys A list containing API configuration parameters, as returned by `get_api_keys()`. It must include:
-#'   - `api_key`: Your KuCoin API key.
-#'   - `api_secret`: Your KuCoin API secret.
-#'   - `api_passphrase`: Your KuCoin API passphrase.
-#'   - `key_version`: The version of the API key (e.g. `"2"`).
-#' @param base_url A character string representing the base URL for the API. If not provided, the function uses
-#'                 `get_base_url()`.
-#' @param subUserId A string representing the sub‐account user ID for which the balance details are to be retrieved.
-#' @param includeBaseAmount A boolean flag indicating whether to include currencies with a zero balance in the response.
-#'   - **Default:** `FALSE`
-#'
-#' @return A promise that resolves to a `data.table` containing the detailed balance information for the specified sub‐account.
-#' Each row represents a currency in one of the account types, with an additional column `accountType` indicating the source
-#' array, as well as columns for `subUserId` and `subName` extracted from the parent response.
-#'
-#' @md
-#' 
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table as.data.table rbindlist

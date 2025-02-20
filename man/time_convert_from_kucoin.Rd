@@ -2,18 +2,53 @@
 % Please edit documentation in R/utils_time_convert_kucoin.R
 \name{time_convert_from_kucoin}
 \alias{time_convert_from_kucoin}
-\title{Convert KuCoin's Server Time to POSIXct}
+\title{Convert KuCoin Server Time to POSIXct}
 \usage{
 time_convert_from_kucoin(time_value, unit = c("ms", "ns", "s"))
 }
 \arguments{
-\item{time_value}{A numeric value representing the time.}
+\item{time_value}{Numeric value representing the UNIX timestamp.}
 
-\item{unit}{A character string specifying the time unit: "ms" for milliseconds (default) or "s" for seconds.}
+\item{unit}{Character string specifying the input time unit: \code{"ms"} for milliseconds (default), \code{"ns"} for nanoseconds, or \code{"s"} for seconds.}
 }
 \value{
-A POSIXct object representing the time in UTC.
+POSIXct object representing the timestamp in UTC.
 }
 \description{
-Converts a UNIX timestamp (in the specified unit) from KuCoin's server to a POSIXct object (UTC).
+Converts a UNIX timestamp from KuCoin's server into a POSIXct object in UTC, based on the specified time unit.
+}
+\details{
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Input Validation}: Ensures \code{time_value} is numeric, aborting if not.
+\item \strong{Unit Matching}: Validates \code{unit} against allowed options (\code{"ms"}, \code{"ns"}, \code{"s"}) using \code{match.arg()}.
+\item \strong{Time Conversion}: Converts the timestamp to seconds based on the unit and then to POSIXct using \code{lubridate::as_datetime()}.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper function for timestamp conversion).
+}
+
+\subsection{Usage}{
+
+Utilised to transform KuCoin API timestamps into R's POSIXct format for analysis or visualisation.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin API timestamp usage guidelines.
+}
+}
+\examples{
+\dontrun{
+# Convert a millisecond timestamp
+time_convert_from_kucoin(time_value = 1698777600000, unit = "ms")
+# Returns POSIXct equivalent of 2023-10-31 16:00:00 UTC
+
+# Convert a nanosecond timestamp
+time_convert_from_kucoin(time_value = 1698777600000000000, unit = "ns")
+# Returns POSIXct equivalent of 2023-10-31 16:00:00 UTC
+}
 }

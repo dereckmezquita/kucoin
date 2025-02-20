@@ -7,8 +7,39 @@
 check_allowed_frequency_str(freq_str)
 }
 \arguments{
-\item{freq_str}{A character string representing the frequency (e.g. "1min", "3min", etc.).}
+\item{freq_str}{Character string representing the frequency (e.g., \code{"1min"}, \code{"3min"}).}
+}
+\value{
+Invisible \code{NULL} if valid; aborts with an error if invalid.
 }
 \description{
-Check Allowed Frequency String
+Validates whether a frequency string is among the allowed options for KuCoin klines data.
+}
+\details{
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Validation}: Checks if \code{freq_str} exists in \code{freq_to_second_map}, aborting with an error message listing allowed values if not.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper validation function).
+}
+
+\subsection{Usage}{
+
+Utilised to ensure frequency inputs for klines data retrieval are valid before API calls.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin klines API documentation for frequency options.
+}
+}
+\examples{
+\dontrun{
+check_allowed_frequency_str("1min")  # Proceeds silently
+check_allowed_frequency_str("10min") # Aborts with error
+}
 }

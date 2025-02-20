@@ -12,33 +12,43 @@ get_api_keys(
 )
 }
 \arguments{
-\item{api_key}{(Optional) The KuCoin API key. Defaults to \code{Sys.getenv("KC-API-KEY")}.}
+\item{api_key}{Character string; the KuCoin API key. Defaults to \code{Sys.getenv("KC-API-KEY")}.}
 
-\item{api_secret}{(Optional) The KuCoin API secret. Defaults to \code{Sys.getenv("KC-API-SECRET")}.}
+\item{api_secret}{Character string; the KuCoin API secret. Defaults to \code{Sys.getenv("KC-API-SECRET")}.}
 
-\item{api_passphrase}{(Optional) The KuCoin API passphrase. Defaults to \code{Sys.getenv("KC-API-PASSPHRASE")}.}
+\item{api_passphrase}{Character string; the KuCoin API passphrase. Defaults to \code{Sys.getenv("KC-API-PASSPHRASE")}.}
 
-\item{key_version}{(Optional) The API key version. Defaults to "2".}
+\item{key_version}{Character string; the API key version. Defaults to \code{"2"}.}
 }
 \value{
-A list containing the API credentials and configuration parameters.
+List containing the API credentials: \code{api_key}, \code{api_secret}, \code{api_passphrase}, and \code{key_version}.
 }
 \description{
-This function retrieves the KuCoin API credentials from environment variables and returns them as a list.
-It expects the following environment variables to be set:
-- \code{KC-API-KEY}
-- \code{KC-API-SECRET}
-- \code{KC-API-PASSPHRASE}
-- \code{KC-API-ENDPOINT} (optional)
+Fetches KuCoin API credentials from environment variables and returns them as a list. Expected environment variables are:
 }
 \details{
-It also sets the API key version (default is "2"). These credentials are essential for making authenticated
-requests to the KuCoin API.
+\itemize{
+\item \code{KC-API-KEY}: The API key.
+\item \code{KC-API-SECRET}: The API secret.
+\item \code{KC-API-PASSPHRASE}: The API passphrase.
+\item \code{KC-API-ENDPOINT}: Optional base URL (handled by \code{get_base_url()}).
+}
+
+Includes a default API key version (\code{"2"}). These credentials are required for authenticated KuCoin API requests.
 }
 \examples{
 \dontrun{
-  config <- get_api_keys()
-  print(config)
-}
+# Retrieve credentials from environment variables
+config <- get_api_keys()
+print(config)
 
+# Specify credentials manually
+config <- get_api_keys(
+  api_key = "my_key",
+  api_secret = "my_secret",
+  api_passphrase = "my_pass",
+  key_version = "2"
+)
+print(config)
+}
 }

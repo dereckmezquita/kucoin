@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_cross_margin_account_impl}
 \alias{get_cross_margin_account_impl}
-\title{Get Cross Margin Account Implementation}
+\title{Retrieve Cross Margin Account Information (Implementation)}
 \usage{
 get_cross_margin_account_impl(
   keys = get_api_keys(),
@@ -12,98 +12,85 @@ get_cross_margin_account_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., "2").
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()}.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 
-\item{query}{A named list of query parameters to filter the account information. Supported parameters include:
-\describe{
-\item{\code{quoteCurrency}}{(string, optional): The quote currency. Allowed values are "USDT", "KCS", or "BTC". Defaults to "USDT" if not provided.}
-\item{\code{queryType}}{(string, optional): The type of account query. Allowed values are:
+\item{query}{Named list of query parameters:
 \itemize{
-\item "MARGIN" - Only query low-frequency cross margin accounts.
-\item "MARGIN_V2" - Only query high-frequency cross margin accounts.
-\item "ALL" - Aggregate query, as seen on the website.
-}
-Defaults to "MARGIN".}
+\item \code{quoteCurrency} (character, optional): Quote currency (e.g., \code{"USDT"}, \code{"KCS"}, \code{"BTC"}; default \code{"USDT"}).
+\item \code{queryType} (character, optional): Account type (\code{"MARGIN"}, \code{"MARGIN_V2"}, \code{"ALL"}; default \code{"MARGIN"}).
 }}
 }
 \value{
-A promise that resolves to a named list with two elements:
-\describe{
-\item{\code{summary}}{A data.table containing the overall cross margin account summary with the following columns:
-\describe{
-\item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-\item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-\item{\code{debtRatio}}{(string) The debt ratio.}
-\item{\code{status}}{(string) The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").}
+Promise resolving to a named list containing:
+\itemize{
+\item \code{summary}: \code{data.table} with:
+\itemize{
+\item \code{totalAssetOfQuoteCurrency} (character): Total assets.
+\item \code{totalLiabilityOfQuoteCurrency} (character): Total liabilities.
+\item \code{debtRatio} (character): Debt ratio.
+\item \code{status} (character): Position status (e.g., \code{"EFFECTIVE"}).
 }
-}
-\item{\code{accounts}}{A data.table containing detailed margin account information. Each row represents a margin account with the following columns:
-\describe{
-\item{\code{currency}}{(string) Currency code.}
-\item{\code{total}}{(string) Total funds in the account.}
-\item{\code{available}}{(string) Funds available for withdrawal or trading.}
-\item{\code{hold}}{(string) Funds on hold.}
-\item{\code{liability}}{(string) Current liabilities.}
-\item{\code{maxBorrowSize}}{(string) Maximum borrowable amount.}
-\item{\code{borrowEnabled}}{(boolean) Indicates whether borrowing is enabled.}
-\item{\code{transferInEnabled}}{(boolean) Indicates whether transfers into the account are enabled.}
-}
+\item \code{accounts}: \code{data.table} with:
+\itemize{
+\item \code{currency} (character): Currency code.
+\item \code{total} (character): Total funds.
+\item \code{available} (character): Available funds.
+\item \code{hold} (character): Funds on hold.
+\item \code{liability} (character): Liabilities.
+\item \code{maxBorrowSize} (character): Maximum borrowable amount.
+\item \code{borrowEnabled} (logical): Borrowing enabled.
+\item \code{transferInEnabled} (logical): Transfer-in enabled.
 }
 }
 }
 \description{
-This asynchronous function retrieves information about the cross margin account from the KuCoin API.
-It sends a \code{GET} request to the \verb{/api/v3/margin/accounts} endpoint with optional query parameters and
-returns the parsed response as a list of two data tables: one containing the overall summary and one containing the detailed margin account list.
+Fetches cross margin account details from the KuCoin API asynchronously, including overall metrics and individual accounts. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-and appending the endpoint and query string.
-\item \strong{Header Preparation:} Builds the authentication headers based on the HTTP method, full endpoint, and request body.
-\item \strong{API Request:} Sends a \code{GET} request to the endpoint.
-\item \strong{Response Processing:} Processes the API response using a helper function and converts the result into two separate data tables:
-\itemize{
-\item A summary data table for the overall cross margin account information.
-\item A detailed data table for the list of margin accounts.
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with \verb{/api/v3/margin/accounts} and a query string from \code{build_query()}.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()}.
+\item \strong{API Request}: Sends a GET request with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()}, splitting the \code{"data"} field into \code{summary} and \code{accounts} \code{data.table} objects.
 }
 }
 
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/margin/accounts}
+\subsection{API Endpoint}{
 
-For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin}{KuCoin API Documentation}.
+\verb{GET https://api.kucoin.com/api/v3/margin/accounts}
+}
+
+\subsection{Usage}{
+
+Utilised internally by \code{KucoinAccountAndFunding} to provide cross margin account data.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin}{KuCoin Get Account Cross Margin}
+}
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from the environment using get_api_keys()
-  keys <- get_api_keys()
-
-  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-  base_url <- "https://api.kucoin.com"
-
-  # Define query parameters to filter the account information
-  query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
-
-  # Execute the asynchronous request using coro::run:
-  main_async <- coro::async(function() {
-    result <- await(get_cross_margin_account_impl(keys, base_url, query))
-    # 'result' is a list with two data.tables:
-    print(result$summary)
-    print(result$accounts)
-  })
-
-  main_async()
-  while (!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
+main_async <- coro::async(function() {
+  result <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url, query = query))
+  print(result$summary)
+  print(result$accounts)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

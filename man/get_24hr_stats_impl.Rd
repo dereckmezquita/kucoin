@@ -11,71 +11,68 @@ get_24hr_stats_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the 24-hour market statistics.
-The resulting \code{data.table} includes the following columns:
-\describe{
-\item{time}{(integer) The raw snapshot timestamp in milliseconds.}
-\item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
-\item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-\item{buy}{(string) The best bid price.}
-\item{sell}{(string) The best ask price.}
-\item{changeRate}{(string) The 24-hour change rate (percentage).}
-\item{changePrice}{(string) The absolute price change over the last 24 hours.}
-\item{high}{(string) The highest price in the last 24 hours.}
-\item{low}{(string) The lowest price in the last 24 hours.}
-\item{vol}{(string) The 24-hour trading volume (in base currency).}
-\item{volValue}{(string) The 24-hour trading turnover (in quote currency).}
-\item{last}{(string) The last traded price.}
-\item{averagePrice}{(string) The average trading price over the last 24 hours.}
-\item{takerFeeRate}{(string) The basic taker fee rate.}
-\item{makerFeeRate}{(string) The basic maker fee rate.}
-\item{takerCoefficient}{(string) The taker fee coefficient.}
-\item{makerCoefficient}{(string) The maker fee coefficient.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
+\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
+\item \code{symbol} (character): Trading symbol.
+\item \code{buy} (character): Best bid price.
+\item \code{sell} (character): Best ask price.
+\item \code{changeRate} (character): 24-hour change rate.
+\item \code{changePrice} (character): 24-hour price change.
+\item \code{high} (character): 24-hour high price.
+\item \code{low} (character): 24-hour low price.
+\item \code{vol} (character): 24-hour trading volume.
+\item \code{volValue} (character): 24-hour turnover.
+\item \code{last} (character): Last traded price.
+\item \code{averagePrice} (character): 24-hour average price.
+\item \code{takerFeeRate} (character): Taker fee rate.
+\item \code{makerFeeRate} (character): Maker fee rate.
+\item \code{takerCoefficient} (character): Taker fee coefficient.
+\item \code{makerCoefficient} (character): Maker fee coefficient.
 }
 }
 \description{
-This asynchronous function retrieves the 24-hour market statistics for a specified trading symbol from the KuCoin API.
-The endpoint returns a snapshot of market data including the best bid and ask prices, last traded price, 24-hour change rate
-and change in price, highest and lowest prices, trading volume, turnover, average price, and fee rates.
+Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query String Construction:}
-Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-\code{/api/v1/market/stats}, and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the API response with \code{process_kucoin_response()} to validate the HTTP status and API code, then extracts the \code{data} field.
-\item \strong{Data Conversion:}
-Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
-\describe{
-\item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
-\item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin("ms")}.}
+\item \strong{Query Construction}: Builds a query string with the \code{symbol} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/stats}, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts \code{"data"} to a \code{data.table}, renames \code{time} to \code{time_ms}, and adds a \code{timestamp} column via \code{time_convert_from_kucoin()}.
 }
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/market/stats}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch a 24-hour snapshot of market statistics for a trading symbol, including volume and price changes.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats}{KuCoin Get 24hr Stats}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/market/stats?symbol=<symbol>}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve 24-hour statistics for BTC-USDT:
-  stats <- await(market_data$get_24hr_stats(symbol = "BTC-USDT"))
+main_async <- coro::async(function() {
+  stats <- await(get_24hr_stats_impl(symbol = "BTC-USDT"))
   print(stats)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

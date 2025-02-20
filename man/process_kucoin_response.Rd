@@ -7,27 +7,45 @@
 process_kucoin_response(response, url = "")
 }
 \arguments{
-\item{response}{An HTTP response object (e.g., from \code{httr::GET()}).}
+\item{response}{HTTP response object (e.g., from \code{httr::GET()}).}
 
-\item{url}{A character string representing the requested URL (used for error messages).}
+\item{url}{Character string representing the requested URL, used for error messages.}
 }
 \value{
-A list representing the parsed JSON response. Users are responsible for extracting specific fields (e.g., the \code{"data"} field) as needed.
+List representing the parsed JSON response; users should extract fields like \code{"data"} as required.
 }
 \description{
-This function processes an HTTP response from a KuCoin API request. It validates that the response
-has a successful HTTP status and that the API-specific response code indicates success. If the response is
-valid, it returns the parsed JSON object.
+Processes an HTTP response from a KuCoin API request, validating its HTTP status and API-specific response code, returning the parsed JSON object if successful or aborting with an error otherwise.
 }
 \details{
-The actual data is often in the \verb{$data} field or \verb{$data$items} etc. especially if the end point is paginated.
-as needed.
-
-\strong{Response Validation Workflow:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item Checks if the HTTP status code is 200.
-\item Parses the JSON response.
-\item Validates that the response contains the \code{"code"} field.
-\item Ensures the \code{"code"} is \code{"200000"} (success); if not, retrieves the error message from the \code{"msg"} field if available.
+\item \strong{Check HTTP Status}: Confirms the status code is 200, aborting if not.
+\item \strong{Parse JSON}: Extracts the response content as text and parses it into a JSON object using \code{jsonlite::fromJSON()}.
+\item \strong{Validate Structure}: Verifies the \code{"code"} field exists, aborting if absent.
+\item \strong{Check Success}: Ensures the \code{"code"} is \code{"200000"}, retrieving an error message from \code{"msg"} and aborting if not successful.
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper function for response processing).
+}
+
+\subsection{Usage}{
+
+Utilised to validate and extract data from KuCoin API responses, typically accessing the \verb{$data} or \verb{$data$items} field for results.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin API response handling guidelines.
+}
+}
+\examples{
+\dontrun{
+response <- httr::GET("https://api.kucoin.com/api/v1/timestamp", httr::timeout(3))
+parsed <- process_kucoin_response(response, "https://api.kucoin.com/api/v1/timestamp")
+print(parsed$data)
 }
 }

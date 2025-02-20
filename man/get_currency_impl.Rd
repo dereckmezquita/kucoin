@@ -12,66 +12,66 @@ get_currency_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API. Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{currency}{A character string representing the currency code (e.g., "BTC", "USDT").}
+\item{currency}{Character string; currency code (e.g., \code{"BTC"}, \code{"USDT"}).}
 
-\item{chain}{(Optional) A character string specifying the chain to query (e.g., "ERC20", "TRC20"). This applies to multi‑chain currencies.}
+\item{chain}{Character string (optional); specific chain for multi-chain currencies (e.g., \code{"ERC20"}, \code{"TRC20"}).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the currency details. The resulting data.table includes columns such as:
-\describe{
-\item{currency}{(string) The unique currency code.}
-\item{name}{(string) The short name of the currency.}
-\item{fullName}{(string) The full name of the currency.}
-\item{precision}{(integer) The number of decimal places for the currency.}
-\item{confirms}{(integer or NULL) The number of block confirmations required (if applicable).}
-\item{contractAddress}{(string or NULL) The contract address for tokenized currencies.}
-\item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled.}
-\item{isDebitEnabled}{(boolean) Indicates whether debit is enabled.}
-\item{chains}{(list) A list of chain objects containing chain‑specific details.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{currency} (character): Unique currency code.
+\item \code{name} (character): Short name of the currency.
+\item \code{fullName} (character): Full name of the currency.
+\item \code{precision} (integer): Decimal places for the currency.
+\item \code{confirms} (integer or NULL): Block confirmations required.
+\item \code{contractAddress} (character or NULL): Contract address for tokenized currencies.
+\item \code{isMarginEnabled} (logical): Margin trading enabled status.
+\item \code{isDebitEnabled} (logical): Debit enabled status.
+\item Chain-specific fields (e.g., \code{chainName}, \code{withdrawalMinSize}) from the \code{chains} list.
 }
 }
 \description{
-This asynchronous function retrieves detailed information for a specified currency from the KuCoin API.
-The endpoint returns metadata such as the unique currency code, name, full name, precision, and other relevant
-details including margin and debit support as well as a list of supported chains for multi-chain currencies.
+Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific details for multi-chain currencies.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Input Validation:}
-Validates that a non-empty currency code is provided.
-\item \strong{Query String Construction:}
-Uses the helper function \code{build_query()} to build a query string from the optional \code{chain} parameter.
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-\code{/api/v3/currencies/} with the provided currency code, and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} which validates the HTTP status and API code,
-then extracts the \code{data} field.
-\item \strong{Data Conversion:}
-Converts the resulting data (a named list of currency details) into a \code{data.table} and returns it.
+\item \strong{Query Construction}: Builds a query string with the optional \code{chain} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/currencies/}, the \code{currency} code, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field.
+\item \strong{Data Conversion}: Splits \code{"data"} into summary fields and \code{chains} data, combining them into a \code{data.table}.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v3/currencies/\{currency\}}
+}
+
+\subsection{Usage}{
+
+Utilised to obtain metadata (e.g., precision, chain support) for a specific currency on KuCoin.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency}{KuCoin Get Currency}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/currencies/{currency}}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve details for Bitcoin:
-  dt_currency <- await(get_currency_impl(currency = "BTC"))
-  print(dt_currency)
-
-  # Retrieve details for USDT on the ERC20 chain:
-  dt_currency <- await(get_currency_impl(currency = "USDT", chain = "ERC20"))
-  print(dt_currency)
+main_async <- coro::async(function() {
+  # Bitcoin details
+  btc <- await(get_currency_impl(currency = "BTC"))
+  print(btc)
+  # USDT on ERC20 chain
+  usdt_erc20 <- await(get_currency_impl(currency = "USDT", chain = "ERC20"))
+  print(usdt_erc20)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

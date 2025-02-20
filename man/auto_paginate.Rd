@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers_api.R
 \name{auto_paginate}
 \alias{auto_paginate}
-\title{Generic Pagination Helper for KuCoin API Endpoints}
+\title{Facilitate Automatic Pagination for KuCoin API Endpoints}
 \usage{
 auto_paginate(
   fetch_page,
@@ -17,42 +17,72 @@ auto_paginate(
 )
 }
 \arguments{
-\item{fetch_page}{A function that fetches a page of results and returns a promise resolving to the response.}
+\item{fetch_page}{Function fetching a page of results, returning a promise resolving to the response.}
 
-\item{query}{A named list of query parameters for the first page (default is \code{list(currentPage = 1, pageSize = 50)}).}
+\item{query}{Named list of query parameters for the first page. Defaults to \code{list(currentPage = 1, pageSize = 50)}.}
 
-\item{items_field}{The field in the response that contains the items to be aggregated (default is \code{"items"}).}
+\item{items_field}{Character string; field in the response containing items to aggregate. Defaults to \code{"items"}.}
 
-\item{paginate_fields}{A named list of fields in the response that contain the current and total page numbers.
+\item{paginate_fields}{Named list specifying response fields for pagination:
 \itemize{
-\item \code{currentPage}: The field containing the current page number.
-\item \code{totalPage}: The field containing the total number of pages.
+\item \code{currentPage}: Field with the current page number.
+\item \code{totalPage}: Field with the total number of pages.
+Defaults to \code{list(currentPage = "currentPage", totalPage = "totalPage")}.
 }}
 
-\item{aggregate_fn}{A function to combine the accumulated results into the final output (default returns the accumulator list as is).}
+\item{aggregate_fn}{Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.}
 
-\item{max_pages}{The maximum number of pages to fetch (default is \code{Inf} to fetch all available pages).}
+\item{max_pages}{Numeric; maximum number of pages to fetch. Defaults to \code{Inf} (all available pages).}
 }
 \value{
-A promise that resolves to the aggregated result as defined by the \code{aggregate_fn}.
+Promise resolving to the aggregated result as defined by \code{aggregate_fn}.
 }
 \description{
-This asynchronous helper function facilitates automatic pagination for KuCoin API endpoints that return paginated
-responses. It repeatedly calls a user-supplied function to fetch each page and aggregates the results using an
-aggregation function provided by the user.
+Handles pagination for KuCoin API endpoints asynchronously by iteratively fetching pages with a user-supplied function and aggregating results using a provided aggregation function.
 }
 \details{
-\subsection{Detailed Workflow:}{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Fetch a Page:}
-The function calls the user-supplied \code{fetch_page} function with the current query parameters.
-\item \strong{Accumulate Results:}
-The items from the current page (extracted via the \code{items_field} parameter) are added to an accumulator.
-\item \strong{Determine Continuation:}
-If the current page number is less than the total number of pages (or less than \code{max_pages} if specified),
-the function increments the page number and continues fetching.
-\item \strong{Aggregate and Return:}
-Once all pages have been fetched, the accumulator is passed to the \code{aggregate_fn} to produce the final result.
+\item \strong{Fetch Page}: Calls \code{fetch_page} with current query parameters to retrieve a page.
+\item \strong{Accumulate Results}: Adds items from the page (via \code{items_field}) to an accumulator list.
+\item \strong{Determine Continuation}: Continues if the current page is less than the total pages and \code{max_pages} hasn’t been reached.
+\item \strong{Aggregate Results}: Applies \code{aggregate_fn} to the accumulator once all pages are fetched.
 }
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper function for paginated endpoints).
+}
+
+\subsection{Usage}{
+
+Utilised to simplify retrieval of multi-page data from KuCoin API responses, aggregating results into a user-defined format.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin API pagination guidelines.
+}
+}
+\examples{
+\dontrun{
+fetch_page <- coro::async(function(query) {
+  url <- paste0(get_base_url(), "/api/v1/example", build_query(query))
+  response <- httr::GET(url, httr::timeout(3))
+  process_kucoin_response(response, url)
+})
+aggregate <- function(acc) data.table::rbindlist(acc)
+main_async <- coro::async(function() {
+  result <- await(auto_paginate(
+    fetch_page = fetch_page,
+    query = list(currentPage = 1, pageSize = 10),
+    max_pages = 3,
+    aggregate_fn = aggregate
+  ))
+  print(result)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
 }

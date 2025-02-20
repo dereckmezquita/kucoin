@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_spot_ledger_impl}
 \alias{get_spot_ledger_impl}
-\title{Get Spot Ledger Implementation}
+\title{Retrieve Spot Ledger Records (Implementation)}
 \usage{
 get_spot_ledger_impl(
   keys = get_api_keys(),
@@ -14,89 +14,100 @@ get_spot_ledger_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-\describe{
-\item{\code{api_key}}{Your KuCoin API key.}
-\item{\code{api_secret}}{Your KuCoin API secret.}
-\item{\code{api_passphrase}}{Your KuCoin API passphrase.}
-\item{\code{key_version}}{The version of the API key (e.g., "2").}
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
+\itemize{
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 
-\item{query}{A named list of additional query parameters to filter the ledger records. Supported parameters include:
-\describe{
-\item{\code{currency}}{(string, optional): One or more currencies (up to 10) to filter by; if omitted, all currencies are returned.}
-\item{\code{direction}}{(string, optional): Transaction direction, either \code{"in"} or \code{"out"}.}
-\item{\code{bizType}}{(string, optional): Business type of the transaction (e.g., \code{"DEPOSIT"}, \code{"WITHDRAW"}, \code{"TRANSFER"}, \code{"SUB_TRANSFER"}, \code{"TRADE_EXCHANGE"}, etc.).}
-\item{\code{startAt}}{(integer, optional): Start time in milliseconds.}
-\item{\code{endAt}}{(integer, optional): End time in milliseconds.}
-}
-Note: The pagination parameters (\code{currentPage} and \code{pageSize}) are managed internally.}
+\item{query}{Named list of query parameters (excluding pagination):
+\itemize{
+\item \code{currency} (character, optional): Filter by currency (up to 10).
+\item \code{direction} (character, optional): \code{"in"} or \code{"out"}.
+\item \code{bizType} (character, optional): Business type (e.g., \code{"DEPOSIT"}, \code{"TRANSFER"}).
+\item \code{startAt} (integer, optional): Start time in milliseconds.
+\item \code{endAt} (integer, optional): End time in milliseconds.
+}}
 
-\item{page_size}{(integer, optional) Number of results per page (minimum 10, maximum 500; default is 50).}
+\item{page_size}{Integer; number of results per page (10–500, default 50).}
 
-\item{max_pages}{(integer, optional) The maximum number of pages to fetch. Defaults to \code{Inf} (all pages).}
+\item{max_pages}{Numeric; maximum number of pages to fetch (default \code{Inf} for all pages).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the aggregated ledger records.
-Each row represents a ledger record with the following columns:
-\describe{
-\item{\code{id}}{(string) Ledger record ID.}
-\item{\code{currency}}{(string) The currency.}
-\item{\code{amount}}{(string) Transaction amount.}
-\item{\code{fee}}{(string) Transaction fee.}
-\item{\code{balance}}{(string) Account balance after the transaction.}
-\item{\code{accountType}}{(string) The account type (e.g., "TRADE").}
-\item{\code{bizType}}{(string) Business type (e.g., "TRANSFER").}
-\item{\code{direction}}{(string) Transaction direction ("in" or "out").}
-\item{\code{createdAt}}{(integer) Timestamp of the transaction in milliseconds.}
-\item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
-\item{\code{context}}{(string) Additional context provided with the transaction.}
-\item{\code{currentPage}}{(integer) The current page number (from the response).}
-\item{\code{pageSize}}{(integer) The page size (from the response).}
-\item{\code{totalNum}}{(integer) The total number of records (from the response).}
-\item{\code{totalPage}}{(integer) The total number of pages (from the response).}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{id} (character): Ledger record ID.
+\item \code{currency} (character): Currency.
+\item \code{amount} (character): Transaction amount.
+\item \code{fee} (character): Transaction fee.
+\item \code{balance} (character): Post-transaction balance.
+\item \code{accountType} (character): Account type.
+\item \code{bizType} (character): Business type.
+\item \code{direction} (character): Transaction direction.
+\item \code{createdAt} (integer): Timestamp in milliseconds.
+\item \code{createdAtDatetime} (POSIXct): Converted datetime.
+\item \code{context} (character): Transaction context.
+\item \code{currentPage} (integer): Current page number.
+\item \code{pageSize} (integer): Page size.
+\item \code{totalNum} (integer): Total records.
+\item \code{totalPage} (integer): Total pages.
 }
 }
 \description{
-This asynchronous function retrieves transaction records (ledgers) for spot/margin accounts from the KuCoin API.
-It uses the pagination helper function \code{auto_paginate} to automatically fetch all pages of results and aggregate
-the ledger records into a single flat \code{data.table}. Pagination is handled via separate arguments.
+Fetches detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, aggregating transaction histories into a \code{data.table}.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by calling \code{get_base_url()} (or using the supplied \code{base_url})
-and appending the endpoint \verb{/api/v1/accounts/ledgers} along with any user-supplied query parameters.
-\item \strong{Header Preparation:} Builds the authentication headers using the provided API keys.
-\item \strong{API Request:} Sends an asynchronous GET request to the endpoint.
-\item \strong{Response Processing:} Uses the \code{auto_paginate} helper function to retrieve all pages of ledger records.
-The pagination parameters (\code{currentPage} and \code{pageSize}) are supplied as separate arguments.
-The helper aggregates the items from each page (from the \code{"items"} field) using \code{data.table::rbindlist}
-and returns a single flat \code{data.table}.
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with \verb{/api/v1/accounts/ledgers}, merging query parameters with pagination settings.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()} within an inner async function.
+\item \strong{API Request}: Utilises \code{auto_paginate} to fetch all pages asynchronously via an inner \code{fetch_page} function.
+\item \strong{Response Processing}: Aggregates \code{"items"} from each page into a \code{data.table} with \code{data.table::rbindlist()}, adding a \code{createdAtDatetime} column via \code{time_convert_from_kucoin()}.
+}
 }
 
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/accounts/ledgers}
+\subsection{API Endpoint}{
 
-For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin}{KuCoin API Documentation}.
+\verb{GET https://api.kucoin.com/api/v1/accounts/ledgers}
+}
+
+\subsection{Usage}{
+
+Utilised internally by \code{KucoinAccountAndFunding} to retrieve ledger records for spot and margin accounts.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin}{KuCoin Get Account Ledgers Spot Margin}
+}
 }
 \examples{
 \dontrun{
-  keys <- get_api_keys()
-  base_url <- "https://api.kucoin.com"
-
-  # Define additional query parameters (do not include pagination parameters)
-  query <- list(currency = "BTC", direction = "in", bizType = "TRANSFER", startAt = 1728663338000, endAt = 1728692138000)
-
-  main_async <- coro::async(function() {
-    dt <- await(get_spot_ledger_impl(keys, base_url, page_size = 50, max_pages = 10, query = query))
-    print(dt)
-  })
-
-  main_async()
-  while (!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+query <- list(
+  currency = "BTC",
+  direction = "in",
+  bizType = "TRANSFER",
+  startAt = 1728663338000L,
+  endAt = 1728692138000L
+)
+main_async <- coro::async(function() {
+  dt <- await(get_spot_ledger_impl(
+    keys = keys,
+    base_url = base_url,
+    query = query,
+    page_size = 50L,
+    max_pages = 10
+  ))
+  print(dt)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

@@ -1,11 +1,17 @@
 # File: ./R/utils.R
 
-#' Verify Symbol Format
+#' Verify Ticker Symbol Format
 #'
-#' Checks whether the ticker symbol is of the format "BTC-USDT" (uppercase alphanumeric separated by a dash).
+#' Checks whether a ticker symbol adheres to the format `"BTC-USDT"`, consisting of uppercase alphanumeric characters separated by a dash.
 #'
-#' @param ticker A character string representing the symbol.
-#' @return A logical value; TRUE if the symbol is valid, FALSE otherwise.
+#' @param ticker Character string representing the ticker symbol to verify.
+#' @return Logical; `TRUE` if the symbol is valid, `FALSE` otherwise.
+#' @examples
+#' \dontrun{
+#' verify_symbol("BTC-USDT")  # Returns TRUE
+#' verify_symbol("btc-usdt")  # Returns FALSE
+#' verify_symbol("BTC_USDT")  # Returns FALSE
+#' }
 #' @export
 verify_symbol <- function(ticker) {
     if (!grepl("^[A-Za-z0-9]+-[A-Za-z0-9]+$", ticker)) {
@@ -14,33 +20,26 @@ verify_symbol <- function(ticker) {
     return(TRUE)
 }
 
-#' Build Query String for KuCoin API Request
+#' Build KuCoin API Query String
 #'
-#' This function constructs a URL query string from a named list of parameters. It performs the following steps:
+#' Constructs a URL query string from a named list of parameters for KuCoin API requests. The process involves:
 #'
-#' 1. **Filter NULL Values:**  
-#'    It removes any parameters whose value is \code{NULL} from the input list.
+#' 1. **Filtering NULL Values**: Removes any parameters with `NULL` values from the input list.
+#' 2. **Concatenating Parameters**: Combines remaining key-value pairs into a query string, starting with a `?` and formatted as `"key1=value1&key2=value2"`.
 #'
-#' 2. **Concatenate Parameters:**  
-#'    It concatenates the remaining key-value pairs into a properly formatted query string. The resulting string 
-#'    starts with a question mark and uses the format \code{"?key1=value1&key2=value2"}.
+#' **Important**: For authenticated requests, pass the complete URL (base endpoint + query string) to the header builder to ensure the signature includes the full path.
 #'
-#' **Important:**  
-#' When building an authenticated request, the complete URL (base endpoint plus query string) must be passed to the 
-#' header builder to ensure that the signature is computed over the full path.
-#'
-#' @param params A named list of query parameters.
-#'
-#' @return A string representing the query part of the URL. If no parameters are provided, an empty string is returned.
-#'
+#' @param params Named list of query parameters.
+#' @return Character string representing the query part of the URL. Returns an empty string (`""`) if no parameters are provided.
 #' @examples
 #' \dontrun{
-#'   # Example usage:
-#'   query <- list(currency = "USDT", type = "main")
-#'   qs <- build_query(query)
-#'   # qs will be "?currency=USDT&type=main"
-#' }
+#' # Basic usage
+#' params <- list(currency = "USDT", type = "main")
+#' build_query(params)  # Returns "?currency=USDT&type=main"
 #'
+#' # Empty list
+#' build_query(list())  # Returns ""
+#' }
 #' @export
 build_query <- function(params) {
     params <- params[!sapply(params, is.null)]
@@ -48,19 +47,24 @@ build_query <- function(params) {
     return(paste0("?", paste0(names(params), "=", params, collapse = "&")))
 }
 
-#' Get Base URL for KuCoin API
+#' Retrieve KuCoin API Base URL
 #'
-#' @details
-#' Returns the base URL for the KuCoin API. The URL is determined using the following priority:
-#' 1. If a URL is explicitly provided via the `url` parameter, it will be used.
-#' 2. If no URL is provided (NULL), it checks for the "KC-API-ENDPOINT" environment variable.
-#' 3. If neither source provides a URL, it falls back to the default "https://api.kucoin.com".
+#' Returns the base URL for the KuCoin API, determined by the following priority:
 #'
-#' @param url A character string representing the base URL. Default is NULL, which triggers
-#'        the fallback behavior.
+#' 1. Uses the explicitly provided `url` parameter if specified.
+#' 2. If `url` is `NULL` or empty, checks the `"KC-API-ENDPOINT"` environment variable.
+#' 3. Falls back to the default `"https://api.kucoin.com"` if neither above source provides a value.
 #'
-#' @return A character string containing the determined base URL.
+#' @param url Character string representing the base URL. Defaults to `Sys.getenv("KC-API-ENDPOINT")`.
+#' @return Character string containing the determined base URL.
+#' @examples
+#' \dontrun{
+#' # Default behavior (uses environment variable or fallback)
+#' get_base_url()  # Might return "https://api.kucoin.com" if KC-API-ENDPOINT is unset
 #'
+#' # Explicit URL
+#' get_base_url("https://testnet.kucoin.com")  # Returns "https://testnet.kucoin.com"
+#' }
 #' @export
 get_base_url <- function(url = Sys.getenv("KC-API-ENDPOINT")) {
     if (is.null(url) || !nzchar(url)) {
@@ -71,29 +75,35 @@ get_base_url <- function(url = Sys.getenv("KC-API-ENDPOINT")) {
 
 #' Retrieve KuCoin API Keys from Environment Variables
 #'
-#' This function retrieves the KuCoin API credentials from environment variables and returns them as a list.
-#' It expects the following environment variables to be set:
-#' - \code{KC-API-KEY}
-#' - \code{KC-API-SECRET}
-#' - \code{KC-API-PASSPHRASE}
-#' - \code{KC-API-ENDPOINT} (optional)
+#' Fetches KuCoin API credentials from environment variables and returns them as a list. Expected environment variables are:
 #'
-#' It also sets the API key version (default is "2"). These credentials are essential for making authenticated
-#' requests to the KuCoin API.
+#' - `KC-API-KEY`: The API key.
+#' - `KC-API-SECRET`: The API secret.
+#' - `KC-API-PASSPHRASE`: The API passphrase.
+#' - `KC-API-ENDPOINT`: Optional base URL (handled by `get_base_url()`).
 #'
-#' @param api_key        (Optional) The KuCoin API key. Defaults to \code{Sys.getenv("KC-API-KEY")}.
-#' @param api_secret     (Optional) The KuCoin API secret. Defaults to \code{Sys.getenv("KC-API-SECRET")}.
-#' @param api_passphrase (Optional) The KuCoin API passphrase. Defaults to \code{Sys.getenv("KC-API-PASSPHRASE")}.
-#' @param key_version    (Optional) The API key version. Defaults to "2".
+#' Includes a default API key version (`"2"`). These credentials are required for authenticated KuCoin API requests.
 #'
-#' @return A list containing the API credentials and configuration parameters.
-#'
+#' @param api_key Character string; the KuCoin API key. Defaults to `Sys.getenv("KC-API-KEY")`.
+#' @param api_secret Character string; the KuCoin API secret. Defaults to `Sys.getenv("KC-API-SECRET")`.
+#' @param api_passphrase Character string; the KuCoin API passphrase. Defaults to `Sys.getenv("KC-API-PASSPHRASE")`.
+#' @param key_version Character string; the API key version. Defaults to `"2"`.
+#' @return List containing the API credentials: `api_key`, `api_secret`, `api_passphrase`, and `key_version`.
 #' @examples
 #' \dontrun{
-#'   config <- get_api_keys()
-#'   print(config)
-#' }
+#' # Retrieve credentials from environment variables
+#' config <- get_api_keys()
+#' print(config)
 #'
+#' # Specify credentials manually
+#' config <- get_api_keys(
+#'   api_key = "my_key",
+#'   api_secret = "my_secret",
+#'   api_passphrase = "my_pass",
+#'   key_version = "2"
+#' )
+#' print(config)
+#' }
 #' @export
 get_api_keys <- function(
     api_key        = Sys.getenv("KC-API-KEY"),
@@ -109,26 +119,31 @@ get_api_keys <- function(
     ))
 }
 
-#' Retrieve SubAccount Configuration from Environment Variables
+#' Retrieve KuCoin Sub-Account Configuration from Environment Variables
 #'
-#' This function retrieves sub-account–specific configuration parameters from environment variables.
-#' It expects the following environment variables to be set:
-#' - \code{KC-ACCOUNT-SUBACCOUNT-NAME}: The sub-account name.
-#' - \code{KC-ACCOUNT-SUBACCOUNT-PASSWORD}: The sub-account password.
+#' Fetches sub-account-specific configuration parameters from environment variables. Expected variables are:
 #'
-#' These parameters are used for sub-account related operations.
+#' - `KC-ACCOUNT-SUBACCOUNT-NAME`: The sub-account name.
+#' - `KC-ACCOUNT-SUBACCOUNT-PASSWORD`: The sub-account password.
 #'
-#' @param sub_account_name (Optional) The sub-account name. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME")}.
-#' @param sub_account_password (Optional) The sub-account password. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")}.
+#' These parameters are used for sub-account-related operations in the KuCoin API.
 #'
-#' @return A list containing sub-account configuration parameters.
-#'
+#' @param sub_account_name Character string; the sub-account name. Defaults to `Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME")`.
+#' @param sub_account_password Character string; the sub-account password. Defaults to `Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")`.
+#' @return List containing sub-account configuration: `sub_account_name` and `sub_account_password`.
 #' @examples
 #' \dontrun{
-#'   sub_cfg <- get_subaccount()
-#'   print(sub_cfg)
-#' }
+#' # Retrieve sub-account config from environment variables
+#' sub_cfg <- get_subaccount()
+#' print(sub_cfg)
 #'
+#' # Specify sub-account details manually
+#' sub_cfg <- get_subaccount(
+#'   sub_account_name = "my_subaccount",
+#'   sub_account_password = "my_password"
+#' )
+#' print(sub_cfg)
+#' }
 #' @export
 get_subaccount <- function(
     sub_account_name     = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),

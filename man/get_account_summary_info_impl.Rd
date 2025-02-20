@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_account_summary_info_impl}
 \alias{get_account_summary_info_impl}
-\title{Get Account Summary Information (Implementation)}
+\title{Retrieve Account Summary Information (Implementation)}
 \usage{
 get_account_summary_info_impl(
   keys = get_api_keys(),
@@ -11,75 +11,71 @@ get_account_summary_info_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., "2").
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the account summary data. The resulting data table is constructed from the raw API response and includes the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \strong{level} (integer): The user's VIP level.
-\item \strong{subQuantity} (integer): Total number of sub-accounts.
-\item \strong{spotSubQuantity} (integer): Number of sub-accounts with spot trading permissions.
-\item \strong{marginSubQuantity} (integer): Number of sub-accounts with margin trading permissions.
-\item \strong{futuresSubQuantity} (integer): Number of sub-accounts with futures trading permissions.
-\item \strong{optionSubQuantity} (integer): Number of sub-accounts with option trading permissions.
-\item \strong{maxSubQuantity} (integer): Maximum allowed sub-accounts (calculated as the sum of
-\code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
-\item \strong{maxDefaultSubQuantity} (integer): Maximum default open sub-accounts based on VIP level.
-\item \strong{maxSpotSubQuantity} (integer): Maximum additional sub-accounts with spot trading permissions.
-\item \strong{maxMarginSubQuantity} (integer): Maximum additional sub-accounts with margin trading permissions.
-\item \strong{maxFuturesSubQuantity} (integer): Maximum additional sub-accounts with futures trading permissions.
-\item \strong{maxOptionSubQuantity} (integer): Maximum additional sub-accounts with option trading permissions.
+\item \code{level} (integer): User's VIP level.
+\item \code{subQuantity} (integer): Total number of sub-accounts.
+\item \code{spotSubQuantity} (integer): Number of spot trading sub-accounts.
+\item \code{marginSubQuantity} (integer): Number of margin trading sub-accounts.
+\item \code{futuresSubQuantity} (integer): Number of futures trading sub-accounts.
+\item \code{optionSubQuantity} (integer): Number of option trading sub-accounts.
+\item \code{maxSubQuantity} (integer): Maximum allowed sub-accounts (sum of \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
+\item \code{maxDefaultSubQuantity} (integer): Maximum default sub-accounts based on VIP level.
+\item \code{maxSpotSubQuantity} (integer): Maximum additional spot sub-accounts.
+\item \code{maxMarginSubQuantity} (integer): Maximum additional margin sub-accounts.
+\item \code{maxFuturesSubQuantity} (integer): Maximum additional futures sub-accounts.
+\item \code{maxOptionSubQuantity} (integer): Maximum additional option sub-accounts.
 }
 }
 \description{
-This asynchronous function implements the retrieval of account summary information from the KuCoin API.
-It is designed for internal use as a method in an R6 class and is \strong{not} intended for direct consumption by end-users.
-The function performs the following operations:
+Retrieves account summary information from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It fetches details such as VIP level, sub-account counts, and limits.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url})
-and appending the endpoint.
-\item \strong{Header Preparation:} Builds the authentication headers based on the HTTP method, endpoint, and request body.
-\item \strong{API Request:} Sends a \code{GET} request to the KuCoin API endpoint for account summary information.
-\item \strong{Response Processing:} Processes the API response using a helper function and converts the \code{"data"} field to a \code{data.table}.
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with the endpoint \verb{/api/v2/user-info}.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()} with the HTTP method, endpoint, and an empty request body.
+\item \strong{API Request}: Sends a GET request to the KuCoin API with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()} and converts the \code{"data"} field into a \code{data.table}.
+}
 }
 
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v2/user-info}
+\subsection{API Endpoint}{
 
-\strong{Raw Response Schema:}
-\itemize{
-\item \code{code} (string): Status code, where "200000" indicates success.
-\item \code{data} (object): Contains the account summary details as described above.
+\verb{GET https://api.kucoin.com/api/v2/user-info}
 }
 
-For more detailed information, please see the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin API Documentation}.
+\subsection{Usage}{
+
+Utilised internally by the \code{KucoinAccountAndFunding} class to provide account summary data.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin Get Account Summary Info}
+}
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from the environment using get_api_keys()
-  keys <- get_api_keys()
-
-  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-  base_url <- "https://api.kucoin.com"
-
-  # Execute the asynchronous request using coro::run:
-  main_async <- coro::async(function() {
-    dt <- await(get_account_summary_info_impl(keys, base_url))
-    print(dt)
-  })
-
-  while(!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+main_async <- coro::async(function() {
+  dt <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
+  print(dt)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

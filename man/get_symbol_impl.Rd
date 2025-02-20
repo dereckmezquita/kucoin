@@ -11,70 +11,78 @@ get_symbol_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 }
 \value{
-A promise that resolves to a \code{data.table}:
-\describe{
-\item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
-\item{name}{(string) Name of the trading pair, which may change after renaming.}
-\item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
-\item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
-\item{feeCurrency}{(string) The currency used for charging fees.}
-\item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
-\item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
-\item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
-\item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
-\item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
-\item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
-\item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
-\item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
-\item{priceLimitRate}{(string) The threshold for price protection.}
-\item{minFunds}{(string) The minimum trading amount required for an order.}
-\item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
-\item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
-\item{feeCategory}{(integer) The fee category/type for the trading pair.}
-\item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
-\item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
-\item{st}{(boolean) A flag indicating additional status information (usage context-specific).}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{symbol} (character): Unique trading symbol code.
+\item \code{name} (character): Name of the trading pair.
+\item \code{baseCurrency} (character): Base currency.
+\item \code{quoteCurrency} (character): Quote currency.
+\item \code{feeCurrency} (character): Currency for fees.
+\item \code{market} (character): Trading market (e.g., \code{"USDS"}).
+\item \code{baseMinSize} (character): Minimum order quantity.
+\item \code{quoteMinSize} (character): Minimum order funds.
+\item \code{baseMaxSize} (character): Maximum order size.
+\item \code{quoteMaxSize} (character): Maximum order funds.
+\item \code{baseIncrement} (character): Quantity increment.
+\item \code{quoteIncrement} (character): Quote increment.
+\item \code{priceIncrement} (character): Price increment.
+\item \code{priceLimitRate} (character): Price protection threshold.
+\item \code{minFunds} (character): Minimum trading amount.
+\item \code{isMarginEnabled} (logical): Margin trading status.
+\item \code{enableTrading} (logical): Trading enabled status.
+\item \code{feeCategory} (integer): Fee category.
+\item \code{makerFeeCoefficient} (character): Maker fee coefficient.
+\item \code{takerFeeCoefficient} (character): Taker fee coefficient.
+\item \code{st} (logical): Special treatment flag.
+\item \code{callauctionIsEnabled} (logical): Call auction enabled status.
+\item \code{callauctionPriceFloor} (character): Call auction price floor.
+\item \code{callauctionPriceCeiling} (character): Call auction price ceiling.
+\item \code{callauctionFirstStageStartTime} (integer): First stage start time.
+\item \code{callauctionSecondStageStartTime} (integer): Second stage start time.
+\item \code{callauctionThirdStageStartTime} (integer): Third stage start time.
+\item \code{tradingStartTime} (integer): Trading start time.
 }
 }
 \description{
-This asynchronous function retrieves detailed information about a specified trading symbol from the KuCoin API.
-It returns a promise that resolves to a \code{data.table} containing all available symbol details.
+Retrieves detailed information about a specified trading symbol from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Input Validation:}
-Validates that a valid trading symbol is provided using the helper function \code{verify_symbol()}.
-\item \strong{URL Construction:}
-Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint
-path \code{/api/v2/symbols/}, and the provided \code{symbol}.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field.
-\item \strong{Data Conversion:}
-Converts the entire \code{data} property (a named list of symbol details) into a \code{data.table} without filtering.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v2/symbols/}, and the \code{symbol}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field.
+\item \strong{Data Conversion}: Converts \code{"data"} into a \code{data.table} without filtering.
+}
 }
 
-#' \strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v2/symbols/\{symbol\}}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch metadata for a specific trading symbol, such as price increments and trading limits.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols}{KuCoin Get Symbol}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v2/symbols/{symbol}}
-
-This function uses a public API endpoint that does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve details for the BTC-USDT trading pair:
-  dt_symbol <- await(get_symbol_impl(symbol = "BTC-USDT"))
-  print(dt_symbol)
+main_async <- coro::async(function() {
+  symbol_data <- await(get_symbol_impl(symbol = "BTC-USDT"))
+  print(symbol_data)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

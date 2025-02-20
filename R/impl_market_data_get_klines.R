@@ -3,10 +3,38 @@
 # box::use(
 #     ./helpers_api[ process_kucoin_response ],
 #     ./utils[ build_query, get_base_url ],
-#     ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ]
+#     ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ],
+#     coro[async, await],
+#     data.table[as.data.table, data.table, setnames, setcolorder, setorder, rbindlist],
+#     httr[RETRY, timeout],
+#     lubridate[as_datetime, now],
+#     promises[promise_all],
+#     rlang[abort]
 # )
 
-#' Get Klines market data allowed frequencies
+#' Get Klines Market Data Allowed Frequencies
+#'
+#' Provides a named list mapping KuCoin klines frequency strings to their equivalent durations in seconds.
+#'
+#' ### Workflow Overview
+#' Not applicable (static data definition).
+#'
+#' ### API Endpoint
+#' Not applicable (helper data structure).
+#'
+#' ### Usage
+#' Utilised to reference valid frequency options and their durations for klines data retrieval functions.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin klines API documentation for supported intervals.
+#'
+#' @return Named list with frequency strings as names (e.g., `"1min"`) and durations in seconds as values (e.g., `60`).
+#' @examples
+#' \dontrun{
+#' print(freq_to_second_map)
+#' # Access a specific frequency
+#' freq_to_second_map[["1hour"]]  # Returns 3600
+#' }
 #' @export
 freq_to_second_map <- list(
     "1min"    = 60,
@@ -26,7 +54,29 @@ freq_to_second_map <- list(
 )
 
 #' Check Allowed Frequency String
-#' @param freq_str A character string representing the frequency (e.g. "1min", "3min", etc.).
+#'
+#' Validates whether a frequency string is among the allowed options for KuCoin klines data.
+#'
+#' ### Workflow Overview
+#' 1. **Validation**: Checks if `freq_str` exists in `freq_to_second_map`, aborting with an error message listing allowed values if not.
+#'
+#' ### API Endpoint
+#' Not applicable (helper validation function).
+#'
+#' ### Usage
+#' Utilised to ensure frequency inputs for klines data retrieval are valid before API calls.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin klines API documentation for frequency options.
+#'
+#' @param freq_str Character string representing the frequency (e.g., `"1min"`, `"3min"`).
+#' @return Invisible `NULL` if valid; aborts with an error if invalid.
+#' @examples
+#' \dontrun{
+#' check_allowed_frequency_str("1min")  # Proceeds silently
+#' check_allowed_frequency_str("10min") # Aborts with error
+#' }
+#' @importFrom rlang abort
 #' @export
 check_allowed_frequency_str <- function(freq_str) {
     if (!freq_str %in% names(freq_to_second_map)) {
@@ -35,7 +85,29 @@ check_allowed_frequency_str <- function(freq_str) {
 }
 
 #' Check Allowed Frequency in Seconds
-#' @param freq_s A numeric value representing the frequency in seconds.
+#'
+#' Validates whether a frequency duration in seconds corresponds to an allowed KuCoin klines interval.
+#'
+#' ### Workflow Overview
+#' 1. **Validation**: Checks if `freq_s` matches any value in `freq_to_second_map`, aborting with an error message listing allowed values if not.
+#'
+#' ### API Endpoint
+#' Not applicable (helper validation function).
+#'
+#' ### Usage
+#' Utilised to confirm frequency durations in seconds are valid for klines data segmentation.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin klines API documentation for frequency durations.
+#'
+#' @param freq_s Numeric value representing the frequency in seconds.
+#' @return Invisible `NULL` if valid; aborts with an error if invalid.
+#' @examples
+#' \dontrun{
+#' check_allowed_frequency_s(60)   # Proceeds silently (matches "1min")
+#' check_allowed_frequency_s(120)  # Aborts with error
+#' }
+#' @importFrom rlang abort
 #' @export
 check_allowed_frequency_s <- function(freq_s) {
     if (!freq_s %in% unlist(freq_to_second_map)) {
@@ -45,18 +117,28 @@ check_allowed_frequency_s <- function(freq_s) {
 
 #' Convert Frequency String to Seconds
 #'
-#' Given a frequency string (e.g. "1min", "3min", "1hour", etc.), this function returns
-#' the corresponding duration in seconds.
+#' Converts a KuCoin klines frequency string into its equivalent duration in seconds.
 #'
-#' @param freq A character string representing the frequency. Allowed values are:
-#'   "1min", "3min", "5min", "15min", "30min", "1hour", "2hour", "4hour", "6hour", "8hour",
-#'   "12hour", "1day", "1week", "1month".
+#' ### Workflow Overview
+#' 1. **Validation**: Calls `check_allowed_frequency_str()` to ensure `freq` is valid.
+#' 2. **Conversion**: Retrieves the corresponding duration in seconds from `freq_to_second_map`.
 #'
-#' @return A numeric value representing the duration in seconds.
+#' ### API Endpoint
+#' Not applicable (helper conversion function).
 #'
+#' ### Usage
+#' Utilised to translate frequency strings into seconds for time range calculations in klines data retrieval.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin klines API documentation for frequency mappings.
+#'
+#' @param freq Character string representing the frequency (e.g., `"1min"`, `"1hour"`). Allowed values: `"1min"`, `"3min"`, `"5min"`, `"15min"`, `"30min"`, `"1hour"`, `"2hour"`, `"4hour"`, `"6hour"`, `"8hour"`, `"12hour"`, `"1day"`, `"1week"`, `"1month"`.
+#' @return Numeric value representing the duration in seconds.
 #' @examples
-#' frequency_to_seconds("1min")  # returns 60
-#'
+#' \dontrun{
+#' frequency_to_seconds("1min")   # Returns 60
+#' frequency_to_seconds("1hour")  # Returns 3600
+#' }
 #' @export
 frequency_to_seconds <- function(freq) {
     check_allowed_frequency_str(freq)
@@ -65,28 +147,41 @@ frequency_to_seconds <- function(freq) {
 
 #' Split a Time Range into Segments by Maximum Candle Count
 #'
-#' Given a start and end time (POSIXct) and the duration of a single candle (in seconds),
-#' this function splits the overall time range into segments such that each segment covers at most
-#' `max_candles` candles.
-#' 
-#' Note: The function extends the end of each segment by `overlap` seconds to ensure that the last candle
-#' when fetching data segments make sure to deduplicate the data.
+#' Splits a time range into segments based on a maximum number of candles, given a candle duration in seconds, adding an overlap to ensure data continuity.
 #'
-#' @param from A POSIXct object representing the start time.
-#' @param to A POSIXct object representing the end time.
-#' @param candle_duration_s A numeric value; the duration of one candle in seconds.
-#' @param max_candles Maximum number of candles per segment (default is 1500).
-#' @param overlap Number of seconds to extend the end of each segment (default is 1).
+#' ### Workflow Overview
+#' 1. **Time Validation**: Ensures `from` is earlier than `to`, aborting if not.
+#' 2. **Frequency Validation**: Confirms `candle_duration_s` is an allowed KuCoin frequency using `check_allowed_frequency_s()`.
+#' 3. **Time Conversion**: Converts `from` and `to` to UNIX seconds with `time_convert_to_kucoin()`.
+#' 4. **Segment Calculation**: Calculates segment start times based on `max_candles` and `candle_duration_s`, extending ends by `overlap` seconds, capped at `to`.
+#' 5. **Output Construction**: Returns a `data.table` with `from` and `to` columns for each segment.
 #'
-#' @return A data.table with two columns, `from` and `to`, where each row defines a segment.
+#' ### API Endpoint
+#' Not applicable (helper segmentation function).
 #'
+#' ### Usage
+#' Utilised to divide large time ranges into manageable segments for fetching KuCoin klines data, respecting the API’s 1500-candle limit per request.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; supports KuCoin klines API pagination.
+#'
+#' @param from POSIXct object representing the start time.
+#' @param to POSIXct object representing the end time.
+#' @param candle_duration_s Numeric value; duration of one candle in seconds.
+#' @param max_candles Integer; maximum number of candles per segment (default 1500).
+#' @param overlap Numeric; seconds to extend each segment’s end for overlap (default 1).
+#' @return `data.table` with columns `from` and `to`, each row defining a segment as POSIXct objects.
 #' @examples
-#' # For a 1min candle, a segment covers 1500 minutes.
+#' \dontrun{
 #' from <- lubridate::now() - 2 * 3600
 #' to <- lubridate::now()
 #' candle_duration_s <- 60
-#' split_time_range_by_candles(from, to, candle_duration_s)
-#'
+#' segments <- split_time_range_by_candles(from = from, to = to, candle_duration_s = candle_duration_s)
+#' print(segments)
+#' }
+#' @importFrom data.table data.table
+#' @importFrom lubridate now
+#' @importFrom rlang abort
 #' @export
 split_time_range_by_candles <- function(
     from,
@@ -117,75 +212,60 @@ split_time_range_by_candles <- function(
 
 #' Fetch a Segment of Klines Data
 #'
-#' This asynchronous helper function retrieves a segment of candlestick (klines) data for a specified trading pair
-#' from the KuCoin API. Because the API returns a maximum of 1500 candles per request, this function is intended to be
-#' used to fetch data for a smaller segment of the total requested time range.
+#' Retrieves a segment of candlestick (klines) data for a specified trading pair from the KuCoin API asynchronously, handling up to 1500 candles per request.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Delay Application**: Pauses for `delay_ms` milliseconds if specified, to throttle requests.
+#' 2. **Query Construction**: Builds the query string with `symbol`, `type` (frequency), `startAt`, and `endAt` using `build_query()`.
+#' 3. **URL Assembly**: Combines `base_url` with the endpoint `/api/v1/market/candles` and query string.
+#' 4. **API Request**: Sends a GET request with retries using `httr::RETRY()` and a 10-second timeout.
+#' 5. **Response Processing**: Processes the response with `process_kucoin_response()`, converts data to a `data.table`, standardises column names, coerces numerics, adds a `datetime` column, and orders by `datetime`.
 #'
-#' 1. **Optional Delay:**  
-#'    If a delay (in milliseconds) is specified via `delay_ms`, the function pauses for that duration before issuing
-#'    the HTTP request. This delay can help in throttling concurrent requests to avoid rate limiting.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/candles`
 #'
-#' 2. **Endpoint & Query Construction:**  
-#'    Constructs the full API URL by appending the appropriate query parameters to the base URL. The query parameters include:
-#'    - `symbol`: The trading pair (e.g., "BTC-USDT").
-#'    - `type`: The candlestick interval (e.g., "15min").
-#'    - `startAt`: The segment's start time converted to a UNIX timestamp in seconds.
-#'    - `endAt`: The segment's end time converted to a UNIX timestamp in seconds.
+#' ### Usage
+#' Utilised as a helper to fetch individual segments of klines data, typically within a broader segmented retrieval strategy.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request using `httr::RETRY()` with the specified number of retries and a timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the API response using `process_kucoin_response()` to ensure it is valid, converts the raw data into a
-#'    `data.table`, standardizes the column names, coerces numeric values, and adds a `datetime` column by converting the
-#'    `timestamp`.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @param symbol A character string representing the trading pair in KuCoin format (e.g., "BTC-USDT").
-#' @param freq A character string specifying the candlestick interval. Allowed values include "1min", "3min", "5min", "15min",
-#'             "30min", "1hour", "2hour", "4hour", "6hour", "8hour", "12hour", "1day", "1week", "1month". Default is "15min".
-#' @param from A POSIXct object representing the start time of the segment. Defaults to one hour before the current time.
-#' @param to A POSIXct object representing the end time of the segment. Defaults to the current time.
-#' @param retries An integer specifying the number of retry attempts for the HTTP request in case of failure. Default is 3.
-#' @param delay_ms A numeric value representing the delay in milliseconds before sending the request. Default is 0.
-#'
-#' @return A promise that resolves to a `data.table` containing the klines data for the specified segment.
-#'         The resulting data.table includes:
-#'         \describe{
-#'           \item{timestamp}{Numeric, the raw timestamp in seconds.}
-#'           \item{open}{Numeric, the opening price.}
-#'           \item{close}{Numeric, the closing price.}
-#'           \item{high}{Numeric, the highest price in the interval.}
-#'           \item{low}{Numeric, the lowest price in the interval.}
-#'           \item{volume}{Numeric, the trading volume.}
-#'           \item{turnover}{Numeric, the trading turnover.}
-#'           \item{datetime}{POSIXct, the converted datetime from the timestamp.}
-#'         }
-#'
-#' @details
-#' This function is a low-level helper intended to be used as part of a segmented approach for retrieving historical market data.
-#' It does not perform authentication since the endpoint is public. Users should note that concurrent requests using this function
-#' may lead to rate limiting; consider using the `delay_ms` parameter or sequential execution if necessary.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading pair in KuCoin format (e.g., `"BTC-USDT"`).
+#' @param freq Character string; candlestick interval (e.g., `"15min"`). Allowed values: `"1min"`, `"3min"`, `"5min"`, `"15min"`, `"30min"`, `"1hour"`, `"2hour"`, `"4hour"`, `"6hour"`, `"8hour"`, `"12hour"`, `"1day"`, `"1week"`, `"1month"`. Defaults to `"15min"`.
+#' @param from POSIXct object; start time of the segment. Defaults to one hour before the current time.
+#' @param to POSIXct object; end time of the segment. Defaults to the current time.
+#' @param retries Integer; number of retry attempts for the HTTP request (default 3).
+#' @param delay_ms Numeric; delay in milliseconds before sending the request (default 0).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `datetime` (POSIXct): Converted timestamp.
+#'   - `timestamp` (numeric): Raw timestamp in seconds.
+#'   - `open` (numeric): Opening price.
+#'   - `close` (numeric): Closing price.
+#'   - `high` (numeric): Highest price in the interval.
+#'   - `low` (numeric): Lowest price in the interval.
+#'   - `volume` (numeric): Trading volume.
+#'   - `turnover` (numeric): Trading turnover.
 #' @examples
 #' \dontrun{
-#'   # Retrieve a 15min segment of klines data for BTC-USDT over the past hour with a 100ms delay
+#' main_async <- coro::async(function() {
 #'   dt_segment <- await(fetch_klines_segment(
-#'       symbol = "BTC-USDT",
-#'       freq = "15min",
-#'       from = lubridate::now() - 3600,
-#'       to = lubridate::now(),
-#'       retries = 3,
-#'       delay_ms = 100
+#'     symbol = "BTC-USDT",
+#'     freq = "15min",
+#'     from = lubridate::now() - 3600,
+#'     to = lubridate::now(),
+#'     retries = 3,
+#'     delay_ms = 100
 #'   ))
 #'   print(dt_segment)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
+#' @importFrom coro async await
+#' @importFrom httr RETRY timeout
+#' @importFrom data.table as.data.table setnames setcolorder setorder
+#' @importFrom lubridate as_datetime now
 #' @export
 fetch_klines_segment <- coro::async(function(
     base_url = get_base_url(),
@@ -232,82 +312,66 @@ fetch_klines_segment <- coro::async(function(
     return(data)
 })
 
-################################################################################
-# Main Implementation: get_klines_impl
-################################################################################
-#' Retrieve Historical Klines Data
+#' Retrieve Historical Klines Data (Implementation)
 #'
-#' This asynchronous function retrieves historical candlestick (klines) data for a single trading pair from the KuCoin API.
-#' To overcome the API limitation of returning a maximum of 1500 candles per request, the function automatically splits the
-#' requested time range into segments (each covering at most 1500 candles), fetches each segment (either concurrently or sequentially),
-#' and aggregates the results.
+#' Retrieves historical candlestick (klines) data for a single trading pair from the KuCoin API asynchronously, segmenting requests to handle the 1500-candle limit per request.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Input Validation**: Converts `from` and `to` to POSIXct and ensures `from` is earlier than `to`.
+#' 2. **Frequency Conversion**: Translates `freq` to seconds using `frequency_to_seconds()`.
+#' 3. **Segmentation**: Splits the time range into segments with `split_time_range_by_candles()`, each up to 1500 candles.
+#' 4. **Segment Fetching**: Creates promises for each segment via `fetch_klines_segment()`.
+#' 5. **Execution Mode**: Fetches segments concurrently with `promises::promise_all()` if `concurrent = TRUE`, or sequentially otherwise.
+#' 6. **Aggregation**: Combines segment results with `data.table::rbindlist()`, removes duplicates by `timestamp`, and orders by `datetime`.
 #'
-#' 1. **Input Validation and Time Conversion:**  
-#'    Converts the input `from` and `to` parameters to POSIXct objects and checks that `from` is earlier than `to`.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/candles` (via `fetch_klines_segment()`)
 #'
-#' 2. **Frequency Conversion:**  
-#'    Converts the frequency string (e.g., "15min") to its corresponding duration in seconds using `frequency_to_seconds()`.
+#' ### Usage
+#' Utilised to fetch and aggregate historical klines data for analysis, supporting both concurrent and sequential retrieval.
 #'
-#' 3. **Time Range Segmentation:**  
-#'    Splits the overall time range into segments via `split_time_range_by_candles()`, ensuring that each segment covers no more than 1500 candles.
-#'
-#' 4. **Segment Data Retrieval:**  
-#'    For each segment, creates a promise by calling `fetch_klines_segment()` to retrieve the corresponding data.
-#'
-#' 5. **Concurrent vs. Sequential Execution:**  
-#'    - When `concurrent = TRUE` (default), all segment requests are executed concurrently using `promises::promise_all()`.
-#'    - When `concurrent = FALSE`, the segment requests are executed sequentially.
-#'
-#' 6. **Aggregation:**  
-#'    Once all segment requests complete, the resulting data.tables are combined using `data.table::rbindlist()` and sorted by `datetime`.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API. Defaults to the value returned by `get_base_url()`.
-#' @param symbol A single character string representing the trading pair (e.g., "BTC-USDT").
-#' @param freq A character string specifying the candlestick interval. Allowed values include "1min", "3min", "5min", "15min",
-#'             "30min", "1hour", "2hour", "4hour", "6hour", "8hour", "12hour", "1day", "1week", "1month". Default is "15min".
-#' @param from A POSIXct object specifying the start time for data retrieval. Defaults to 24 hours before the current time.
-#' @param to A POSIXct object specifying the end time for data retrieval. Defaults to the current time.
-#' @param concurrent A logical value indicating whether to execute segment requests concurrently. Default is TRUE.
-#'                   **Caution:** Concurrent requests may trigger rate limiting.
-#' @param delay_ms A numeric value representing the delay (in milliseconds) to insert before each request. This helps to control the request rate.
-#' @param retries An integer specifying the number of retry attempts for each segment request. Default is 3.
-#'
-#' @return A promise that resolves to a `data.table` containing the aggregated historical klines data. The table includes:
-#'         \describe{
-#'           \item{timestamp}{Numeric, the raw timestamp in seconds.}
-#'           \item{open}{Numeric, the opening price.}
-#'           \item{close}{Numeric, the closing price.}
-#'           \item{high}{Numeric, the highest price in the interval.}
-#'           \item{low}{Numeric, the lowest price in the interval.}
-#'           \item{volume}{Numeric, the trading volume.}
-#'           \item{turnover}{Numeric, the trading turnover.}
-#'           \item{datetime}{POSIXct, the timestamp converted to a datetime object.}
-#'         }
-#'
-#' @details
-#' This function is designed to fetch large ranges of historical market data by segmenting the request to comply with the KuCoin API limit of 1500 candles per request.
-#' The user has the option to execute the segmented requests concurrently for speed or sequentially for increased safety against rate limiting.
-#' Adjust the `delay_ms` parameter to insert a pause between requests if necessary.
-#'
-#' **Caution:**  
-#' Using concurrent requests can lead to hitting API rate limits. Users should consider setting `concurrent = FALSE` or increasing `delay_ms` if they encounter rate limit errors.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading pair (e.g., `"BTC-USDT"`). Defaults to `"BTC-USDT"`.
+#' @param freq Character string; candlestick interval (e.g., `"15min"`). Allowed values: `"1min"`, `"3min"`, `"5min"`, `"15min"`, `"30min"`, `"1hour"`, `"2hour"`, `"4hour"`, `"6hour"`, `"8hour"`, `"12hour"`, `"1day"`, `"1week"`, `"1month"`. Defaults to `"15min"`.
+#' @param from POSIXct object; start time for data retrieval. Defaults to 24 hours before now.
+#' @param to POSIXct object; end time for data retrieval. Defaults to now.
+#' @param concurrent Logical; whether to fetch segments concurrently (default `TRUE`). Caution: May trigger rate limits.
+#' @param delay_ms Numeric; delay in milliseconds before each request (default 0).
+#' @param retries Integer; number of retry attempts per segment request (default 3).
+#' @param verbose Logical; whether to print progress messages (default `FALSE`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `datetime` (POSIXct): Converted timestamp.
+#'   - `timestamp` (numeric): Raw timestamp in seconds.
+#'   - `open` (numeric): Opening price.
+#'   - `close` (numeric): Closing price.
+#'   - `high` (numeric): Highest price in the interval.
+#'   - `low` (numeric): Lowest price in the interval.
+#'   - `volume` (numeric): Trading volume.
+#'   - `turnover` (numeric): Trading turnover.
 #' @examples
 #' \dontrun{
-#'   # Retrieve 15min candles for BTC-USDT for the last 24 hours concurrently:
+#' main_async <- coro::async(function() {
 #'   dt <- await(get_klines_impl(symbol = "BTC-USDT", freq = "15min"))
 #'   print(dt)
-#'
-#'   # Retrieve the same data sequentially with a 200ms delay between requests:
-#'   dt_seq <- await(get_klines_impl(symbol = "BTC-USDT", freq = "15min", concurrent = FALSE, delay_ms = 200))
+#'   dt_seq <- await(get_klines_impl(
+#'     symbol = "BTC-USDT",
+#'     freq = "15min",
+#'     concurrent = FALSE,
+#'     delay_ms = 200
+#'   ))
 #'   print(dt_seq)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
+#' @importFrom coro async await
+#' @importFrom data.table data.table rbindlist setorder
+#' @importFrom lubridate as_datetime now
+#' @importFrom promises promise_all
+#' @importFrom rlang abort
 #' @export
 get_klines_impl <- coro::async(function(
     base_url = get_base_url(),

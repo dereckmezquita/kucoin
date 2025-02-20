@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_sub_account.R
 \name{get_subaccount_detail_balance_impl}
 \alias{get_subaccount_detail_balance_impl}
-\title{Get SubAccount Detail – Balance Implementation}
+\title{Retrieve Sub-Account Balance Details (Implementation)}
 \usage{
 get_subaccount_detail_balance_impl(
   keys = get_api_keys(),
@@ -13,88 +13,77 @@ get_subaccount_detail_balance_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. It must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g. \code{"2"}).
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses
-\code{get_base_url()}.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 
-\item{subUserId}{A string representing the sub‐account user ID for which the balance details are to be retrieved.}
+\item{subUserId}{Character string representing the sub-account user ID for which balance details are retrieved.}
 
-\item{includeBaseAmount}{A boolean flag indicating whether to include currencies with a zero balance in the response.
-\itemize{
-\item \strong{Default:} \code{FALSE}
-}}
+\item{includeBaseAmount}{Logical flag indicating whether to include currencies with a zero balance in the response. Defaults to \code{FALSE}.}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the detailed balance information for the specified sub‐account.
-Each row represents a currency in one of the account types, with an additional column \code{accountType} indicating the source
-array, as well as columns for \code{subUserId} and \code{subName} extracted from the parent response.
+Promise resolving to a \code{data.table} containing detailed balance information for the specified sub-account, with columns including:
+\itemize{
+\item \code{currency} (character): Currency code.
+\item \code{balance} (character): Total balance.
+\item \code{available} (character): Amount available for trading or withdrawal.
+\item \code{holds} (character): Amount locked or held.
+\item \code{accountType} (character): Source account type (e.g., \code{"mainAccounts"}, \code{"tradeAccounts"}, \code{"marginAccounts"}, \code{"tradeHFAccounts"}).
+\item \code{subUserId} (character): Sub-account user ID.
+\item \code{subName} (character): Sub-account name.
+Additional fields such as \code{baseCurrency}, \code{baseCurrencyPrice}, \code{baseAmount}, and \code{tag} may be present depending on the response.
+}
 }
 \description{
-This asynchronous function retrieves the balance details for a specific sub‐account from KuCoin.
-It sends a GET request to the KuCoin API endpoint for sub‐account details and processes the returned JSON response.
-The endpoint provides separate arrays for each account type under the sub‐account (typically including
-\code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts} and \code{tradeHFAccounts}). For each non‐empty array, the function converts
-the data into a \code{data.table}, adds an \code{accountType} column to indicate the type, and then aggregates all the tables into a
-single \code{data.table}. Finally, it appends the sub‐account's user ID and name to every row.
+Retrieves balance details for a specific sub-account from KuCoin asynchronously, aggregating account types into a single \code{data.table}. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 }
 \details{
-\subsection{Endpoint Overview}{
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL and Query String Construction}: Constructs the endpoint URL by appending \code{subUserId} to \verb{/api/v1/sub-accounts/} and adding the \code{includeBaseAmount} query parameter (defaulting to \code{FALSE}).
+\item \strong{Header Generation}: Generates authentication headers asynchronously via \code{build_headers()}.
+\item \strong{HTTP Request}: Sends a GET request to the constructed URL with a 3-second timeout using \code{httr::GET()}.
+\item \strong{Response Processing}: Parses the JSON response with \code{process_kucoin_response()}, converting each non-empty account type array (\code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, \code{tradeHFAccounts}) into a \code{data.table} with an added \code{accountType} column.
+\item \strong{Aggregation and Metadata Addition}: Aggregates all non-empty \code{data.table}s into a single \code{data.table} using \code{data.table::rbindlist()}, appending \code{subUserId} and \code{subName} to each row.
+}
+}
 
-\strong{API Endpoint:}
+\subsection{API Endpoint}{
+
 \verb{GET https://api.kucoin.com/api/v1/sub-accounts/\{subUserId\}?includeBaseAmount=\{includeBaseAmount\}}
-
-\strong{Purpose:}
-This endpoint retrieves detailed balance information for a specific sub‐account. The response is structured to provide
-separate balance details for various account categories (e.g. funding, spot, margin, and high‐frequency trading accounts).
-
-\strong{Query Parameter:}
-\itemize{
-\item \code{includeBaseAmount} (boolean): Indicates whether to include currencies with a zero balance in the response.
-\itemize{
-\item \strong{Default:} \code{FALSE} (only non‐zero balances are returned)
-}
 }
 
-\strong{Response Schema:}
-On success, the API returns a JSON object with:
-\itemize{
-\item \strong{code} (string): Status code, where \code{"200000"} indicates success.
-\item \strong{data} (object): Contains:
-\itemize{
-\item \code{subUserId}: The sub‐account's user ID.
-\item \code{subName}: The sub‐account name.
-\item \code{mainAccounts}: An array of objects detailing funding account balances.
-\item \code{tradeAccounts}: An array of objects detailing spot account balances.
-\item \code{marginAccounts}: An array of objects detailing margin account balances.
-\item \code{tradeHFAccounts}: An array (often deprecated) for high‐frequency trading accounts.
-}
+\subsection{Usage}{
+
+Utilised internally to provide detailed balance information across various account categories for a specified sub-account.
 }
 
-Each account object typically includes fields such as:
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance}{KuCoin Get Sub-Account Detail Balance}
+
+\strong{Raw Response Schema}:
 \itemize{
-\item \code{currency}: The currency code.
-\item \code{balance}: Total balance.
-\item \code{available}: Amount available for trading or withdrawal.
-\item \code{holds}: Amount locked or held.
-\item Additional fields such as \code{baseCurrency}, \code{baseCurrencyPrice}, \code{baseAmount}, and \code{tag}.
+\item \code{code} (string): Status code, where \code{"200000"} indicates success.
+\item \code{data} (object): Contains \code{subUserId}, \code{subName}, and arrays for \code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, and \code{tradeHFAccounts}.
 }
 
-The JSON response looks like:
-\preformatted{
-{
+Example JSON response:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\{
     "code": "200000",
-    "data": {
+    "data": \{
         "subUserId": "63743f07e0c5230001761d08",
         "subName": "testapi6",
         "mainAccounts": [
-            {
+            \{
                 "currency": "USDT",
                 "balance": "0.01",
                 "available": "0.01",
@@ -103,10 +92,10 @@ The JSON response looks like:
                 "baseCurrencyPrice": "62384.3",
                 "baseAmount": "0.00000016",
                 "tag": "DEFAULT"
-            }
+            \}
         ],
         "tradeAccounts": [
-            {
+            \{
                 "currency": "USDT",
                 "balance": "0.01",
                 "available": "0.01",
@@ -115,10 +104,10 @@ The JSON response looks like:
                 "baseCurrencyPrice": "62384.3",
                 "baseAmount": "0.00000016",
                 "tag": "DEFAULT"
-            }
+            \}
         ],
         "marginAccounts": [
-            {
+            \{
                 "currency": "USDT",
                 "balance": "0.01",
                 "available": "0.01",
@@ -127,33 +116,29 @@ The JSON response looks like:
                 "baseCurrencyPrice": "62384.3",
                 "baseAmount": "0.00000016",
                 "tag": "DEFAULT"
-            }
+            \}
         ],
         "tradeHFAccounts": []
-    }
+    \}
+\}
+}\if{html}{\out{</div>}}
 }
 }
-
-For more detailed information, please refer to the
-\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance}{KuCoin Sub‐Account Detail Balance Documentation}.
-}
-
-\subsection{Function Workflow}{
-\enumerate{
-\item \strong{URL and Query String Construction:}
-Constructs the endpoint URL by appending the \code{subUserId} to \verb{/api/v1/sub-accounts/} and adding the query parameter
-\code{includeBaseAmount} (which defaults to \code{FALSE} if not specified).
-\item \strong{Header Generation:}
-Asynchronously generates the necessary authentication headers by calling \code{build_headers()}.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 3-second timeout.
-\item \strong{Response Processing:}
-Parses the JSON response using \code{process_kucoin_response()} and, for each account type array
-(\code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, \code{tradeHFAccounts}), converts the array into a \code{data.table}
-and adds an \code{accountType} column.
-\item \strong{Aggregation and Metadata Addition:}
-Aggregates all non‐empty \code{data.table}s into a single \code{data.table} using \code{data.table::rbindlist()} and appends the
-sub‐account's user ID and name as new columns.
-}
+\examples{
+\dontrun{
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+subUserId <- "63743f07e0c5230001761d08"
+main_async <- coro::async(function() {
+  dt <- await(get_subaccount_detail_balance_impl(
+    keys = keys,
+    base_url = base_url,
+    subUserId = subUserId,
+    includeBaseAmount = TRUE
+  ))
+  print(dt)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
 }

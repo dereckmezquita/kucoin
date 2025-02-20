@@ -10,49 +10,45 @@ get_market_list_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a \code{character} vector containing the list of available trading markets.
+Promise resolving to a character vector of trading market identifiers (e.g., \code{"USDS"}, \code{"TON"}).
 }
 \description{
-This asynchronous function retrieves the list of all available trading markets from the KuCoin API.
-The endpoint returns an array of market identifiers (e.g., "USDS", "TON", "AI", etc.) which represent different
-trading areas. This list can be used to filter or further query market-specific data using other endpoints (e.g., retrieving
-24-hour statistics or ticker information for a specific market).
+Retrieves the list of all available trading markets from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint path
-\code{/api/v1/markets}. No query parameters are required.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the API response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field, which contains the list of markets.
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/markets}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field as a character vector.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/markets}
+}
+
+\subsection{Usage}{
+
+Utilised to identify available trading markets on KuCoin for filtering or querying market-specific data.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list}{KuCoin Get Market List}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/markets}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve the list of markets:
-  dt_markets <- await(get_market_list_impl())
-  print(dt_markets)
-}
-
-}
-\seealso{
-\itemize{
-\item \code{\link{get_24hr_stats_impl}} for retrieving detailed statistics for a specific trading pair.
-\item \code{\link{get_ticker_impl}} for obtaining ticker information.
+main_async <- coro::async(function() {
+  markets <- await(get_market_list_impl())
+  print(markets)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
 }

@@ -16,82 +16,76 @@ fetch_klines_segment(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API. Defaults to `get_base_url()`.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading pair in KuCoin format (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading pair in KuCoin format (e.g., \code{"BTC-USDT"}).}
 
-\item{freq}{A character string specifying the candlestick interval. Allowed values include "1min", "3min", "5min", "15min",
-"30min", "1hour", "2hour", "4hour", "6hour", "8hour", "12hour", "1day", "1week", "1month". Default is "15min".}
+\item{freq}{Character string; candlestick interval (e.g., \code{"15min"}). Allowed values: \code{"1min"}, \code{"3min"}, \code{"5min"}, \code{"15min"}, \code{"30min"}, \code{"1hour"}, \code{"2hour"}, \code{"4hour"}, \code{"6hour"}, \code{"8hour"}, \code{"12hour"}, \code{"1day"}, \code{"1week"}, \code{"1month"}. Defaults to \code{"15min"}.}
 
-\item{from}{A POSIXct object representing the start time of the segment. Defaults to one hour before the current time.}
+\item{from}{POSIXct object; start time of the segment. Defaults to one hour before the current time.}
 
-\item{to}{A POSIXct object representing the end time of the segment. Defaults to the current time.}
+\item{to}{POSIXct object; end time of the segment. Defaults to the current time.}
 
-\item{retries}{An integer specifying the number of retry attempts for the HTTP request in case of failure. Default is 3.}
+\item{retries}{Integer; number of retry attempts for the HTTP request (default 3).}
 
-\item{delay_ms}{A numeric value representing the delay in milliseconds before sending the request. Default is 0.}
+\item{delay_ms}{Numeric; delay in milliseconds before sending the request (default 0).}
 }
 \value{
-A promise that resolves to a `data.table` containing the klines data for the specified segment.
-        The resulting data.table includes:
-        \describe{
-          \item{timestamp}{Numeric, the raw timestamp in seconds.}
-          \item{open}{Numeric, the opening price.}
-          \item{close}{Numeric, the closing price.}
-          \item{high}{Numeric, the highest price in the interval.}
-          \item{low}{Numeric, the lowest price in the interval.}
-          \item{volume}{Numeric, the trading volume.}
-          \item{turnover}{Numeric, the trading turnover.}
-          \item{datetime}{POSIXct, the converted datetime from the timestamp.}
-        }
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{datetime} (POSIXct): Converted timestamp.
+\item \code{timestamp} (numeric): Raw timestamp in seconds.
+\item \code{open} (numeric): Opening price.
+\item \code{close} (numeric): Closing price.
+\item \code{high} (numeric): Highest price in the interval.
+\item \code{low} (numeric): Lowest price in the interval.
+\item \code{volume} (numeric): Trading volume.
+\item \code{turnover} (numeric): Trading turnover.
+}
 }
 \description{
-This asynchronous helper function retrieves a segment of candlestick (klines) data for a specified trading pair
-from the KuCoin API. Because the API returns a maximum of 1500 candles per request, this function is intended to be
-used to fetch data for a smaller segment of the total requested time range.
+Retrieves a segment of candlestick (klines) data for a specified trading pair from the KuCoin API asynchronously, handling up to 1500 candles per request.
 }
 \details{
-**Workflow Overview:**
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Delay Application}: Pauses for \code{delay_ms} milliseconds if specified, to throttle requests.
+\item \strong{Query Construction}: Builds the query string with \code{symbol}, \code{type} (frequency), \code{startAt}, and \code{endAt} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url} with the endpoint \verb{/api/v1/market/candles} and query string.
+\item \strong{API Request}: Sends a GET request with retries using \code{httr::RETRY()} and a 10-second timeout.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()}, converts data to a \code{data.table}, standardises column names, coerces numerics, adds a \code{datetime} column, and orders by \code{datetime}.
+}
+}
 
-1. **Optional Delay:**  
-   If a delay (in milliseconds) is specified via `delay_ms`, the function pauses for that duration before issuing
-   the HTTP request. This delay can help in throttling concurrent requests to avoid rate limiting.
+\subsection{API Endpoint}{
 
-2. **Endpoint & Query Construction:**  
-   Constructs the full API URL by appending the appropriate query parameters to the base URL. The query parameters include:
-   - `symbol`: The trading pair (e.g., "BTC-USDT").
-   - `type`: The candlestick interval (e.g., "15min").
-   - `startAt`: The segment's start time converted to a UNIX timestamp in seconds.
-   - `endAt`: The segment's end time converted to a UNIX timestamp in seconds.
+\verb{GET https://api.kucoin.com/api/v1/market/candles}
+}
 
-3. **HTTP Request:**  
-   Sends a GET request using `httr::RETRY()` with the specified number of retries and a timeout.
+\subsection{Usage}{
 
-4. **Response Processing:**  
-   Processes the API response using `process_kucoin_response()` to ensure it is valid, converts the raw data into a
-   `data.table`, standardizes the column names, coerces numeric values, and adds a `datetime` column by converting the
-   `timestamp`.
+Utilised as a helper to fetch individual segments of klines data, typically within a broader segmented retrieval strategy.
+}
 
-**API Documentation:**  
-[KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
+\subsection{Official Documentation}{
 
-
-This function is a low-level helper intended to be used as part of a segmented approach for retrieving historical market data.
-It does not perform authentication since the endpoint is public. Users should note that concurrent requests using this function
-may lead to rate limiting; consider using the `delay_ms` parameter or sequential execution if necessary.
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines}{KuCoin Get Klines}
+}
 }
 \examples{
 \dontrun{
-  # Retrieve a 15min segment of klines data for BTC-USDT over the past hour with a 100ms delay
+main_async <- coro::async(function() {
   dt_segment <- await(fetch_klines_segment(
-      symbol = "BTC-USDT",
-      freq = "15min",
-      from = lubridate::now() - 3600,
-      to = lubridate::now(),
-      retries = 3,
-      delay_ms = 100
+    symbol = "BTC-USDT",
+    freq = "15min",
+    from = lubridate::now() - 3600,
+    to = lubridate::now(),
+    retries = 3,
+    delay_ms = 100
   ))
   print(dt_segment)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

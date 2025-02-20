@@ -3,14 +3,45 @@
 \docType{data}
 \name{freq_to_second_map}
 \alias{freq_to_second_map}
-\title{Get Klines market data allowed frequencies}
+\title{Get Klines Market Data Allowed Frequencies}
 \format{
 An object of class \code{list} of length 14.
 }
 \usage{
 freq_to_second_map
 }
+\value{
+Named list with frequency strings as names (e.g., \code{"1min"}) and durations in seconds as values (e.g., \code{60}).
+}
 \description{
-Get Klines market data allowed frequencies
+Provides a named list mapping KuCoin klines frequency strings to their equivalent durations in seconds.
+}
+\details{
+\subsection{Workflow Overview}{
+
+Not applicable (static data definition).
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper data structure).
+}
+
+\subsection{Usage}{
+
+Utilised to reference valid frequency options and their durations for klines data retrieval functions.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin klines API documentation for supported intervals.
+}
+}
+\examples{
+\dontrun{
+print(freq_to_second_map)
+# Access a specific frequency
+freq_to_second_map[["1hour"]]  # Returns 3600
+}
 }
 \keyword{datasets}

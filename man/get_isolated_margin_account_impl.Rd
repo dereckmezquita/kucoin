@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_isolated_margin_account_impl}
 \alias{get_isolated_margin_account_impl}
-\title{Get Isolated Margin Account Implementation}
+\title{Retrieve Isolated Margin Account Information (Implementation)}
 \usage{
 get_isolated_margin_account_impl(
   keys = get_api_keys(),
@@ -12,101 +12,97 @@ get_isolated_margin_account_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-\describe{
-\item{\code{api_key}}{Your KuCoin API key.}
-\item{\code{api_secret}}{Your KuCoin API secret.}
-\item{\code{api_passphrase}}{Your KuCoin API passphrase.}
-\item{\code{key_version}}{The version of the API key (e.g., "2").}
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
+\itemize{
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, \code{get_base_url()} is used.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 
-\item{query}{A named list of query parameters to filter the isolated margin account information. Supported parameters include:
-\describe{
-\item{\code{symbol}}{(string, optional) For isolated trading pairs; if omitted, queries all pairs.}
-\item{\code{quoteCurrency}}{(string, optional) The quote currency. Allowed values: "USDT", "KCS", "BTC". Defaults to "USDT".}
-\item{\code{queryType}}{(string, optional) The type of account query. Allowed values: "ISOLATED", "ISOLATED_V2", "ALL". Defaults to "ISOLATED".}
+\item{query}{Named list of query parameters:
+\itemize{
+\item \code{symbol} (character, optional): Trading pair (e.g., \code{"BTC-USDT"}).
+\item \code{quoteCurrency} (character, optional): Quote currency (e.g., \code{"USDT"}, \code{"KCS"}, \code{"BTC"}; default \code{"USDT"}).
+\item \code{queryType} (character, optional): Type (\code{"ISOLATED"}, \code{"ISOLATED_V2"}, \code{"ALL"}; default \code{"ISOLATED"}).
 }}
 }
 \value{
-A promise that resolves to a named list with two elements:
-\describe{
-\item{\code{summary}}{
-A data.table with the following columns:
-\describe{
-\item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-\item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-\item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-\item{\code{datetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
+Promise resolving to a named list containing:
+\itemize{
+\item \code{summary}: \code{data.table} with:
+\itemize{
+\item \code{totalAssetOfQuoteCurrency} (character): Total assets.
+\item \code{totalLiabilityOfQuoteCurrency} (character): Total liabilities.
+\item \code{timestamp} (integer): Timestamp in milliseconds.
+\item \code{datetime} (POSIXct): Converted datetime.
 }
-}
-\item{\code{assets}}{
-A data.table where each row represents one isolated margin account asset. The flattened columns include:
-\describe{
-\item{\code{symbol}}{(string) Trading pair symbol (e.g., "BTC-USDT").}
-\item{\code{status}}{(string) Position status.}
-\item{\code{debtRatio}}{(string) Debt ratio.}
-\item{\code{base_currency}}{(string) Currency code from the base asset.}
-\item{\code{base_borrowEnabled}}{(boolean) Whether borrowing is enabled for the base asset.}
-\item{\code{base_transferInEnabled}}{(boolean) Whether transfers into the base asset account are enabled.}
-\item{\code{base_liability}}{(string) Liability for the base asset.}
-\item{\code{base_total}}{(string) Total base asset amount.}
-\item{\code{base_available}}{(string) Available base asset amount.}
-\item{\code{base_hold}}{(string) Base asset amount on hold.}
-\item{\code{base_maxBorrowSize}}{(string) Maximum borrowable base asset amount.}
-\item{\code{quote_currency}}{(string) Currency code from the quote asset.}
-\item{\code{quote_borrowEnabled}}{(boolean) Whether borrowing is enabled for the quote asset.}
-\item{\code{quote_transferInEnabled}}{(boolean) Whether transfers into the quote asset account are enabled.}
-\item{\code{quote_liability}}{(string) Liability for the quote asset.}
-\item{\code{quote_total}}{(string) Total quote asset amount.}
-\item{\code{quote_available}}{(string) Available quote asset amount.}
-\item{\code{quote_hold}}{(string) Quote asset amount on hold.}
-\item{\code{quote_maxBorrowSize}}{(string) Maximum borrowable quote asset amount.}
-}
+\item \code{assets}: \code{data.table} with:
+\itemize{
+\item \code{symbol} (character): Trading pair.
+\item \code{status} (character): Position status.
+\item \code{debtRatio} (character): Debt ratio.
+\item \code{base_currency} (character): Base currency code.
+\item \code{base_borrowEnabled} (logical): Base borrowing enabled.
+\item \code{base_transferInEnabled} (logical): Base transfer-in enabled.
+\item \code{base_liability} (character): Base liability.
+\item \code{base_total} (character): Base total funds.
+\item \code{base_available} (character): Base available funds.
+\item \code{base_hold} (character): Base funds on hold.
+\item \code{base_maxBorrowSize} (character): Base max borrowable.
+\item \code{quote_currency} (character): Quote currency code.
+\item \code{quote_borrowEnabled} (logical): Quote borrowing enabled.
+\item \code{quote_transferInEnabled} (logical): Quote transfer-in enabled.
+\item \code{quote_liability} (character): Quote liability.
+\item \code{quote_total} (character): Quote total funds.
+\item \code{quote_available} (character): Quote available funds.
+\item \code{quote_hold} (character): Quote funds on hold.
+\item \code{quote_maxBorrowSize} (character): Quote max borrowable.
 }
 }
 }
 \description{
-This asynchronous function retrieves isolated margin account information from the KuCoin API.
-It sends a \code{GET} request to the \verb{/api/v3/isolated/accounts} endpoint with optional query parameters
-and returns the parsed response as a named list of two flat data.tables.
+Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, segregating collateral by pair.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:} Constructs the full API URL by calling \code{get_base_url()} (or using the supplied \code{base_url})
-and appending the endpoint and query string.
-\item \strong{Header Preparation:} Builds the authentication headers using the provided API keys.
-\item \strong{API Request:} Sends an asynchronous GET request to the endpoint.
-\item \strong{Response Processing:} Processes the API response using a helper function and then:
-\itemize{
-\item Extracts overall summary fields into a data.table and adds a new column \code{datetime} by converting the raw \code{timestamp} using \code{time_convert_from_kucoin("ms")}.
-\item Flattens the nested \code{baseAsset} and \code{quoteAsset} objects from each asset into separate columns with prefixes.
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with \verb{/api/v3/isolated/accounts} and a query string from \code{build_query()}.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()}.
+\item \strong{API Request}: Sends a GET request with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()}, converting the \code{"data"} field into \code{summary} and flattened \code{assets} \code{data.table} objects, adding a \code{datetime} column.
 }
 }
 
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/isolated/accounts}
+\subsection{API Endpoint}{
 
-For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin}{KuCoin API Documentation}.
+\verb{GET https://api.kucoin.com/api/v3/isolated/accounts}
+}
+
+\subsection{Usage}{
+
+Utilised internally by \code{KucoinAccountAndFunding} to provide isolated margin account data.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin}{KuCoin Get Account Isolated Margin}
+}
 }
 \examples{
 \dontrun{
-  keys <- get_api_keys()
-  base_url <- "https://api.kucoin.com"
-
-  query <- list(quoteCurrency = "USDT", queryType = "ISOLATED")
-
-  main_async <- coro::async(function() {
-    result <- await(get_isolated_margin_account_impl(keys, base_url, query))
-    # 'result' is a list with two data.tables: summary and assets.
-    print(result$summary)
-    print(result$assets)
-  })
-
-  main_async()
-  while (!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+query <- list(symbol = "BTC-USDT", quoteCurrency = "USDT")
+main_async <- coro::async(function() {
+  result <- await(get_isolated_margin_account_impl(keys = keys, base_url = base_url, query = query))
+  print(result$summary)
+  print(result$assets)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

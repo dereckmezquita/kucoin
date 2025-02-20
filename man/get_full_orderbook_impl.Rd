@@ -12,74 +12,68 @@ get_full_orderbook_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List; API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The API key version (e.g., "2").
+\item \code{api_key} (character): KuCoin API key.
+\item \code{api_secret} (character): KuCoin API secret.
+\item \code{api_passphrase} (character): KuCoin API passphrase.
+\item \code{key_version} (character): API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the full orderbook details. The returned data.table includes:
-\describe{
-\item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
-\item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
-\item{sequence}{(string) The sequence number for the orderbook update.}
-\item{side}{(string) The order side ("bid" or "ask").}
-\item{price}{(string) The aggregated price at the given level.}
-\item{size}{(string) The aggregated size at that price level.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
+\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
+\item \code{sequence} (character): Orderbook update sequence.
+\item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
+\item \code{price} (character): Aggregated price level.
+\item \code{size} (character): Aggregated size at that price.
 }
 }
 \description{
-This asynchronous function retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API.
-Because this is a private endpoint, valid API keys must be provided and authentication headers are constructed.
-The endpoint returns aggregated price levels for both bids and asks along with a global snapshot timestamp and sequence number.
+Retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring authentication.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Authentication Header Preparation:}
-Uses the helper function \code{build_headers()} along with the provided API keys to construct the necessary authentication headers.
-\item \strong{Query String Construction:}
-Uses \code{build_query()} to generate a query string containing the required \code{symbol} parameter.
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-\code{/api/v3/market/orderbook/level2}, and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with the authentication headers and a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to ensure the HTTP status and API code indicate success,
-then extracts the \code{data} field.
-\item \strong{Data Conversion and Flattening:}
-\itemize{
-\item Converts the bids and asks matrices (with price in the first column and size in the second) into two separate \code{data.table} objects.
-\item Adds a \code{side} column to each table ("bid" for bids, "ask" for asks).
-\item Combines the two tables into a single \code{data.table}.
+\item \strong{Header Preparation}: Constructs authentication headers with \code{build_headers()} using \code{keys}.
+\item \strong{Query Construction}: Builds a query string with the \code{symbol} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/market/orderbook/level2}, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with headers and a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts bids and asks into \code{data.table}s, adds \code{side}, combines them, and appends snapshot fields.
 }
-\item \strong{Timestamp Conversion:}
-Appends the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin("ms")}).
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v3/market/orderbook/level2}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch the complete orderbook for a trading symbol, requiring API authentication for detailed depth data.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook}{KuCoin Get Full OrderBook}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/market/orderbook/level2?symbol=<symbol>}
-
-This function is private and requires valid API keys to construct authentication headers.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from your environment:
+main_async <- coro::async(function() {
   keys <- get_api_keys()
-
-  # Retrieve the full orderbook for BTC-USDT:
-  dt_full_orderbook <- await(get_full_orderbook_impl(keys, base_url = get_base_url(), symbol = "BTC-USDT"))
-  print(dt_full_orderbook)
+  orderbook <- await(get_full_orderbook_impl(keys = keys, symbol = "BTC-USDT"))
+  print(orderbook)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

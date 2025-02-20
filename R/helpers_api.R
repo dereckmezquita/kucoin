@@ -1,50 +1,55 @@
 # File: ./R/helpers_api.R
 
-# box::use(./utils[ get_base_url ])
+# box::use(
+#   ./utils[get_base_url],
+#   httr[GET, timeout, content, status_code, add_headers],
+#   jsonlite[fromJSON],
+#   rlang[error_cnd, abort],
+#   promises[promise],
+#   digest[hmac],
+#   base64enc[base64encode],
+#   coro[async, await]
+# )
 
-#' Get Server Time from KuCoin Futures API
+#' Retrieve Server Time from KuCoin Futures API
 #'
-#' Retrieves the current server time (Unix timestamp in milliseconds) from the KuCoin Futures API.
-#' The server time is critical for authenticated requests to KuCoin, as the API requires that the
-#' timestamp header in each request is within 5 seconds of the actual server time. This function sends
-#' an asynchronous GET request and returns a promise that resolves to the timestamp. If the request fails,
-#' the promise is rejected with an error.
+#' Retrieves the current server time as a Unix timestamp in milliseconds from the KuCoin Futures API asynchronously. This helper function is essential for authenticated requests, ensuring timestamps align with server time within a 5-second window.
 #'
-#' **API Endpoint:**  
+#' ### Workflow Overview
+#' 1. **URL Construction**: Combines the base URL (default from `get_base_url()`) with the endpoint `/api/v1/timestamp`.
+#' 2. **API Request**: Sends an asynchronous GET request with a 3-second timeout using `httr::GET()`.
+#' 3. **Status Check**: Validates the HTTP status code is 200, rejecting the promise if not.
+#' 4. **Response Parsing**: Extracts the response text and parses it as JSON with `jsonlite::fromJSON()`.
+#' 5. **Structure Validation**: Ensures `"code"` and `"data"` fields exist, rejecting if missing.
+#' 6. **Success Check**: Confirms the API code is `"200000"`, rejecting if not.
+#' 7. **Result Resolution**: Resolves the promise with the timestamp from the `"data"` field.
+#'
+#' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v1/timestamp`
 #'
-#' **Usage:**  
-#' The server time is used to generate signatures and validate request freshness, helping prevent replay attacks.
+#' ### Usage
+#' Utilised to synchronise request timestamps for signature generation and to prevent replay attacks in authenticated API calls.
 #'
-#' **Official Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Futures Get Server Time](https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time)
 #'
-#' @param base_url The base URL for the KuCoin Futures API. Defaults to the result of `get_base_url()`.
-#' @return A promise that resolves to a numeric Unix timestamp in milliseconds or rejects with an error.
-#'
+#' @param base_url Character string specifying the base URL for the KuCoin Futures API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a numeric Unix timestamp in milliseconds or rejecting with an error if the request fails.
 #' @examples
-#' ```r
-#' # Asynchronously retrieve the server time.
+#' \dontrun{
 #' get_server_time()$
-#'     then(function(timestamp) {
-#'         cat("KuCoin Server Time:", timestamp, "\n")
-#'     })$
-#'     catch(function(e) {
-#'         message("Error retrieving server time: ", conditionMessage(e))
-#'     })
-#'
-#' # Run the event loop until all asynchronous tasks are processed.
-#' while (!later::loop_empty()) {
-#'     later::run_now(timeoutSecs = Inf, all = TRUE)
+#'   then(function(timestamp) {
+#'     cat("KuCoin Server Time:", timestamp, "\n")
+#'   })$
+#'   catch(function(e) {
+#'     message("Error retrieving server time:", conditionMessage(e))
+#'   })
+#' while (!later::loop_empty()) later::run_now(timeoutSecs = Inf, all = TRUE)
 #' }
-#' ```
-#'
-#' @md
-#'
+#' @importFrom promises promise
 #' @importFrom httr GET timeout content status_code
 #' @importFrom jsonlite fromJSON
-#' @importFrom rlang error_cnd abort
-#' @importFrom promises promise
+#' @importFrom rlang error_cnd
 #' @export
 get_server_time <- function(base_url = get_base_url()) {
     promises::promise(function(resolve, reject) {
@@ -52,19 +57,19 @@ get_server_time <- function(base_url = get_base_url()) {
             url <- paste0(base_url, "/api/v1/timestamp")
             response <- httr::GET(url, httr::timeout(3))
             if (httr::status_code(response) != 200) {
-                reject(
-                    rlang::error_cnd("rlang_error",
-                    reason = paste("KuCoin API request failed with status code", httr::status_code(response)))
-                )
+                reject(rlang::error_cnd(
+                    "rlang_error",
+                    reason = paste("KuCoin API request failed with status code", httr::status_code(response))
+                ))
                 return()
             }
             response_text <- httr::content(response, as = "text", encoding = "UTF-8")
             parsed_response <- jsonlite::fromJSON(response_text)
             if (!all(c("code", "data") %in% names(parsed_response))) {
-                reject(
-                    rlang::error_cnd("rlang_error",
-                    reason = "Invalid API response structure: missing 'code' or 'data' field")
-                )
+                reject(rlang::error_cnd(
+                    "rlang_error",
+                    reason = "Invalid API response structure: missing 'code' or 'data' field"
+                ))
                 return()
             }
             if (parsed_response$code != "200000") {
@@ -78,83 +83,56 @@ get_server_time <- function(base_url = get_base_url()) {
     })
 }
 
-#' Build Request Headers for KuCoin API
+#' Construct Request Headers for KuCoin API
 #'
-#' Asynchronously constructs the HTTP request headers required for making authenticated requests to the KuCoin API.
-#' These headers include your API key, an HMAC-SHA256 signature computed over a prehash string, a timestamp,
-#' an encrypted passphrase, the API key version, and the content type. The headers ensure both the security and
-#' integrity of API requests.
+#' Generates HTTP request headers asynchronously for authenticated KuCoin API requests, incorporating the API key, HMAC-SHA256 signature, timestamp, encrypted passphrase, key version, and content type to ensure request security.
 #'
-#' ## Workflow Overview:
+#' ### Workflow Overview
+#' 1. **Retrieve Server Time**: Obtains the current server timestamp in milliseconds by calling `get_server_time()` with the base URL from `get_base_url()`.
+#' 2. **Construct Prehash String**: Concatenates the timestamp, uppercase HTTP method, endpoint, and request body.
+#' 3. **Generate Signature**: Computes an HMAC-SHA256 signature over the prehash string using the API secret, then base64-encodes it.
+#' 4. **Encrypt Passphrase**: Signs the API passphrase with the API secret using HMAC-SHA256 and base64-encodes the result.
+#' 5. **Assemble Headers**: Constructs headers with `httr::add_headers()`, including `KC-API-KEY`, `KC-API-SIGN`, `KC-API-TIMESTAMP`, `KC-API-PASSPHRASE`, `KC-API-KEY-VERSION`, and `Content-Type`.
 #'
-#' 1. **Retrieve Server Time:**  
-#'    Calls `get_server_time()` with the base URL (obtained via `get_base_url()`) to fetch the current
-#'    server timestamp in milliseconds.
+#' ### API Endpoint
+#' Not applicable (helper function for request construction).
 #'
-#' 2. **Construct the Prehash String:**  
-#'    Concatenates the timestamp, the uppercase HTTP method, the API endpoint, and the request body to form a string
-#'    that will be used for signing.
+#' ### Usage
+#' Employed to authenticate and secure API requests to KuCoin endpoints requiring authorisation.
 #'
-#' 3. **Generate the Signature:**  
-#'    Computes an HMAC-SHA256 signature using your API secret and the prehash string. The raw signature is then
-#'    encoded in base64.
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin API authentication guidelines.
 #'
-#' 4. **Encrypt the Passphrase:**  
-#'    Signs your API passphrase with the API secret (also via HMAC-SHA256) and encodes the result in base64.
-#'
-#' 5. **Assemble the Headers:**  
-#'    Returns a list of headers (using `httr::add_headers()`) that includes:
-#'    - `KC-API-KEY`
-#'    - `KC-API-SIGN`
-#'    - `KC-API-TIMESTAMP`
-#'    - `KC-API-PASSPHRASE`
-#'    - `KC-API-KEY-VERSION`
-#'    - `Content-Type`
-#'
-#' **Parameters:**
-#' - **method:** A character string specifying the HTTP method (e.g., "GET", "POST").
-#' - **endpoint:** A character string representing the API endpoint (e.g., "/api/v1/orders").
-#' - **body:** A character string containing the JSON-formatted request body; use an empty string (`""`) if no payload is required.
-#' - **keys:** A list of API credentials and configuration parameters. It must include:
-#'    - `api_key`: Your KuCoin API key.
-#'    - `api_secret`: Your KuCoin API secret.
-#'    - `api_passphrase`: Your KuCoin API passphrase.
-#'    - `key_version`: The API key version (e.g., "2").
-#'    Optionally, a `base_url` may be provided, though this function relies on `get_base_url()` to determine the base URL.
-#'
-#' **Return Value:**  
-#' Returns a list of HTTP headers created using `httr::add_headers()`.
-#' 
-#' @param method A character string specifying the HTTP method (e.g., "GET", "POST").
-#' @param endpoint A character string representing the API endpoint (e.g., "/api/v1/orders").
-#' @param body A character string containing the JSON-formatted request body; use an empty string (`""`) if no payload is required.
-#' @param keys A list of API credentials and configuration parameters.
-#'
+#' @param method Character string specifying the HTTP method (e.g., `"GET"`, `"POST"`).
+#' @param endpoint Character string representing the API endpoint (e.g., `"/api/v1/orders"`).
+#' @param body Character string containing the JSON-formatted request body; use `""` if no payload is required.
+#' @param keys List of API credentials including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; the API key version (e.g., `"2"`).
+#' @return Promise resolving to a list of HTTP headers created with `httr::add_headers()`.
 #' @examples
-#' ```r
-#' # Example usage for building headers for a POST request with a JSON payload.
+#' \dontrun{
 #' keys <- list(
-#'     api_key = "your_api_key",
-#'     api_secret = "your_api_secret",
-#'     api_passphrase = "your_api_passphrase",
-#'     key_version = "2"
-#'     # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
+#'   api_key = "your_api_key",
+#'   api_secret = "your_api_secret",
+#'   api_passphrase = "your_api_passphrase",
+#'   key_version = "2"
 #' )
-#'
-#' # Build headers for a POST request.
-#' headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
-#' print(headers)
-#'
-#' # Build headers for a GET request with no payload.
-#' headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
-#' print(headers)
-#' ```
-#'
-#' @md
-#'
-#' @importFrom httr add_headers
+#' main_async <- coro::async(function() {
+#'   headers <- await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
+#'   print(headers)
+#'   headers <- await(build_headers("GET", "/api/v1/orders", "", keys))
+#'   print(headers)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
 #' @importFrom digest hmac
 #' @importFrom base64enc base64encode
+#' @importFrom httr add_headers
 #' @importFrom rlang abort
 #' @export
 build_headers <- coro::async(function(method, endpoint, body, keys) {
@@ -201,25 +179,35 @@ build_headers <- coro::async(function(method, endpoint, body, keys) {
 
 #' Process and Validate KuCoin API Response
 #'
-#' This function processes an HTTP response from a KuCoin API request. It validates that the response
-#' has a successful HTTP status and that the API-specific response code indicates success. If the response is
-#' valid, it returns the parsed JSON object.
+#' Processes an HTTP response from a KuCoin API request, validating its HTTP status and API-specific response code, returning the parsed JSON object if successful or aborting with an error otherwise.
 #'
-#' The actual data is often in the `$data` field or `$data$items` etc. especially if the end point is paginated.
-#' as needed.
+#' ### Workflow Overview
+#' 1. **Check HTTP Status**: Confirms the status code is 200, aborting if not.
+#' 2. **Parse JSON**: Extracts the response content as text and parses it into a JSON object using `jsonlite::fromJSON()`.
+#' 3. **Validate Structure**: Verifies the `"code"` field exists, aborting if absent.
+#' 4. **Check Success**: Ensures the `"code"` is `"200000"`, retrieving an error message from `"msg"` and aborting if not successful.
 #'
-#' **Response Validation Workflow:**  
-#' 1. Checks if the HTTP status code is 200.  
-#' 2. Parses the JSON response.  
-#' 3. Validates that the response contains the `"code"` field.  
-#' 4. Ensures the `"code"` is `"200000"` (success); if not, retrieves the error message from the `"msg"` field if available.
+#' ### API Endpoint
+#' Not applicable (helper function for response processing).
 #'
-#' @param response An HTTP response object (e.g., from `httr::GET()`).
-#' @param url A character string representing the requested URL (used for error messages).
+#' ### Usage
+#' Utilised to validate and extract data from KuCoin API responses, typically accessing the `$data` or `$data$items` field for results.
 #'
-#' @return A list representing the parsed JSON response. Users are responsible for extracting specific fields (e.g., the `"data"` field) as needed.
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin API response handling guidelines.
 #'
-#' @md
+#' @param response HTTP response object (e.g., from `httr::GET()`).
+#' @param url Character string representing the requested URL, used for error messages.
+#' @return List representing the parsed JSON response; users should extract fields like `"data"` as required.
+#' @examples
+#' \dontrun{
+#' response <- httr::GET("https://api.kucoin.com/api/v1/timestamp", httr::timeout(3))
+#' parsed <- process_kucoin_response(response, "https://api.kucoin.com/api/v1/timestamp")
+#' print(parsed$data)
+#' }
+#' @importFrom httr status_code content
+#' @importFrom jsonlite fromJSON
+#' @importFrom rlang abort
 #' @export
 process_kucoin_response <- function(response, url = "") {
     status_code <- httr::status_code(response)
@@ -250,39 +238,56 @@ process_kucoin_response <- function(response, url = "") {
     return(parsed_response)
 }
 
-#' Generic Pagination Helper for KuCoin API Endpoints
+#' Facilitate Automatic Pagination for KuCoin API Endpoints
 #'
-#' This asynchronous helper function facilitates automatic pagination for KuCoin API endpoints that return paginated
-#' responses. It repeatedly calls a user-supplied function to fetch each page and aggregates the results using an 
-#' aggregation function provided by the user.
+#' Handles pagination for KuCoin API endpoints asynchronously by iteratively fetching pages with a user-supplied function and aggregating results using a provided aggregation function.
 #'
-#' ## Detailed Workflow:
+#' ### Workflow Overview
+#' 1. **Fetch Page**: Calls `fetch_page` with current query parameters to retrieve a page.
+#' 2. **Accumulate Results**: Adds items from the page (via `items_field`) to an accumulator list.
+#' 3. **Determine Continuation**: Continues if the current page is less than the total pages and `max_pages` hasn’t been reached.
+#' 4. **Aggregate Results**: Applies `aggregate_fn` to the accumulator once all pages are fetched.
 #'
-#' 1. **Fetch a Page:**  
-#'    The function calls the user-supplied `fetch_page` function with the current query parameters.
+#' ### API Endpoint
+#' Not applicable (helper function for paginated endpoints).
 #'
-#' 2. **Accumulate Results:**  
-#'    The items from the current page (extracted via the `items_field` parameter) are added to an accumulator.
+#' ### Usage
+#' Utilised to simplify retrieval of multi-page data from KuCoin API responses, aggregating results into a user-defined format.
 #'
-#' 3. **Determine Continuation:**  
-#'    If the current page number is less than the total number of pages (or less than `max_pages` if specified),
-#'    the function increments the page number and continues fetching.
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin API pagination guidelines.
 #'
-#' 4. **Aggregate and Return:**  
-#'    Once all pages have been fetched, the accumulator is passed to the `aggregate_fn` to produce the final result.
-#'
-#' @param fetch_page A function that fetches a page of results and returns a promise resolving to the response.
-#' @param query A named list of query parameters for the first page (default is `list(currentPage = 1, pageSize = 50)`).
-#' @param items_field The field in the response that contains the items to be aggregated (default is `"items"`).
-#' @param paginate_fields A named list of fields in the response that contain the current and total page numbers.
-#'    - `currentPage`: The field containing the current page number.
-#'    - `totalPage`: The field containing the total number of pages.
-#' @param aggregate_fn A function to combine the accumulated results into the final output (default returns the accumulator list as is).
-#' @param max_pages The maximum number of pages to fetch (default is `Inf` to fetch all available pages).
-#'
-#' @return A promise that resolves to the aggregated result as defined by the `aggregate_fn`.
-#'
-#' @md
+#' @param fetch_page Function fetching a page of results, returning a promise resolving to the response.
+#' @param query Named list of query parameters for the first page. Defaults to `list(currentPage = 1, pageSize = 50)`.
+#' @param items_field Character string; field in the response containing items to aggregate. Defaults to `"items"`.
+#' @param paginate_fields Named list specifying response fields for pagination:
+#'   - `currentPage`: Field with the current page number.
+#'   - `totalPage`: Field with the total number of pages.
+#'   Defaults to `list(currentPage = "currentPage", totalPage = "totalPage")`.
+#' @param aggregate_fn Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.
+#' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
+#' @return Promise resolving to the aggregated result as defined by `aggregate_fn`.
+#' @examples
+#' \dontrun{
+#' fetch_page <- coro::async(function(query) {
+#'   url <- paste0(get_base_url(), "/api/v1/example", build_query(query))
+#'   response <- httr::GET(url, httr::timeout(3))
+#'   process_kucoin_response(response, url)
+#' })
+#' aggregate <- function(acc) data.table::rbindlist(acc)
+#' main_async <- coro::async(function() {
+#'   result <- await(auto_paginate(
+#'     fetch_page = fetch_page,
+#'     query = list(currentPage = 1, pageSize = 10),
+#'     max_pages = 3,
+#'     aggregate_fn = aggregate
+#'   ))
+#'   print(result)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
 #' @export
 auto_paginate <- coro::async(function(
     fetch_page,
@@ -320,25 +325,58 @@ auto_paginate <- coro::async(function(
     })
 })
 
-#' Generic Pagination Helper (Old Version) for KuCoin API Endpoints
+#' Facilitate Automatic Pagination for KuCoin API Endpoints (Legacy Version)
 #'
-#' This asynchronous helper function (old version) facilitates automatic pagination for KuCoin API endpoints that return paginated
-#' responses. It repeatedly calls a user-supplied function to fetch each page and aggregates the results using an 
-#' aggregation function provided by the user. The workflow is similar to `auto_paginate` but implemented recursively.
+#' Manages pagination for KuCoin API endpoints asynchronously using a recursive approach, fetching pages with a user-supplied function and aggregating results via a provided function. This is an older version of `auto_paginate`.
 #'
-#' @param fetch_page A function that fetches a page of results and returns a promise resolving to the response.
-#' @param query A named list of query parameters for the first page (default is `list(currentPage = 1, pageSize = 50)`).
-#' @param items_field The field in the response that contains the items to be aggregated (default is `"items"`).
-#' @param paginate_fields A named list of fields in the response that contain the current and total page numbers.
-#'    - `currentPage`: The field containing the current page number.
-#'    - `totalPage`: The field containing the total number of pages.
-#' @param aggregate_fn A function to combine the accumulated results into the final output (default returns the accumulator list as is).
-#' @param max_pages The maximum number of pages to fetch (default is `Inf` to fetch all available pages).
-#' @param accumulator An accumulator for recursive aggregation (internal use).
+#' ### Workflow Overview
+#' 1. **Fetch Page**: Calls `fetch_page` to retrieve the current page.
+#' 2. **Accumulate Results**: Adds items from the page (via `items_field`) to the `accumulator`.
+#' 3. **Recursive Continuation**: Recursively fetches the next page if the current page is less than the total pages and `max_pages` allows, updating the query.
+#' 4. **Aggregate Results**: Applies `aggregate_fn` to the accumulator when pagination completes.
 #'
-#' @return A promise that resolves to the aggregated result as defined by the `aggregate_fn`.
+#' ### API Endpoint
+#' Not applicable (helper function for paginated endpoints).
 #'
-#' @md
+#' ### Usage
+#' Utilised as a legacy alternative to `auto_paginate` for retrieving multi-page data from KuCoin API responses.
+#'
+#' ### Official Documentation
+#' Not directly tied to a specific endpoint; see KuCoin API pagination guidelines.
+#'
+#' @param fetch_page Function fetching a page of results, returning a promise resolving to the response.
+#' @param query Named list of query parameters for the first page. Defaults to `list(currentPage = 1, pageSize = 50)`.
+#' @param items_field Character string; field in the response containing items to aggregate. Defaults to `"items"`.
+#' @param paginate_fields Named list specifying response fields for pagination:
+#'   - `currentPage`: Field with the current page number.
+#'   - `totalPage`: Field with the total number of pages.
+#'   Defaults to `list(currentPage = "currentPage", totalPage = "totalPage")`.
+#' @param aggregate_fn Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.
+#' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
+#' @param accumulator List; internal accumulator for recursive aggregation. Defaults to an empty list.
+#' @return Promise resolving to the aggregated result as defined by `aggregate_fn`.
+#' @examples
+#' \dontrun{
+#' fetch_page <- coro::async(function(query) {
+#'   url <- paste0(get_base_url(), "/api/v1/example", build_query(query))
+#'   response <- httr::GET(url, httr::timeout(3))
+#'   process_kucoin_response(response, url)
+#' })
+#' aggregate <- function(acc) data.table::rbindlist(acc)
+#' main_async <- coro::async(function() {
+#'   result <- await(auto_paginate_old(
+#'     fetch_page = fetch_page,
+#'     query = list(currentPage = 1, pageSize = 10),
+#'     max_pages = 3,
+#'     aggregate_fn = aggregate
+#'   ))
+#'   print(result)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
+#' @export
 auto_paginate_old <- coro::async(function(
     fetch_page,
     query = list(currentPage = 1, pageSize = 50),

@@ -12,70 +12,62 @@ get_part_orderbook_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 
-\item{size}{An integer specifying the orderbook depth to retrieve. Allowed values are 20 or 100.}
+\item{size}{Integer; orderbook depth (20 or 100).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the partial orderbook details. Each row contains:
-\describe{
-\item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
-\item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
-\item{sequence}{(string) The sequence number for the orderbook update.}
-\item{side}{(string) The order side ("bid" or "ask").}
-\item{price}{(string) The aggregated price at that level.}
-\item{size}{(string) The aggregated size at that price level.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
+\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
+\item \code{sequence} (character): Orderbook update sequence.
+\item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
+\item \code{price} (character): Aggregated price level.
+\item \code{size} (character): Aggregated size at that price.
 }
 }
 \description{
-This asynchronous function retrieves partial orderbook depth data for a specified trading symbol from the KuCoin API.
-The endpoint returns aggregated orderbook data at a specified depth (either 20 or 100 levels) along with a global
-snapshot timestamp and sequence number. The function processes the response and returns a single flattened
-\code{data.table} where each row represents a price level (from either the bids or the asks), with the global snapshot
-fields appended.
+Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Input Validation:}
-Converts the \code{size} parameter to an integer and validates that it is either 20 or 100.
-\item \strong{URL Construction:}
-Uses \code{build_query()} to construct a query string with the required \code{symbol} parameter. The full URL is
-built by concatenating the base URL, the endpoint path (which includes the depth parameter), and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response with \code{process_kucoin_response()} to validate the HTTP status and extract the \code{data} field.
-\item \strong{Data Conversion:}
-\itemize{
-\item Extracts global snapshot fields (\code{time} and \code{sequence}) from the response.
-\item Converts the bids and asks matrices into separate \code{data.table} objects, each with an added \code{side} column
-("bid" for bids, "ask" for asks).
+\item \strong{Input Validation}: Ensures \code{size} is 20 or 100, aborting if invalid.
+\item \strong{Query Construction}: Builds a query string with the \code{symbol} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level2_\{size\}}, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts bids and asks into separate \code{data.table}s, adds \code{side}, combines them, and appends snapshot fields.
 }
-\item \strong{Data Assembly:}
-Combines the bids and asks tables into a single \code{data.table}, appends the global snapshot fields, and reorders
-the columns so that the global fields appear first.
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/market/orderbook/level2_\{size\}}
+}
+
+\subsection{Usage}{
+
+Utilised to obtain a snapshot of the orderbook for a trading symbol, showing aggregated bid and ask levels.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook}{KuCoin Get Part OrderBook}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}?symbol=<symbol>}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve the top 20 levels of the orderbook for BTC-USDT:
-  dt_orderbook <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 20))
-  print(dt_orderbook)
-
-  # Retrieve the top 100 levels of the orderbook for BTC-USDT:
-  dt_orderbook_100 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 100))
-  print(dt_orderbook_100)
+main_async <- coro::async(function() {
+  orderbook_20 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 20))
+  print(orderbook_20)
+  orderbook_100 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 100))
+  print(orderbook_100)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

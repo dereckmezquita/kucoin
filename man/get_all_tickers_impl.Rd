@@ -10,72 +10,68 @@ get_all_tickers_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the ticker information.
-The data.table includes the following columns:
-\describe{
-\item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-\item{symbolName}{(string) The symbol name (which may be updated if the currency name changes).}
-\item{buy}{(string) The current best bid price.}
-\item{bestBidSize}{(string) The size at the best bid price.}
-\item{sell}{(string) The current best ask price.}
-\item{bestAskSize}{(string) The size at the best ask price.}
-\item{changeRate}{(string) The 24-hour change rate.}
-\item{changePrice}{(string) The 24-hour price change.}
-\item{high}{(string) The highest price in the last 24 hours.}
-\item{low}{(string) The lowest price in the last 24 hours.}
-\item{vol}{(string) The 24-hour trading volume.}
-\item{volValue}{(string) The 24-hour trading turnover.}
-\item{last}{(string) The last traded price.}
-\item{averagePrice}{(string) The average price over the last 24 hours.}
-\item{takerFeeRate}{(string) The taker fee rate.}
-\item{makerFeeRate}{(string) The maker fee rate.}
-\item{takerCoefficient}{(string) The taker fee coefficient.}
-\item{makerCoefficient}{(string) The maker fee coefficient.}
-\item{globalTime_ms}{(integer) The snapshot timestamp in milliseconds (from the parent data object).}
-\item{snapshotTime}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{symbol} (character): Trading symbol.
+\item \code{symbolName} (character): Symbol name.
+\item \code{buy} (character): Best bid price.
+\item \code{bestBidSize} (character): Best bid size.
+\item \code{sell} (character): Best ask price.
+\item \code{bestAskSize} (character): Best ask size.
+\item \code{changeRate} (character): 24-hour change rate.
+\item \code{changePrice} (character): 24-hour price change.
+\item \code{high} (character): 24-hour high price.
+\item \code{low} (character): 24-hour low price.
+\item \code{vol} (character): 24-hour trading volume.
+\item \code{volValue} (character): 24-hour turnover.
+\item \code{last} (character): Last traded price.
+\item \code{averagePrice} (character): 24-hour average price.
+\item \code{takerFeeRate} (character): Taker fee rate.
+\item \code{makerFeeRate} (character): Maker fee rate.
+\item \code{takerCoefficient} (character): Taker fee coefficient.
+\item \code{makerCoefficient} (character): Maker fee coefficient.
+\item \code{globalTime_ms} (integer): Snapshot timestamp in milliseconds.
+\item \code{globalTime_datetime} (POSIXct): Snapshot timestamp in UTC.
 }
 }
 \description{
-This asynchronous function retrieves market tickers for all trading pairs from the KuCoin API.
-The endpoint returns a snapshot of market data, including 24-hour volume, for all symbols.
-The response contains a global timestamp and an array of ticker objects. Each ticker object includes
-details such as the last traded price and size, best bid/ask prices and sizes, and other trading parameters.
+Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:}
-Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()})
-with the endpoint path \code{/api/v1/market/allTickers}. An optional query string can be built using the
-\code{build_query()} helper if needed (though no parameters are required by default).
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field. The \code{data} object contains a global \code{time} field and a \code{ticker} array.
-\item \strong{Data Conversion:}
-Converts the \code{ticker} array (an array of ticker objects) into a \code{data.table}.
-\item \strong{Snapshot Time Augmentation:}
-Adds columns for the global snapshot time both in its original millisecond format and as a converted
-POSIXct datetime (using the helper function \code{time_convert_from_kucoin("ms")}).
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/market/allTickers}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts the \code{"ticker"} array to a \code{data.table}, adding \code{globalTime_ms} and \code{globalTime_datetime} from the \code{"time"} field.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/market/allTickers}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch a snapshot of market data across all KuCoin trading pairs for monitoring or analysis.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers}{KuCoin Get All Tickers}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/market/allTickers}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve all market tickers:
-  dt_tickers <- await(market_data$get_all_tickers())
-  print(dt_tickers)
+main_async <- coro::async(function() {
+  tickers <- await(get_all_tickers_impl())
+  print(tickers)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

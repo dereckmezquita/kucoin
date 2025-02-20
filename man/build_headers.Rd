@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers_api.R
 \name{build_headers}
 \alias{build_headers}
-\title{Build Request Headers for KuCoin API}
+\title{Construct Request Headers for KuCoin API}
 \usage{
 build_headers(
   method,
@@ -13,83 +13,67 @@ build_headers(
 )
 }
 \arguments{
-\item{method}{A character string specifying the HTTP method (e.g., "GET", "POST").}
+\item{method}{Character string specifying the HTTP method (e.g., \code{"GET"}, \code{"POST"}).}
 
-\item{endpoint}{A character string representing the API endpoint (e.g., "/api/v1/orders").}
+\item{endpoint}{Character string representing the API endpoint (e.g., \code{"/api/v1/orders"}).}
 
-\item{body}{A character string containing the JSON-formatted request body; use an empty string (\code{""}) if no payload is required.}
+\item{body}{Character string containing the JSON-formatted request body; use \code{""} if no payload is required.}
 
-\item{keys}{A list of API credentials and configuration parameters.}
+\item{keys}{List of API credentials including:
+\itemize{
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; the API key version (e.g., \code{"2"}).
+}}
+}
+\value{
+Promise resolving to a list of HTTP headers created with \code{httr::add_headers()}.
 }
 \description{
-Asynchronously constructs the HTTP request headers required for making authenticated requests to the KuCoin API.
-These headers include your API key, an HMAC-SHA256 signature computed over a prehash string, a timestamp,
-an encrypted passphrase, the API key version, and the content type. The headers ensure both the security and
-integrity of API requests.
+Generates HTTP request headers asynchronously for authenticated KuCoin API requests, incorporating the API key, HMAC-SHA256 signature, timestamp, encrypted passphrase, key version, and content type to ensure request security.
 }
 \details{
-\subsection{Workflow Overview:}{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Retrieve Server Time:}
-Calls \code{get_server_time()} with the base URL (obtained via \code{get_base_url()}) to fetch the current
-server timestamp in milliseconds.
-\item \strong{Construct the Prehash String:}
-Concatenates the timestamp, the uppercase HTTP method, the API endpoint, and the request body to form a string
-that will be used for signing.
-\item \strong{Generate the Signature:}
-Computes an HMAC-SHA256 signature using your API secret and the prehash string. The raw signature is then
-encoded in base64.
-\item \strong{Encrypt the Passphrase:}
-Signs your API passphrase with the API secret (also via HMAC-SHA256) and encodes the result in base64.
-\item \strong{Assemble the Headers:}
-Returns a list of headers (using \code{httr::add_headers()}) that includes:
-\itemize{
-\item \code{KC-API-KEY}
-\item \code{KC-API-SIGN}
-\item \code{KC-API-TIMESTAMP}
-\item \code{KC-API-PASSPHRASE}
-\item \code{KC-API-KEY-VERSION}
-\item \code{Content-Type}
+\item \strong{Retrieve Server Time}: Obtains the current server timestamp in milliseconds by calling \code{get_server_time()} with the base URL from \code{get_base_url()}.
+\item \strong{Construct Prehash String}: Concatenates the timestamp, uppercase HTTP method, endpoint, and request body.
+\item \strong{Generate Signature}: Computes an HMAC-SHA256 signature over the prehash string using the API secret, then base64-encodes it.
+\item \strong{Encrypt Passphrase}: Signs the API passphrase with the API secret using HMAC-SHA256 and base64-encodes the result.
+\item \strong{Assemble Headers}: Constructs headers with \code{httr::add_headers()}, including \code{KC-API-KEY}, \code{KC-API-SIGN}, \code{KC-API-TIMESTAMP}, \code{KC-API-PASSPHRASE}, \code{KC-API-KEY-VERSION}, and \code{Content-Type}.
 }
 }
 
-\strong{Parameters:}
-\itemize{
-\item \strong{method:} A character string specifying the HTTP method (e.g., "GET", "POST").
-\item \strong{endpoint:} A character string representing the API endpoint (e.g., "/api/v1/orders").
-\item \strong{body:} A character string containing the JSON-formatted request body; use an empty string (\code{""}) if no payload is required.
-\item \strong{keys:} A list of API credentials and configuration parameters. It must include:
-\itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The API key version (e.g., "2").
-Optionally, a \code{base_url} may be provided, though this function relies on \code{get_base_url()} to determine the base URL.
-}
+\subsection{API Endpoint}{
+
+Not applicable (helper function for request construction).
 }
 
-\strong{Return Value:}
-Returns a list of HTTP headers created using \code{httr::add_headers()}.
+\subsection{Usage}{
+
+Employed to authenticate and secure API requests to KuCoin endpoints requiring authorisation.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin API authentication guidelines.
 }
 }
 \examples{
-```r
-# Example usage for building headers for a POST request with a JSON payload.
+\dontrun{
 keys <- list(
-    api_key = "your_api_key",
-    api_secret = "your_api_secret",
-    api_passphrase = "your_api_passphrase",
-    key_version = "2"
-    # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
+  api_key = "your_api_key",
+  api_secret = "your_api_secret",
+  api_passphrase = "your_api_passphrase",
+  key_version = "2"
 )
-
-# Build headers for a POST request.
-headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
-print(headers)
-
-# Build headers for a GET request with no payload.
-headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
-print(headers)
-```
-
+main_async <- coro::async(function() {
+  headers <- await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
+  print(headers)
+  headers <- await(build_headers("GET", "/api/v1/orders", "", keys))
+  print(headers)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
+}
 }

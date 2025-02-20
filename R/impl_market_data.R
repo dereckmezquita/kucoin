@@ -3,104 +3,74 @@
 # box::use(
 #     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
 #     ./utils[ build_query, get_api_keys, get_base_url ],
-#     ./utils_time_convert_kucoin[ verify_symbol, time_convert_from_kucoin ]
+#     ./utils_time_convert_kucoin[ verify_symbol, time_convert_from_kucoin ],
+#     coro[async, await],
+#     data.table[as.data.table, data.table, rbindlist, setcolorder, setnames],
+#     httr[GET, timeout],
+#     rlang[abort],
+#     utils[modifyList]
 # )
 
 #' Get Announcements (Implementation)
 #'
-#' This asynchronous function retrieves the latest announcements from the KuCoin API. The endpoint returns a paginated list of
-#' news announcements such as updates, promotions, or new listings. By default, the function retrieves announcements classified as
-#' "latest-announcements" in English (en_US), but these parameters can be overridden via the \code{query} argument. This function
-#' utilizes the \code{auto_paginate} helper to automatically iterate through all available pages (or a specified maximum number)
-#' and aggregates the results into a single \code{data.table}. This data can be further used to filter or display market-related news,
-#' or in conjunction with other market data functions.
+#' Retrieves the latest announcements from the KuCoin API asynchronously, aggregating paginated results into a single `data.table`. This internal function is designed for use within a larger system and is not intended for direct end-user consumption.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Merges default parameters (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) with user-supplied `query` using `utils::modifyList()`.
+#' 2. **URL Assembly**: Combines `base_url` with `/api/v3/announcements` and the query string from `build_query()`.
+#' 3. **Page Fetching**: Defines an async `fetch_page` function to send a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Pagination**: Utilises `auto_paginate` to fetch all pages up to `max_pages`, extracting `"items"` from each response.
+#' 5. **Aggregation**: Combines results into a `data.table` with `data.table::rbindlist()`.
 #'
-#' 1. **Query String Construction:**  
-#'    The function first merges default pagination parameters—\code{currentPage = 1}, \code{pageSize = 50},
-#'    \code{annType = "latest-announcements"}, and \code{lang = "en_US"}—with any additional user-supplied query parameters.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/announcements`
 #'
-#' 2. **URL Construction:**  
-#'    It constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint
-#'    path \code{/api/v3/announcements} and the generated query string.
+#' ### Usage
+#' Utilised to gather KuCoin news announcements (e.g., updates, promotions) for market analysis or display.
 #'
-#' 3. **HTTP Request:**  
-#'    The function sends an asynchronous GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    The API response is processed using \code{process_kucoin_response()} to ensure that the HTTP status and API code indicate
-#'    success. The \code{data} field is then extracted, which includes pagination metadata and a list of announcement items.
-#'
-#' 5. **Automatic Pagination:**  
-#'    Using the \code{auto_paginate} helper function, the function automatically iterates through subsequent pages (based on
-#'    the \code{currentPage} and \code{totalPage} fields) and aggregates all announcement items into a single \code{data.table}.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param query A named list of additional query parameters to filter the announcements. Supported parameters include:
-#'        \describe{
-#'          \item{currentPage}{(integer, optional) The page number to retrieve.}
-#'          \item{pageSize}{(integer, optional) The number of announcements per page.}
-#'          \item{annType}{(string, optional) The type of announcements to retrieve. Allowed values include "latest-announcements",
-#'                           "activities", "product-updates", "vip", "maintenance-updates", "delistings", "others", "api-campaigns", "new-listings".}
-#'          \item{lang}{(string, optional) The language of the announcements (e.g., "en_US", "zh_HK", "ja_JP").}
-#'          \item{startTime}{(integer, optional) The start time (in milliseconds) for filtering announcements.}
-#'          \item{endTime}{(integer, optional) The end time (in milliseconds) for filtering announcements.}
-#'        }
-#' @param page_size (integer, optional) The number of results per page; default is 50.
-#' @param max_pages (integer, optional) The maximum number of pages to fetch. Defaults to \code{Inf} (to fetch all pages).
-#'
-#' @return A promise that resolves to a \code{data.table} containing the aggregated announcement records.
-#'         Each row represents an announcement with columns including:
-#'         \describe{
-#'           \item{annId}{(integer) The unique announcement ID.}
-#'           \item{annTitle}{(string) The title of the announcement.}
-#'           \item{annType}{(list) A list of announcement types.}
-#'           \item{annDesc}{(string) The description of the announcement.}
-#'           \item{cTime}{(integer) The announcement release time in Unix milliseconds.}
-#'           \item{language}{(string) The language of the announcement.}
-#'           \item{annUrl}{(string) The URL linking to the full announcement.}
-#'           \item{currentPage}{(integer) The current page number (from the API response).}
-#'           \item{pageSize}{(integer) The number of records per page (from the API response).}
-#'           \item{totalNum}{(integer) The total number of announcements.}
-#'           \item{totalPage}{(integer) The total number of pages available.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/announcements}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
-#' @seealso
-#' \itemize{
-#'   \item \code{\link{get_24hr_stats_impl}} for retrieving detailed 24-hour statistics for a specific trading pair.
-#'   \item \code{\link{get_ticker_impl}} for obtaining ticker information.
-#' }
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param query Named list; additional query parameters to filter announcements. Supported:
+#'   - `currentPage` (integer, optional): Page number to retrieve.
+#'   - `pageSize` (integer, optional): Number of announcements per page.
+#'   - `annType` (string, optional): Type of announcements (e.g., `"latest-announcements"`, `"activities"`, `"product-updates"`, `"vip"`, `"maintenance-updates"`, `"delistings"`, `"others"`, `"api-campaigns"`, `"new-listings"`).
+#'   - `lang` (string, optional): Language (e.g., `"en_US"`, `"zh_HK"`, `"ja_JP"`).
+#'   - `startTime` (integer, optional): Start time in milliseconds.
+#'   - `endTime` (integer, optional): End time in milliseconds.
+#' @param page_size Integer; number of results per page (default 50).
+#' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `annId` (integer): Unique announcement ID.
+#'   - `annTitle` (character): Announcement title.
+#'   - `annType` (list): List of announcement types.
+#'   - `annDesc` (character): Announcement description.
+#'   - `cTime` (integer): Release time in Unix milliseconds.
+#'   - `language` (character): Language of the announcement.
+#'   - `annUrl` (character): URL to the full announcement.
+#'   - `currentPage` (integer): Current page number.
+#'   - `pageSize` (integer): Records per page.
+#'   - `totalNum` (integer): Total number of announcements.
+#'   - `totalPage` (integer): Total pages available.
 #' @examples
 #' \dontrun{
-#'   # Retrieve the latest announcements with default parameters:
+#' main_async <- coro::async(function() {
+#'   # Default: latest announcements in English
 #'   announcements <- await(get_announcements_impl())
 #'   print(announcements)
-#'
-#'   # Retrieve announcements filtered by type and language:
-#'   announcements <- await(get_announcements_impl(query = list(annType = "activities", lang = "en_US")))
-#'   print(announcements)
+#'   # Filtered by type and language
+#'   activities <- await(get_announcements_impl(query = list(annType = "activities", lang = "en_US")))
+#'   print(activities)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
-#' 
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
 #' @importFrom data.table rbindlist
-#' @importFrom coro async
-#' @importFrom httr GET
 #' @importFrom utils modifyList
 #' @importFrom rlang abort
-#' @importFrom kucoin build_query process_kucoin_response get_base_url auto_paginate
-#' 
 #' @export
 get_announcements_impl <- coro::async(function(
   base_url = get_base_url(),
@@ -143,192 +113,157 @@ get_announcements_impl <- coro::async(function(
 
 #' Get Currency Details (Implementation)
 #'
-#' This asynchronous function retrieves detailed information for a specified currency from the KuCoin API.
-#' The endpoint returns metadata such as the unique currency code, name, full name, precision, and other relevant
-#' details including margin and debit support as well as a list of supported chains for multi-chain currencies.
+#' Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific details for multi-chain currencies.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Builds a query string with the optional `chain` parameter using `build_query()`.
+#' 2. **URL Assembly**: Combines `base_url`, `/api/v3/currencies/`, the `currency` code, and the query string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 5. **Data Conversion**: Splits `"data"` into summary fields and `chains` data, combining them into a `data.table`.
 #'
-#' 1. **Input Validation:**  
-#'    Validates that a non-empty currency code is provided.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/currencies/{currency}`
 #'
-#' 2. **Query String Construction:**  
-#'    Uses the helper function \code{build_query()} to build a query string from the optional \code{chain} parameter.
+#' ### Usage
+#' Utilised to obtain metadata (e.g., precision, chain support) for a specific currency on KuCoin.
 #'
-#' 3. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-#'    \code{/api/v3/currencies/} with the provided currency code, and the query string.
-#'
-#' 4. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 5. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} which validates the HTTP status and API code,
-#'    then extracts the \code{data} field.
-#'
-#' 6. **Data Conversion:**  
-#'    Converts the resulting data (a named list of currency details) into a \code{data.table} and returns it.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API. Defaults to the value returned by \code{get_base_url()}.
-#' @param currency A character string representing the currency code (e.g., "BTC", "USDT").
-#' @param chain (Optional) A character string specifying the chain to query (e.g., "ERC20", "TRC20"). This applies to multi‑chain currencies.
-#'
-#' @return A promise that resolves to a \code{data.table} containing the currency details. The resulting data.table includes columns such as:
-#'         \describe{
-#'           \item{currency}{(string) The unique currency code.}
-#'           \item{name}{(string) The short name of the currency.}
-#'           \item{fullName}{(string) The full name of the currency.}
-#'           \item{precision}{(integer) The number of decimal places for the currency.}
-#'           \item{confirms}{(integer or NULL) The number of block confirmations required (if applicable).}
-#'           \item{contractAddress}{(string or NULL) The contract address for tokenized currencies.}
-#'           \item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled.}
-#'           \item{isDebitEnabled}{(boolean) Indicates whether debit is enabled.}
-#'           \item{chains}{(list) A list of chain objects containing chain‑specific details.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/currencies/{currency}}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param currency Character string; currency code (e.g., `"BTC"`, `"USDT"`).
+#' @param chain Character string (optional); specific chain for multi-chain currencies (e.g., `"ERC20"`, `"TRC20"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `currency` (character): Unique currency code.
+#'   - `name` (character): Short name of the currency.
+#'   - `fullName` (character): Full name of the currency.
+#'   - `precision` (integer): Decimal places for the currency.
+#'   - `confirms` (integer or NULL): Block confirmations required.
+#'   - `contractAddress` (character or NULL): Contract address for tokenized currencies.
+#'   - `isMarginEnabled` (logical): Margin trading enabled status.
+#'   - `isDebitEnabled` (logical): Debit enabled status.
+#'   - Chain-specific fields (e.g., `chainName`, `withdrawalMinSize`) from the `chains` list.
 #' @examples
 #' \dontrun{
-#'   # Retrieve details for Bitcoin:
-#'   dt_currency <- await(get_currency_impl(currency = "BTC"))
-#'   print(dt_currency)
-#'
-#'   # Retrieve details for USDT on the ERC20 chain:
-#'   dt_currency <- await(get_currency_impl(currency = "USDT", chain = "ERC20"))
-#'   print(dt_currency)
+#' main_async <- coro::async(function() {
+#'   # Bitcoin details
+#'   btc <- await(get_currency_impl(currency = "BTC"))
+#'   print(btc)
+#'   # USDT on ERC20 chain
+#'   usdt_erc20 <- await(get_currency_impl(currency = "USDT", chain = "ERC20"))
+#'   print(usdt_erc20)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_currency_impl <- coro::async(function(
     base_url = get_base_url(),
     currency,
     chain = NULL
 ) {
-    endpoint <- "/api/v3/currencies/"
+    tryCatch({
+        endpoint <- "/api/v3/currencies/"
 
-    # Build query string from the optional chain parameter
-    qs <- build_query(list(chain = chain))
+        # Build query string from the optional chain parameter
+        qs <- build_query(list(chain = chain))
 
-    # Construct the full URL by appending the currency code to the endpoint
-    endpoint <- paste0(endpoint, currency)
-    url <- paste0(base_url, endpoint, qs)
+        # Construct the full URL by appending the currency code to the endpoint
+        endpoint <- paste0(endpoint, currency)
+        url <- paste0(base_url, endpoint, qs)
 
-    # Send the GET request with a 10-second timeout
-    response <- httr::GET(url, httr::timeout(10))
+        # Send the GET request with a 10-second timeout
+        response <- httr::GET(url, httr::timeout(10))
 
-    # Process the response and extract the 'data' field
-    parsed_response <- process_kucoin_response(response, url)
+        # Process the response and extract the 'data' field
+        parsed_response <- process_kucoin_response(response, url)
 
-    # Convert the resulting data (a named list) into a data.table and return it
-    summary_fields <- c(
-        "currency", "name", "fullName", "precision", "confirms",
-        "contractAddress", "isMarginEnabled", "isDebitEnabled"
-    )
+        # Convert the resulting data (a named list) into a data.table and return it
+        summary_fields <- c(
+            "currency", "name", "fullName", "precision", "confirms",
+            "contractAddress", "isMarginEnabled", "isDebitEnabled"
+        )
 
-    # TODO: benchmark what is more efficient cbind or := new cols
-    summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
+        summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
+        currency_dt <- data.table::as.data.table(parsed_response$data$chains)
 
-    currency_dt <- data.table::as.data.table(parsed_response$data$chains)
-
-    return(cbind(
-        summary_dt,
-        currency_dt
-    ))
+        return(cbind(
+            summary_dt,
+            currency_dt
+        ))
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_currency_impl:", conditionMessage(e)))
+    })
 })
 
 #' Get All Currencies (Implementation)
 #'
-#' This asynchronous function retrieves a list of all currencies available on the KuCoin API.
-#' Each currency is returned along with its associated summary details and nested chain-specific details.
-#' For currencies that support multiple chains, the summary information is replicated for each chain,
-#' so that each row in the resulting data.table corresponds to a unique (currency, chain) combination.
-#' If a currency has no associated chain data, dummy chain columns (filled with NA) are appended.
+#' Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details into a `data.table`.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **URL Assembly**: Combines `base_url` with `/api/v3/currencies`.
+#' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 4. **Data Iteration**: Loops through each currency, extracting summary fields and chain data (if present).
+#' 5. **Result Assembly**: Combines summary and chain data into a `data.table`, adding dummy chain columns with `NA` if no chains exist.
 #'
-#' 1. **URL Construction:**  
-#'    Constructs the URL by concatenating the base URL (obtained via \code{get_base_url()})
-#'    with the endpoint path \code{/api/v3/currencies}.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/currencies`
 #'
-#' 2. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#' ### Usage
+#' Utilised to fetch comprehensive currency details, including multi-chain support, for market analysis or configuration.
 #'
-#' 3. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field.
-#'
-#' 4. **Data Conversion:**  
-#'    Iterates over each row (currency) in the returned data.frame. For each currency, its summary fields are
-#'    extracted and its nested \code{chains} data (if available) is converted to a data.table.
-#'
-#' 5. **Result Assembly:**  
-#'    If chain data exists, the summary row is replicated for each chain row and combined with the chain data.
-#'    Otherwise, dummy chain columns (filled with \code{NA}) are appended.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#'
-#' @return A promise that resolves to a \code{data.table} containing combined currency details.
-#'         Each row represents a unique currency/chain combination. The data.table includes:
-#'
-#'         **Currency Summary Fields:**
-#'         \describe{
-#'           \item{currency}{(string) The unique currency code.}
-#'           \item{name}{(string) The short name of the currency.}
-#'           \item{fullName}{(string) The full descriptive name of the currency.}
-#'           \item{precision}{(integer) The number of decimal places supported by the currency.}
-#'           \item{confirms}{(integer or NA) The number of block confirmations required at the currency level.}
-#'           \item{contractAddress}{(string or NA) The primary contract address for tokenized currencies.}
-#'           \item{isMarginEnabled}{(boolean) Indicates whether margin trading is enabled for the currency.}
-#'           \item{isDebitEnabled}{(boolean) Indicates whether debit transactions are enabled for the currency.}
-#'         }
-#'
-#'         **Chain-Specific Fields:**
-#'         \describe{
-#'           \item{chainName}{(string or NA) The name of the blockchain network associated with the currency.}
-#'           \item{withdrawalMinSize}{(string or NA) The minimum withdrawal amount permitted on this chain.}
-#'           \item{depositMinSize}{(string or NA) The minimum deposit amount permitted on this chain.}
-#'           \item{withdrawFeeRate}{(string or NA) The fee rate applied to withdrawals on this chain.}
-#'           \item{withdrawalMinFee}{(string or NA) The minimum fee charged for a withdrawal transaction on this chain.}
-#'           \item{isWithdrawEnabled}{(boolean or NA) Indicates whether withdrawals are enabled on this chain.}
-#'           \item{isDepositEnabled}{(boolean or NA) Indicates whether deposits are enabled on this chain.}
-#'           \item{confirms}{(integer or NA) The number of blockchain confirmations required on this chain.}
-#'           \item{preConfirms}{(integer or NA) The number of pre-confirmations required for on-chain verification on this chain.}
-#'           \item{chain_contractAddress}{(string or NA) The contract address specific to this chain (renamed from \code{contractAddress}).}
-#'           \item{withdrawPrecision}{(integer or NA) The withdrawal precision (maximum number of decimal places for withdrawal amounts on this chain).}
-#'           \item{maxWithdraw}{(string or NA) The maximum amount allowed per withdrawal transaction on this chain.}
-#'           \item{maxDeposit}{(string or NA) The maximum amount allowed per deposit transaction on this chain (applicable to some chains such as Lightning Network).}
-#'           \item{needTag}{(boolean or NA) Indicates whether a memo/tag is required for transactions on this chain.}
-#'           \item{chainId}{(string or NA) The unique identifier for the blockchain network associated with the currency.}
-#'           \item{depositFeeRate}{(string or NA) The fee rate applied to deposits on this chain, if provided by the API.}
-#'           \item{withdrawMaxFee}{(string or NA) The maximum fee charged for a withdrawal on this chain, if provided by the API.}
-#'           \item{depositTierFee}{(string or NA) The tiered fee structure for deposits on this chain, if provided by the API.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/currencies}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a `data.table` containing:
+#'   - **Summary Fields**:
+#'     - `currency` (character): Unique currency code.
+#'     - `name` (character): Short name.
+#'     - `fullName` (character): Full name.
+#'     - `precision` (integer): Decimal places.
+#'     - `confirms` (integer or NA): Block confirmations.
+#'     - `contractAddress` (character or NA): Primary contract address.
+#'     - `isMarginEnabled` (logical): Margin trading status.
+#'     - `isDebitEnabled` (logical): Debit status.
+#'   - **Chain-Specific Fields**:
+#'     - `chainName` (character or NA): Blockchain name.
+#'     - `withdrawalMinSize` (character or NA): Minimum withdrawal amount.
+#'     - `depositMinSize` (character or NA): Minimum deposit amount.
+#'     - `withdrawFeeRate` (character or NA): Withdrawal fee rate.
+#'     - `withdrawalMinFee` (character or NA): Minimum withdrawal fee.
+#'     - `isWithdrawEnabled` (logical or NA): Withdrawal enabled status.
+#'     - `isDepositEnabled` (logical or NA): Deposit enabled status.
+#'     - `confirms` (integer or NA): Chain-specific confirmations.
+#'     - `preConfirms` (integer or NA): Pre-confirmations.
+#'     - `chain_contractAddress` (character or NA): Chain-specific contract address.
+#'     - `withdrawPrecision` (integer or NA): Withdrawal precision.
+#'     - `maxWithdraw` (character or NA): Maximum withdrawal amount.
+#'     - `maxDeposit` (character or NA): Maximum deposit amount.
+#'     - `needTag` (logical or NA): Memo/tag requirement.
+#'     - `chainId` (character or NA): Blockchain identifier.
+#'     - `depositFeeRate` (character or NA): Deposit fee rate.
+#'     - `withdrawMaxFee` (character or NA): Maximum withdrawal fee.
+#'     - `depositTierFee` (character or NA): Tiered deposit fee.
 #' @examples
 #' \dontrun{
-#'   # Retrieve all available currencies:
-#'   dt_all_currencies <- await(get_all_currencies_impl())
-#'   print(dt_all_currencies)
+#' main_async <- coro::async(function() {
+#'   currencies <- await(get_all_currencies_impl())
+#'   print(currencies)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table data.table rbindlist
+#' @importFrom rlang abort
 #' @export
 get_all_currencies_impl <- coro::async(function(
     base_url = get_base_url()
@@ -408,73 +343,67 @@ get_all_currencies_impl <- coro::async(function(
 
 #' Get Symbol (Implementation)
 #'
-#' This asynchronous function retrieves detailed information about a specified trading symbol from the KuCoin API.
-#' It returns a promise that resolves to a \code{data.table} containing all available symbol details.
+#' Retrieves detailed information about a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **URL Assembly**: Combines `base_url`, `/api/v2/symbols/`, and the `symbol`.
+#' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 4. **Data Conversion**: Converts `"data"` into a `data.table` without filtering.
 #'
-#' 1. **Input Validation:**  
-#'    Validates that a valid trading symbol is provided using the helper function \code{verify_symbol()}.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v2/symbols/{symbol}`
 #'
-#' 2. **URL Construction:**  
-#'    Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint
-#'    path \code{/api/v2/symbols/}, and the provided \code{symbol}.
+#' ### Usage
+#' Utilised to fetch metadata for a specific trading symbol, such as price increments and trading limits.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field.
-#'
-#' 5. **Data Conversion:**  
-#'    Converts the entire \code{data} property (a named list of symbol details) into a \code{data.table} without filtering.
-#'
-#' #' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#'
-#' @return A promise that resolves to a \code{data.table}:
-#' \describe{
-#'   \item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
-#'   \item{name}{(string) Name of the trading pair, which may change after renaming.}
-#'   \item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
-#'   \item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
-#'   \item{feeCurrency}{(string) The currency used for charging fees.}
-#'   \item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
-#'   \item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
-#'   \item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
-#'   \item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
-#'   \item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
-#'   \item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
-#'   \item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
-#'   \item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
-#'   \item{priceLimitRate}{(string) The threshold for price protection.}
-#'   \item{minFunds}{(string) The minimum trading amount required for an order.}
-#'   \item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
-#'   \item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
-#'   \item{feeCategory}{(integer) The fee category/type for the trading pair.}
-#'   \item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
-#'   \item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
-#'   \item{st}{(boolean) A flag indicating additional status information (usage context-specific).}
-#' }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols/{symbol}}  
-#'
-#' This function uses a public API endpoint that does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `symbol` (character): Unique trading symbol code.
+#'   - `name` (character): Name of the trading pair.
+#'   - `baseCurrency` (character): Base currency.
+#'   - `quoteCurrency` (character): Quote currency.
+#'   - `feeCurrency` (character): Currency for fees.
+#'   - `market` (character): Trading market (e.g., `"USDS"`).
+#'   - `baseMinSize` (character): Minimum order quantity.
+#'   - `quoteMinSize` (character): Minimum order funds.
+#'   - `baseMaxSize` (character): Maximum order size.
+#'   - `quoteMaxSize` (character): Maximum order funds.
+#'   - `baseIncrement` (character): Quantity increment.
+#'   - `quoteIncrement` (character): Quote increment.
+#'   - `priceIncrement` (character): Price increment.
+#'   - `priceLimitRate` (character): Price protection threshold.
+#'   - `minFunds` (character): Minimum trading amount.
+#'   - `isMarginEnabled` (logical): Margin trading status.
+#'   - `enableTrading` (logical): Trading enabled status.
+#'   - `feeCategory` (integer): Fee category.
+#'   - `makerFeeCoefficient` (character): Maker fee coefficient.
+#'   - `takerFeeCoefficient` (character): Taker fee coefficient.
+#'   - `st` (logical): Special treatment flag.
+#'   - `callauctionIsEnabled` (logical): Call auction enabled status.
+#'   - `callauctionPriceFloor` (character): Call auction price floor.
+#'   - `callauctionPriceCeiling` (character): Call auction price ceiling.
+#'   - `callauctionFirstStageStartTime` (integer): First stage start time.
+#'   - `callauctionSecondStageStartTime` (integer): Second stage start time.
+#'   - `callauctionThirdStageStartTime` (integer): Third stage start time.
+#'   - `tradingStartTime` (integer): Trading start time.
 #' @examples
 #' \dontrun{
-#'   # Retrieve details for the BTC-USDT trading pair:
-#'   dt_symbol <- await(get_symbol_impl(symbol = "BTC-USDT"))
-#'   print(dt_symbol)
+#' main_async <- coro::async(function() {
+#'   symbol_data <- await(get_symbol_impl(symbol = "BTC-USDT"))
+#'   print(symbol_data)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_symbol_impl <- coro::async(function(
     base_url = get_base_url(),
@@ -501,87 +430,70 @@ get_symbol_impl <- coro::async(function(
 
 #' Get All Symbols (Implementation)
 #'
-#' This asynchronous function retrieves a list of all available trading symbols (currency pairs)
-#' from the KuCoin API. The endpoint returns an array of symbol objects with details such as the
-#' symbol code, base currency, quote currency, fee currency, order size limits, price increments,
-#' and fee coefficients.
+#' Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Builds a query string with the optional `market` parameter using `build_query()`.
+#' 2. **URL Assembly**: Combines `base_url`, `/api/v2/symbols`, and the query string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 5. **Data Conversion**: Converts `"data"` into a `data.table`.
 #'
-#' 1. **Query String Construction (Optional):**  
-#'    Uses the helper function \code{build_query()} to build a query string from the optional \code{market} parameter.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v2/symbols`
 #'
-#' 2. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}),
-#'    the endpoint path \code{/api/v2/symbols}, and the optional query string.
+#' ### Usage
+#' Utilised to obtain a comprehensive list of trading symbols for market exploration or filtering.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field.
-#'
-#' 5. **Data Conversion:**  
-#'    Converts the \code{data} property (an array of symbol objects) into a \code{data.table}.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param market (Optional) A character string specifying the trading market to filter symbols (e.g., "ALTS", "USDS", "ETF").
-#'
-#' @return A promise that resolves to a \code{data.table} containing the symbol details. The resulting data.table includes:
-#'         \describe{
-#'           \item{symbol}{(string) Unique code of the trading symbol (e.g., "BTC-USDT").}
-#'           \item{name}{(string) Name of the trading pair, which may change after renaming.}
-#'           \item{baseCurrency}{(string) The base currency of the trading pair (e.g., "BTC").}
-#'           \item{quoteCurrency}{(string) The quote currency of the trading pair (e.g., "USDT").}
-#'           \item{feeCurrency}{(string) The currency used for charging fees.}
-#'           \item{market}{(string) The trading market (e.g., "USDS", "BTC", "ALTS").}
-#'           \item{baseMinSize}{(string) The minimum order quantity required to place an order (in base currency).}
-#'           \item{quoteMinSize}{(string) The minimum order funds required to place a market order (in quote currency).}
-#'           \item{baseMaxSize}{(string) The maximum order size allowed (in base currency).}
-#'           \item{quoteMaxSize}{(string) The maximum order funds allowed (in quote currency).}
-#'           \item{baseIncrement}{(string) The quantity increment; order quantities must be a positive integer multiple of this value.}
-#'           \item{quoteIncrement}{(string) The quote increment; order funds must be a positive integer multiple of this value.}
-#'           \item{priceIncrement}{(string) The price increment; order prices must be a positive integer multiple of this value.}
-#'           \item{priceLimitRate}{(string) The threshold for price protection.}
-#'           \item{minFunds}{(string) The minimum trading amount required for an order.}
-#'           \item{isMarginEnabled}{(boolean) Indicates whether the trading pair is available for margin trading.}
-#'           \item{enableTrading}{(boolean) Indicates whether trading is enabled for this symbol.}
-#'           \item{feeCategory}{(integer) The fee category/type for the trading pair.}
-#'           \item{makerFeeCoefficient}{(string) The maker fee coefficient; the actual fee is calculated by multiplying by this value.}
-#'           \item{takerFeeCoefficient}{(string) The taker fee coefficient; the actual fee is calculated by multiplying by this value.}
-#'           \item{st}{(boolean) A flag indicating special treatment status for the symbol.}
-# Note: below new additions:
-#'           \item{callauctionIsEnabled}{(boolean) Indicates whether call auction is enabled for the symbol.}
-#'           \item{callauctionPriceFloor}{(string) The price floor for call auction.}
-#'           \item{callauctionPriceCeiling}{(string) The price ceiling for call auction.}
-#'           \item{callauctionFirstStageStartTime}{(integer) The start time of the first stage of call auction.}
-#'           \item{callauctionSecondStageStartTime}{(integer) The start time of the second stage of call auction.}
-#'           \item{callauctionThirdStageStartTime}{(integer) The start time of the third stage of call auction.}
-#'           \item{tradingStartTime}{(integer) The start time of trading for the symbol.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v2/symbols}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param market Character string (optional); trading market to filter symbols (e.g., `"ALTS"`, `"USDS"`, `"ETF"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `symbol` (character): Unique trading symbol code.
+#'   - `name` (character): Name of the trading pair.
+#'   - `baseCurrency` (character): Base currency.
+#'   - `quoteCurrency` (character): Quote currency.
+#'   - `feeCurrency` (character): Currency for fees.
+#'   - `market` (character): Trading market.
+#'   - `baseMinSize` (character): Minimum order quantity.
+#'   - `quoteMinSize` (character): Minimum order funds.
+#'   - `baseMaxSize` (character): Maximum order size.
+#'   - `quoteMaxSize` (character): Maximum order funds.
+#'   - `baseIncrement` (character): Quantity increment.
+#'   - `quoteIncrement` (character): Quote increment.
+#'   - `priceIncrement` (character): Price increment.
+#'   - `priceLimitRate` (character): Price protection threshold.
+#'   - `minFunds` (character): Minimum trading amount.
+#'   - `isMarginEnabled` (logical): Margin trading status.
+#'   - `enableTrading` (logical): Trading enabled status.
+#'   - `feeCategory` (integer): Fee category.
+#'   - `makerFeeCoefficient` (character): Maker fee coefficient.
+#'   - `takerFeeCoefficient` (character): Taker fee coefficient.
+#'   - `st` (logical): Special treatment flag.
+#'   - `callauctionIsEnabled` (logical): Call auction enabled status.
+#'   - `callauctionPriceFloor` (character): Call auction price floor.
+#'   - `callauctionPriceCeiling` (character): Call auction price ceiling.
+#'   - `callauctionFirstStageStartTime` (integer): First stage start time.
+#'   - `callauctionSecondStageStartTime` (integer): Second stage start time.
+#'   - `callauctionThirdStageStartTime` (integer): Third stage start time.
+#'   - `tradingStartTime` (integer): Trading start time.
 #' @examples
 #' \dontrun{
-#'   # Retrieve all trading symbols:
-#'   dt_symbols <- await(get_all_symbols_impl())
-#'   print(dt_symbols)
-#'
-#'   # Retrieve all symbols filtered by market "ALTS":
-#'   dt_symbols_alts <- await(get_all_symbols_impl(market = "ALTS"))
-#'   print(dt_symbols_alts)
+#' main_async <- coro::async(function() {
+#'   all_symbols <- await(get_all_symbols_impl())
+#'   print(all_symbols)
+#'   alts_symbols <- await(get_all_symbols_impl(market = "ALTS"))
+#'   print(alts_symbols)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_all_symbols_impl <- coro::async(function(
     base_url = get_base_url(),
@@ -610,62 +522,50 @@ get_all_symbols_impl <- coro::async(function(
 
 #' Get Ticker (Implementation)
 #'
-#' This asynchronous function retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API.
-#' The endpoint returns details such as the last traded price and size, the best bid and ask prices and sizes, as well as additional metadata.
+#' Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level1`, and the query string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, adds `symbol`, renames `time` to `time_ms`, and adds a `timestamp` column via `time_convert_from_kucoin()`.
 #'
-#' 1. **Query String Construction:**  
-#'    Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/orderbook/level1`
 #'
-#' 2. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
-#'    \code{/api/v1/market/orderbook/level1}, and the query string.
+#' ### Usage
+#' Utilised to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field.
-#'
-#' 5. **Data Conversion:**  
-#'    Converts the returned \code{data} (a named list containing ticker information) into a \code{data.table}.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#'
-#' @return A promise that resolves to a \code{data.table} containing the ticker information. The data.table includes:
-#'         \describe{
-#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-#'           \item{timestamp}{(POSIXct) The timestamp of the ticker data in UTC.}
-#'           \item{time_ms}{(integer) The timestamp of the ticker data (in milliseconds).}
-#'           \item{sequence}{(string) The sequence identifier for the ticker update.}
-#'           \item{price}{(string) The last traded price.}
-#'           \item{size}{(string) The last traded size.}
-#'           \item{bestBid}{(string) The best bid price.}
-#'           \item{bestBidSize}{(string) The best bid size.}
-#'           \item{bestAsk}{(string) The best ask price.}
-#'           \item{bestAskSize}{(string) The best ask size.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `symbol` (character): Trading symbol.
+#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
+#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `sequence` (character): Update sequence identifier.
+#'   - `price` (character): Last traded price.
+#'   - `size` (character): Last traded size.
+#'   - `bestBid` (character): Best bid price.
+#'   - `bestBidSize` (character): Best bid size.
+#'   - `bestAsk` (character): Best ask price.
+#'   - `bestAskSize` (character): Best ask size.
 #' @examples
 #' \dontrun{
-#'   # Retrieve ticker information for the BTC-USDT trading pair:
-#'   dt_ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
-#'   print(dt_ticker)
+#' main_async <- coro::async(function() {
+#'   ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
+#'   print(ticker)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table setnames setcolorder
+#' @importFrom rlang abort
 #' @export
 get_ticker_impl <- coro::async(function(
     base_url = get_base_url(),
@@ -699,79 +599,60 @@ get_ticker_impl <- coro::async(function(
     })
 })
 
-
 #' Get All Tickers (Implementation)
 #'
-#' This asynchronous function retrieves market tickers for all trading pairs from the KuCoin API.
-#' The endpoint returns a snapshot of market data, including 24-hour volume, for all symbols.
-#' The response contains a global timestamp and an array of ticker objects. Each ticker object includes
-#' details such as the last traded price and size, best bid/ask prices and sizes, and other trading parameters.
+#' Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **URL Assembly**: Combines `base_url` with `/api/v1/market/allTickers`.
+#' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
+#' 4. **Data Conversion**: Converts the `"ticker"` array to a `data.table`, adding `globalTime_ms` and `globalTime_datetime` from the `"time"` field.
 #'
-#' 1. **URL Construction:**  
-#'    Constructs the full API URL by concatenating the base URL (obtained via \code{get_base_url()})
-#'    with the endpoint path \code{/api/v1/market/allTickers}. An optional query string can be built using the
-#'    \code{build_query()} helper if needed (though no parameters are required by default).
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/allTickers`
 #'
-#' 2. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#' ### Usage
+#' Utilised to fetch a snapshot of market data across all KuCoin trading pairs for monitoring or analysis.
 #'
-#' 3. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field. The \code{data} object contains a global \code{time} field and a \code{ticker} array.
-#'
-#' 4. **Data Conversion:**  
-#'    Converts the \code{ticker} array (an array of ticker objects) into a \code{data.table}.
-#'
-#' 5. **Snapshot Time Augmentation:**  
-#'    Adds columns for the global snapshot time both in its original millisecond format and as a converted
-#'    POSIXct datetime (using the helper function \code{time_convert_from_kucoin("ms")}).
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#'
-#' @return A promise that resolves to a \code{data.table} containing the ticker information.
-#'         The data.table includes the following columns:
-#'         \describe{
-#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-#'           \item{symbolName}{(string) The symbol name (which may be updated if the currency name changes).}
-#'           \item{buy}{(string) The current best bid price.}
-#'           \item{bestBidSize}{(string) The size at the best bid price.}
-#'           \item{sell}{(string) The current best ask price.}
-#'           \item{bestAskSize}{(string) The size at the best ask price.}
-#'           \item{changeRate}{(string) The 24-hour change rate.}
-#'           \item{changePrice}{(string) The 24-hour price change.}
-#'           \item{high}{(string) The highest price in the last 24 hours.}
-#'           \item{low}{(string) The lowest price in the last 24 hours.}
-#'           \item{vol}{(string) The 24-hour trading volume.}
-#'           \item{volValue}{(string) The 24-hour trading turnover.}
-#'           \item{last}{(string) The last traded price.}
-#'           \item{averagePrice}{(string) The average price over the last 24 hours.}
-#'           \item{takerFeeRate}{(string) The taker fee rate.}
-#'           \item{makerFeeRate}{(string) The maker fee rate.}
-#'           \item{takerCoefficient}{(string) The taker fee coefficient.}
-#'           \item{makerCoefficient}{(string) The maker fee coefficient.}
-#'           \item{globalTime_ms}{(integer) The snapshot timestamp in milliseconds (from the parent data object).}
-#'           \item{snapshotTime}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/allTickers}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a `data.table` containing:
+#'   - `symbol` (character): Trading symbol.
+#'   - `symbolName` (character): Symbol name.
+#'   - `buy` (character): Best bid price.
+#'   - `bestBidSize` (character): Best bid size.
+#'   - `sell` (character): Best ask price.
+#'   - `bestAskSize` (character): Best ask size.
+#'   - `changeRate` (character): 24-hour change rate.
+#'   - `changePrice` (character): 24-hour price change.
+#'   - `high` (character): 24-hour high price.
+#'   - `low` (character): 24-hour low price.
+#'   - `vol` (character): 24-hour trading volume.
+#'   - `volValue` (character): 24-hour turnover.
+#'   - `last` (character): Last traded price.
+#'   - `averagePrice` (character): 24-hour average price.
+#'   - `takerFeeRate` (character): Taker fee rate.
+#'   - `makerFeeRate` (character): Maker fee rate.
+#'   - `takerCoefficient` (character): Taker fee coefficient.
+#'   - `makerCoefficient` (character): Maker fee coefficient.
+#'   - `globalTime_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `globalTime_datetime` (POSIXct): Snapshot timestamp in UTC.
 #' @examples
 #' \dontrun{
-#'   # Retrieve all market tickers:
-#'   dt_tickers <- await(market_data$get_all_tickers())
-#'   print(dt_tickers)
+#' main_async <- coro::async(function() {
+#'   tickers <- await(get_all_tickers_impl())
+#'   print(tickers)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_all_tickers_impl <- coro::async(function(
     base_url = get_base_url()
@@ -805,64 +686,46 @@ get_all_tickers_impl <- coro::async(function(
 
 #' Get Trade History (Implementation)
 #'
-#' This asynchronous function retrieves the trade history for a specified trading symbol from the KuCoin API.
-#' The endpoint returns the most recent 100 trade records, with each record including details such as the sequence number,
-#' filled price, filled size, trade side (buy/sell), and the timestamp (in nanoseconds).
+#' Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/histories`, and the query string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, adding a `timestamp` column via `time_convert_from_kucoin()`.
 #'
-#' 1. **Query String Construction:**  
-#'    Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/histories`
 #'
-#' 2. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
-#'    \code{/api/v1/market/histories}, and the query string.
+#' ### Usage
+#' Utilised to fetch recent trade history for a trading symbol, useful for tracking market activity.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field which contains an array of trade history objects.
-#'
-#' 5. **Data Conversion:**  
-#'    Converts the array of trade history objects into a \code{data.table}.
-#'
-#' 6. **Timestamp Conversion:**  
-#'    Converts the trade timestamp from nanoseconds to a POSIXct datetime by dividing by 1e6 (to get milliseconds)
-#'    and applying the helper function \code{time_convert_from_kucoin("ns")}.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#'
-#' @return A promise that resolves to a \code{data.table} containing the trade history records.
-#'         The data.table includes the following columns:
-#'         \describe{
-#'           \item{sequence}{(string) The sequence number for the trade.}
-#'           \item{price}{(string) The filled price of the trade.}
-#'           \item{size}{(string) The filled amount for the trade.}
-#'           \item{side}{(string) The side of the trade ("buy" or "sell").}
-#'           \item{time}{(integer) The original trade timestamp in nanoseconds.}
-#'           \item{datetime}{(POSIXct) The trade timestamp converted to a datetime (UTC).}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/histories?symbol=<symbol>}  
-#'
-#' This function uses a public API endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `sequence` (character): Trade sequence number.
+#'   - `price` (character): Filled price.
+#'   - `size` (character): Filled amount.
+#'   - `side` (character): Trade side (`"buy"` or `"sell"`).
+#'   - `time` (integer): Trade timestamp in nanoseconds.
+#'   - `timestamp` (POSIXct): Converted trade timestamp in UTC.
 #' @examples
 #' \dontrun{
-#'   # Retrieve the trade history for the BTC-USDT trading pair:
-#'   dt_trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
-#'   print(dt_trade_history)
+#' main_async <- coro::async(function() {
+#'   trades <- await(get_trade_history_impl(symbol = "BTC-USDT"))
+#'   print(trades)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table
+#' @importFrom rlang abort
 #' @export
 get_trade_history_impl <- coro::async(function(
     base_url = get_base_url(),
@@ -893,71 +756,50 @@ get_trade_history_impl <- coro::async(function(
 
 #' Get Part OrderBook (Implementation)
 #'
-#' This asynchronous function retrieves partial orderbook depth data for a specified trading symbol from the KuCoin API.
-#' The endpoint returns aggregated orderbook data at a specified depth (either 20 or 100 levels) along with a global
-#' snapshot timestamp and sequence number. The function processes the response and returns a single flattened
-#' \code{data.table} where each row represents a price level (from either the bids or the asks), with the global snapshot
-#' fields appended.
+#' Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Input Validation**: Ensures `size` is 20 or 100, aborting if invalid.
+#' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level2_{size}`, and the query string.
+#' 4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
+#' 6. **Data Conversion**: Converts bids and asks into separate `data.table`s, adds `side`, combines them, and appends snapshot fields.
 #'
-#' 1. **Input Validation:**  
-#'    Converts the \code{size} parameter to an integer and validates that it is either 20 or 100.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}`
 #'
-#' 2. **URL Construction:**  
-#'    Uses \code{build_query()} to construct a query string with the required \code{symbol} parameter. The full URL is
-#'    built by concatenating the base URL, the endpoint path (which includes the depth parameter), and the query string.
+#' ### Usage
+#' Utilised to obtain a snapshot of the orderbook for a trading symbol, showing aggregated bid and ask levels.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the response with \code{process_kucoin_response()} to validate the HTTP status and extract the \code{data} field.
-#'
-#' 5. **Data Conversion:**  
-#'    - Extracts global snapshot fields (\code{time} and \code{sequence}) from the response.
-#'    - Converts the bids and asks matrices into separate \code{data.table} objects, each with an added \code{side} column
-#'      ("bid" for bids, "ask" for asks).
-#'
-#' 6. **Data Assembly:**  
-#'    Combines the bids and asks tables into a single \code{data.table}, appends the global snapshot fields, and reorders
-#'    the columns so that the global fields appear first.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#' @param size An integer specifying the orderbook depth to retrieve. Allowed values are 20 or 100.
-#'
-#' @return A promise that resolves to a \code{data.table} containing the partial orderbook details. Each row contains:
-#'         \describe{
-#'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
-#'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
-#'           \item{sequence}{(string) The sequence number for the orderbook update.}
-#'           \item{side}{(string) The order side ("bid" or "ask").}
-#'           \item{price}{(string) The aggregated price at that level.}
-#'           \item{size}{(string) The aggregated size at that price level.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}?symbol=<symbol>}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @param size Integer; orderbook depth (20 or 100).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
+#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `sequence` (character): Orderbook update sequence.
+#'   - `side` (character): Order side (`"bid"` or `"ask"`).
+#'   - `price` (character): Aggregated price level.
+#'   - `size` (character): Aggregated size at that price.
 #' @examples
 #' \dontrun{
-#'   # Retrieve the top 20 levels of the orderbook for BTC-USDT:
-#'   dt_orderbook <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 20))
-#'   print(dt_orderbook)
-#'
-#'   # Retrieve the top 100 levels of the orderbook for BTC-USDT:
-#'   dt_orderbook_100 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 100))
-#'   print(dt_orderbook_100)
+#' main_async <- coro::async(function() {
+#'   orderbook_20 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 20))
+#'   print(orderbook_20)
+#'   orderbook_100 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 100))
+#'   print(orderbook_100)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table data.table rbindlist setcolorder setorder
+#' @importFrom rlang abort
 #' @export
 get_part_orderbook_impl <- coro::async(function(
     base_url = get_base_url(),
@@ -1021,74 +863,54 @@ get_part_orderbook_impl <- coro::async(function(
 
 #' Get Full OrderBook (Implementation, Authenticated)
 #'
-#' This asynchronous function retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API.
-#' Because this is a private endpoint, valid API keys must be provided and authentication headers are constructed.
-#' The endpoint returns aggregated price levels for both bids and asks along with a global snapshot timestamp and sequence number.
+#' Retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring authentication.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Header Preparation**: Constructs authentication headers with `build_headers()` using `keys`.
+#' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 3. **URL Assembly**: Combines `base_url`, `/api/v3/market/orderbook/level2`, and the query string.
+#' 4. **HTTP Request**: Sends a GET request with headers and a 10-second timeout via `httr::GET()`.
+#' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
+#' 6. **Data Conversion**: Converts bids and asks into `data.table`s, adds `side`, combines them, and appends snapshot fields.
 #'
-#' 1. **Authentication Header Preparation:**  
-#'    Uses the helper function \code{build_headers()} along with the provided API keys to construct the necessary authentication headers.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v3/market/orderbook/level2`
 #'
-#' 2. **Query String Construction:**  
-#'    Uses \code{build_query()} to generate a query string containing the required \code{symbol} parameter.
+#' ### Usage
+#' Utilised to fetch the complete orderbook for a trading symbol, requiring API authentication for detailed depth data.
 #'
-#' 3. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
-#'    \code{/api/v3/market/orderbook/level2}, and the query string.
-#'
-#' 4. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with the authentication headers and a 10‑second timeout.
-#'
-#' 5. **Response Processing:**  
-#'    Processes the response using \code{process_kucoin_response()} to ensure the HTTP status and API code indicate success,
-#'    then extracts the \code{data} field.
-#'
-#' 6. **Data Conversion and Flattening:**  
-#'    - Converts the bids and asks matrices (with price in the first column and size in the second) into two separate \code{data.table} objects.
-#'    - Adds a \code{side} column to each table ("bid" for bids, "ask" for asks).
-#'    - Combines the two tables into a single \code{data.table}.
-#'
-#' 7. **Timestamp Conversion:**  
-#'    Appends the global snapshot timestamp (in milliseconds) as well as a converted POSIXct datetime (using \code{time_convert_from_kucoin("ms")}).
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
 #'
-#' @param keys A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
-#'   - \code{api_key}: Your KuCoin API key.
-#'   - \code{api_secret}: Your KuCoin API secret.
-#'   - \code{api_passphrase}: Your KuCoin API passphrase.
-#'   - \code{key_version}: The API key version (e.g., "2").
-#' @param base_url A character string representing the base URL for the API. Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#'
-#' @return A promise that resolves to a \code{data.table} containing the full orderbook details. The returned data.table includes:
-#'         \describe{
-#'           \item{timestamp}{(POSIXct) The global snapshot timestamp converted to a datetime (UTC).}
-#'           \item{time_ms}{(integer) The global snapshot timestamp in milliseconds.}
-#'           \item{sequence}{(string) The sequence number for the orderbook update.}
-#'           \item{side}{(string) The order side ("bid" or "ask").}
-#'           \item{price}{(string) The aggregated price at the given level.}
-#'           \item{size}{(string) The aggregated size at that price level.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v3/market/orderbook/level2?symbol=<symbol>}  
-#'
-#' This function is private and requires valid API keys to construct authentication headers.
-#'
+#' @param keys List; API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key` (character): KuCoin API key.
+#'   - `api_secret` (character): KuCoin API secret.
+#'   - `api_passphrase` (character): KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
+#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `sequence` (character): Orderbook update sequence.
+#'   - `side` (character): Order side (`"bid"` or `"ask"`).
+#'   - `price` (character): Aggregated price level.
+#'   - `size` (character): Aggregated size at that price.
 #' @examples
 #' \dontrun{
-#'   # Retrieve API keys from your environment:
+#' main_async <- coro::async(function() {
 #'   keys <- get_api_keys()
-#'
-#'   # Retrieve the full orderbook for BTC-USDT:
-#'   dt_full_orderbook <- await(get_full_orderbook_impl(keys, base_url = get_base_url(), symbol = "BTC-USDT"))
-#'   print(dt_full_orderbook)
+#'   orderbook <- await(get_full_orderbook_impl(keys = keys, symbol = "BTC-USDT"))
+#'   print(orderbook)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table data.table rbindlist setcolorder setorder
+#' @importFrom rlang abort
 #' @export
 get_full_orderbook_impl <- coro::async(function(
     keys = get_api_keys(),
@@ -1152,74 +974,57 @@ get_full_orderbook_impl <- coro::async(function(
 
 #' Get 24-Hour Statistics (Implementation)
 #'
-#' This asynchronous function retrieves the 24-hour market statistics for a specified trading symbol from the KuCoin API.
-#' The endpoint returns a snapshot of market data including the best bid and ask prices, last traded price, 24-hour change rate
-#' and change in price, highest and lowest prices, trading volume, turnover, average price, and fee rates.
+#' Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/stats`, and the query string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
+#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, renames `time` to `time_ms`, and adds a `timestamp` column via `time_convert_from_kucoin()`.
 #'
-#' 1. **Query String Construction:**  
-#'    Uses the helper function \code{build_query()} to create a query string containing the required \code{symbol} parameter.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/market/stats`
 #'
-#' 2. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path 
-#'    \code{/api/v1/market/stats}, and the query string.
+#' ### Usage
+#' Utilised to fetch a 24-hour snapshot of market statistics for a trading symbol, including volume and price changes.
 #'
-#' 3. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-#'
-#' 4. **Response Processing:**  
-#'    Processes the API response with \code{process_kucoin_response()} to validate the HTTP status and API code, then extracts the \code{data} field.
-#'
-#' 5. **Data Conversion:**  
-#'    Converts the returned data (a named list of market statistics) into a \code{data.table} and appends two new columns:
-#'    \describe{
-#'      \item{globalTime_ms}{(integer) The raw snapshot timestamp in milliseconds.}
-#'      \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC) via \code{time_convert_from_kucoin("ms")}.}
-#'    }
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
-#'
-#' @return A promise that resolves to a \code{data.table} containing the 24-hour market statistics.
-#'         The resulting \code{data.table} includes the following columns:
-#'         \describe{
-#'           \item{time}{(integer) The raw snapshot timestamp in milliseconds.}
-#'           \item{timestamp}{(POSIXct) The snapshot timestamp converted to a datetime (UTC).}
-#'           \item{symbol}{(string) The trading symbol (e.g., "BTC-USDT").}
-#'           \item{buy}{(string) The best bid price.}
-#'           \item{sell}{(string) The best ask price.}
-#'           \item{changeRate}{(string) The 24-hour change rate (percentage).}
-#'           \item{changePrice}{(string) The absolute price change over the last 24 hours.}
-#'           \item{high}{(string) The highest price in the last 24 hours.}
-#'           \item{low}{(string) The lowest price in the last 24 hours.}
-#'           \item{vol}{(string) The 24-hour trading volume (in base currency).}
-#'           \item{volValue}{(string) The 24-hour trading turnover (in quote currency).}
-#'           \item{last}{(string) The last traded price.}
-#'           \item{averagePrice}{(string) The average trading price over the last 24 hours.}
-#'           \item{takerFeeRate}{(string) The basic taker fee rate.}
-#'           \item{makerFeeRate}{(string) The basic maker fee rate.}
-#'           \item{takerCoefficient}{(string) The taker fee coefficient.}
-#'           \item{makerCoefficient}{(string) The maker fee coefficient.}
-#'         }
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/market/stats?symbol=<symbol>}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
+#' @return Promise resolving to a `data.table` containing:
+#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
+#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `symbol` (character): Trading symbol.
+#'   - `buy` (character): Best bid price.
+#'   - `sell` (character): Best ask price.
+#'   - `changeRate` (character): 24-hour change rate.
+#'   - `changePrice` (character): 24-hour price change.
+#'   - `high` (character): 24-hour high price.
+#'   - `low` (character): 24-hour low price.
+#'   - `vol` (character): 24-hour trading volume.
+#'   - `volValue` (character): 24-hour turnover.
+#'   - `last` (character): Last traded price.
+#'   - `averagePrice` (character): 24-hour average price.
+#'   - `takerFeeRate` (character): Taker fee rate.
+#'   - `makerFeeRate` (character): Maker fee rate.
+#'   - `takerCoefficient` (character): Taker fee coefficient.
+#'   - `makerCoefficient` (character): Maker fee coefficient.
 #' @examples
 #' \dontrun{
-#'   # Retrieve 24-hour statistics for BTC-USDT:
-#'   stats <- await(market_data$get_24hr_stats(symbol = "BTC-USDT"))
+#' main_async <- coro::async(function() {
+#'   stats <- await(get_24hr_stats_impl(symbol = "BTC-USDT"))
 #'   print(stats)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table as.data.table setnames setcolorder
+#' @importFrom rlang abort
 #' @export
 get_24hr_stats_impl <- coro::async(function(
   base_url = get_base_url(),
@@ -1248,51 +1053,36 @@ get_24hr_stats_impl <- coro::async(function(
 
 #' Get Market List (Implementation)
 #'
-#' This asynchronous function retrieves the list of all available trading markets from the KuCoin API.
-#' The endpoint returns an array of market identifiers (e.g., "USDS", "TON", "AI", etc.) which represent different
-#' trading areas. This list can be used to filter or further query market-specific data using other endpoints (e.g., retrieving
-#' 24-hour statistics or ticker information for a specific market).
+#' Retrieves the list of all available trading markets from the KuCoin API asynchronously.
 #'
-#' **Workflow Overview:**
+#' ### Workflow Overview
+#' 1. **URL Assembly**: Combines `base_url` with `/api/v1/markets`.
+#' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field as a character vector.
 #'
-#' 1. **URL Construction:**  
-#'    Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint path
-#'    \code{/api/v1/markets}. No query parameters are required.
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v1/markets`
 #'
-#' 2. **HTTP Request:**  
-#'    Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
+#' ### Usage
+#' Utilised to identify available trading markets on KuCoin for filtering or querying market-specific data.
 #'
-#' 3. **Response Processing:**  
-#'    Processes the API response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-#'    then extracts the \code{data} field, which contains the list of markets.
-#'
-#' **API Documentation:**  
+#' ### Official Documentation
 #' [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
 #'
-#' @param base_url A character string representing the base URL for the KuCoin API.
-#'        Defaults to the value returned by \code{get_base_url()}.
-#'
-#' @return A promise that resolves to a \code{character} vector containing the list of available trading markets.
-#'
-#' @details
-#' **Endpoint:** \code{GET https://api.kucoin.com/api/v1/markets}  
-#'
-#' This function uses a public endpoint and does not require authentication.
-#'
-#' @seealso
-#' \itemize{
-#'   \item \code{\link{get_24hr_stats_impl}} for retrieving detailed statistics for a specific trading pair.
-#'   \item \code{\link{get_ticker_impl}} for obtaining ticker information.
-#' }
-#'
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @return Promise resolving to a character vector of trading market identifiers (e.g., `"USDS"`, `"TON"`).
 #' @examples
 #' \dontrun{
-#'   # Retrieve the list of markets:
-#'   dt_markets <- await(get_market_list_impl())
-#'   print(dt_markets)
+#' main_async <- coro::async(function() {
+#'   markets <- await(get_market_list_impl())
+#'   print(markets)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
 #' }
-#'
-#' @md
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom rlang abort
 #' @export
 get_market_list_impl <- coro::async(function(
   base_url = get_base_url()

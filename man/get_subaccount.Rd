@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_subaccount}
 \alias{get_subaccount}
-\title{Retrieve SubAccount Configuration from Environment Variables}
+\title{Retrieve KuCoin Sub-Account Configuration from Environment Variables}
 \usage{
 get_subaccount(
   sub_account_name = Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME"),
@@ -10,26 +10,35 @@ get_subaccount(
 )
 }
 \arguments{
-\item{sub_account_name}{(Optional) The sub-account name. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME")}.}
+\item{sub_account_name}{Character string; the sub-account name. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-NAME")}.}
 
-\item{sub_account_password}{(Optional) The sub-account password. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")}.}
+\item{sub_account_password}{Character string; the sub-account password. Defaults to \code{Sys.getenv("KC-ACCOUNT-SUBACCOUNT-PASSWORD")}.}
 }
 \value{
-A list containing sub-account configuration parameters.
+List containing sub-account configuration: \code{sub_account_name} and \code{sub_account_password}.
 }
 \description{
-This function retrieves sub-account–specific configuration parameters from environment variables.
-It expects the following environment variables to be set:
-- \code{KC-ACCOUNT-SUBACCOUNT-NAME}: The sub-account name.
-- \code{KC-ACCOUNT-SUBACCOUNT-PASSWORD}: The sub-account password.
+Fetches sub-account-specific configuration parameters from environment variables. Expected variables are:
 }
 \details{
-These parameters are used for sub-account related operations.
+\itemize{
+\item \code{KC-ACCOUNT-SUBACCOUNT-NAME}: The sub-account name.
+\item \code{KC-ACCOUNT-SUBACCOUNT-PASSWORD}: The sub-account password.
+}
+
+These parameters are used for sub-account-related operations in the KuCoin API.
 }
 \examples{
 \dontrun{
-  sub_cfg <- get_subaccount()
-  print(sub_cfg)
-}
+# Retrieve sub-account config from environment variables
+sub_cfg <- get_subaccount()
+print(sub_cfg)
 
+# Specify sub-account details manually
+sub_cfg <- get_subaccount(
+  sub_account_name = "my_subaccount",
+  sub_account_password = "my_password"
+)
+print(sub_cfg)
+}
 }

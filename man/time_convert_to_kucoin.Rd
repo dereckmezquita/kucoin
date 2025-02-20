@@ -2,18 +2,54 @@
 % Please edit documentation in R/utils_time_convert_kucoin.R
 \name{time_convert_to_kucoin}
 \alias{time_convert_to_kucoin}
-\title{Convert POSIXct to KuCoin's Server Time}
+\title{Convert POSIXct to KuCoin Server Time}
 \usage{
 time_convert_to_kucoin(datetime, unit = c("ms", "ns", "s"))
 }
 \arguments{
-\item{datetime}{A POSIXct object representing the time.}
+\item{datetime}{POSIXct object representing the timestamp to convert.}
 
-\item{unit}{A character string specifying the output time unit: "ms" for milliseconds (default) or "s" for seconds.}
+\item{unit}{Character string specifying the output time unit: \code{"ms"} for milliseconds (default), \code{"ns"} for nanoseconds, or \code{"s"} for seconds.}
 }
 \value{
-A numeric value representing the time in the specified unit.
+Numeric value representing the UNIX timestamp in the specified unit.
 }
 \description{
-Converts a POSIXct object to a UNIX timestamp in the specified unit for KuCoin's server.
+Converts a POSIXct object into a UNIX timestamp in the specified unit, compatible with KuCoin's server time requirements.
+}
+\details{
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Input Validation}: Ensures \code{datetime} is a POSIXct object, aborting if not.
+\item \strong{Unit Matching}: Validates \code{unit} against allowed options (\code{"ms"}, \code{"ns"}, \code{"s"}) using \code{match.arg()}.
+\item \strong{Time Conversion}: Converts the POSIXct to seconds and scales to the desired unit (milliseconds, nanoseconds, or seconds).
+}
+}
+
+\subsection{API Endpoint}{
+
+Not applicable (helper function for timestamp conversion).
+}
+
+\subsection{Usage}{
+
+Utilised to prepare timestamps in the appropriate UNIX format for KuCoin API requests.
+}
+
+\subsection{Official Documentation}{
+
+Not directly tied to a specific endpoint; see KuCoin API timestamp usage guidelines.
+}
+}
+\examples{
+\dontrun{
+# Convert to milliseconds
+dt <- as.POSIXct("2023-10-31 16:00:00", tz = "UTC")
+time_convert_to_kucoin(datetime = dt, unit = "ms")
+# Returns 1698777600000
+
+# Convert to nanoseconds
+time_convert_to_kucoin(datetime = dt, unit = "ns")
+# Returns 1698777600000000000
+}
 }

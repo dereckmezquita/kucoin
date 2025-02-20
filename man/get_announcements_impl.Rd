@@ -13,90 +13,78 @@ get_announcements_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{query}{A named list of additional query parameters to filter the announcements. Supported parameters include:
-\describe{
-\item{currentPage}{(integer, optional) The page number to retrieve.}
-\item{pageSize}{(integer, optional) The number of announcements per page.}
-\item{annType}{(string, optional) The type of announcements to retrieve. Allowed values include "latest-announcements",
-"activities", "product-updates", "vip", "maintenance-updates", "delistings", "others", "api-campaigns", "new-listings".}
-\item{lang}{(string, optional) The language of the announcements (e.g., "en_US", "zh_HK", "ja_JP").}
-\item{startTime}{(integer, optional) The start time (in milliseconds) for filtering announcements.}
-\item{endTime}{(integer, optional) The end time (in milliseconds) for filtering announcements.}
+\item{query}{Named list; additional query parameters to filter announcements. Supported:
+\itemize{
+\item \code{currentPage} (integer, optional): Page number to retrieve.
+\item \code{pageSize} (integer, optional): Number of announcements per page.
+\item \code{annType} (string, optional): Type of announcements (e.g., \code{"latest-announcements"}, \code{"activities"}, \code{"product-updates"}, \code{"vip"}, \code{"maintenance-updates"}, \code{"delistings"}, \code{"others"}, \code{"api-campaigns"}, \code{"new-listings"}).
+\item \code{lang} (string, optional): Language (e.g., \code{"en_US"}, \code{"zh_HK"}, \code{"ja_JP"}).
+\item \code{startTime} (integer, optional): Start time in milliseconds.
+\item \code{endTime} (integer, optional): End time in milliseconds.
 }}
 
-\item{page_size}{(integer, optional) The number of results per page; default is 50.}
+\item{page_size}{Integer; number of results per page (default 50).}
 
-\item{max_pages}{(integer, optional) The maximum number of pages to fetch. Defaults to \code{Inf} (to fetch all pages).}
+\item{max_pages}{Numeric; maximum number of pages to fetch (default \code{Inf} for all pages).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the aggregated announcement records.
-Each row represents an announcement with columns including:
-\describe{
-\item{annId}{(integer) The unique announcement ID.}
-\item{annTitle}{(string) The title of the announcement.}
-\item{annType}{(list) A list of announcement types.}
-\item{annDesc}{(string) The description of the announcement.}
-\item{cTime}{(integer) The announcement release time in Unix milliseconds.}
-\item{language}{(string) The language of the announcement.}
-\item{annUrl}{(string) The URL linking to the full announcement.}
-\item{currentPage}{(integer) The current page number (from the API response).}
-\item{pageSize}{(integer) The number of records per page (from the API response).}
-\item{totalNum}{(integer) The total number of announcements.}
-\item{totalPage}{(integer) The total number of pages available.}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{annId} (integer): Unique announcement ID.
+\item \code{annTitle} (character): Announcement title.
+\item \code{annType} (list): List of announcement types.
+\item \code{annDesc} (character): Announcement description.
+\item \code{cTime} (integer): Release time in Unix milliseconds.
+\item \code{language} (character): Language of the announcement.
+\item \code{annUrl} (character): URL to the full announcement.
+\item \code{currentPage} (integer): Current page number.
+\item \code{pageSize} (integer): Records per page.
+\item \code{totalNum} (integer): Total number of announcements.
+\item \code{totalPage} (integer): Total pages available.
 }
 }
 \description{
-This asynchronous function retrieves the latest announcements from the KuCoin API. The endpoint returns a paginated list of
-news announcements such as updates, promotions, or new listings. By default, the function retrieves announcements classified as
-"latest-announcements" in English (en_US), but these parameters can be overridden via the \code{query} argument. This function
-utilizes the \code{auto_paginate} helper to automatically iterate through all available pages (or a specified maximum number)
-and aggregates the results into a single \code{data.table}. This data can be further used to filter or display market-related news,
-or in conjunction with other market data functions.
+Retrieves the latest announcements from the KuCoin API asynchronously, aggregating paginated results into a single \code{data.table}. This internal function is designed for use within a larger system and is not intended for direct end-user consumption.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query String Construction:}
-The function first merges default pagination parameters—\code{currentPage = 1}, \code{pageSize = 50},
-\code{annType = "latest-announcements"}, and \code{lang = "en_US"}—with any additional user-supplied query parameters.
-\item \strong{URL Construction:}
-It constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}) with the endpoint
-path \code{/api/v3/announcements} and the generated query string.
-\item \strong{HTTP Request:}
-The function sends an asynchronous GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-The API response is processed using \code{process_kucoin_response()} to ensure that the HTTP status and API code indicate
-success. The \code{data} field is then extracted, which includes pagination metadata and a list of announcement items.
-\item \strong{Automatic Pagination:}
-Using the \code{auto_paginate} helper function, the function automatically iterates through subsequent pages (based on
-the \code{currentPage} and \code{totalPage} fields) and aggregates all announcement items into a single \code{data.table}.
+\item \strong{Query Construction}: Merges default parameters (\code{currentPage = 1}, \code{pageSize = 50}, \code{annType = "latest-announcements"}, \code{lang = "en_US"}) with user-supplied \code{query} using \code{utils::modifyList()}.
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/announcements} and the query string from \code{build_query()}.
+\item \strong{Page Fetching}: Defines an async \code{fetch_page} function to send a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Pagination}: Utilises \code{auto_paginate} to fetch all pages up to \code{max_pages}, extracting \code{"items"} from each response.
+\item \strong{Aggregation}: Combines results into a \code{data.table} with \code{data.table::rbindlist()}.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v3/announcements}
+}
+
+\subsection{Usage}{
+
+Utilised to gather KuCoin news announcements (e.g., updates, promotions) for market analysis or display.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements}{KuCoin Get Announcements}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v3/announcements}
-
-This function uses a public endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve the latest announcements with default parameters:
+main_async <- coro::async(function() {
+  # Default: latest announcements in English
   announcements <- await(get_announcements_impl())
   print(announcements)
-
-  # Retrieve announcements filtered by type and language:
-  announcements <- await(get_announcements_impl(query = list(annType = "activities", lang = "en_US")))
-  print(announcements)
-}
-
-}
-\seealso{
-\itemize{
-\item \code{\link{get_24hr_stats_impl}} for retrieving detailed 24-hour statistics for a specific trading pair.
-\item \code{\link{get_ticker_impl}} for obtaining ticker information.
+  # Filtered by type and language
+  activities <- await(get_announcements_impl(query = list(annType = "activities", lang = "en_US")))
+  print(activities)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
 }

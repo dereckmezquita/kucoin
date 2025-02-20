@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_sub_account.R
 \name{add_subaccount_impl}
 \alias{add_subaccount_impl}
-\title{Add SubAccount Implementation}
+\title{Add Sub-Account (Implementation)}
 \usage{
 add_subaccount_impl(
   keys = get_api_keys(),
@@ -15,97 +15,80 @@ add_subaccount_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g. \code{"2"}).
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses
-\code{get_base_url()} to determine the base URL.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 
-\item{password}{A string representing the sub‐account password.
-\itemize{
-\item \strong{Requirements:} Must be between 7 and 24 characters and contain both letters and numbers.
-}}
+\item{password}{Character string; sub-account password (7–24 characters, must contain both letters and numbers).}
 
-\item{subName}{A string representing the desired sub‐account name.
-\itemize{
-\item \strong{Requirements:} Must be between 7 and 32 characters, include at least one letter and one number, and not contain spaces.
-}}
+\item{subName}{Character string; desired sub-account name (7–32 characters, must include at least one letter and one number, no spaces).}
 
-\item{access}{A string representing the permission type for the sub‐account.
-\itemize{
-\item \strong{Allowed Values:} \code{"Spot"}, \code{"Futures"}, \code{"Margin"}.
-}}
+\item{access}{Character string; permission type for the sub-account (allowed values: \code{"Spot"}, \code{"Futures"}, \code{"Margin"}).}
 
-\item{remarks}{(Optional) A string containing remarks or notes about the sub‐account.
-\itemize{
-\item \strong{Requirements:} If provided, must be between 1 and 24 characters.
-}}
+\item{remarks}{Character string (optional); remarks or notes about the sub-account (1–24 characters if provided).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the sub‐account details. The resulting table includes at least:
+Promise resolving to a \code{data.table} containing sub-account details, including at least:
 \itemize{
-\item \strong{uid} (integer): The unique identifier for the sub‐account.
-\item \strong{subName} (string): The name of the sub‐account.
-\item \strong{remarks} (string): Any remarks or notes provided.
-\item \strong{access} (string): The permission type granted to the sub‐account.
+\item \code{uid} (integer): Unique identifier for the sub-account.
+\item \code{subName} (character): Name of the sub-account.
+\item \code{remarks} (character): Any provided remarks or notes.
+\item \code{access} (character): Permission type granted to the sub-account.
 }
 }
 \description{
-This asynchronous function creates a new sub‐account on KuCoin by sending a POST request to the
-\verb{/api/v2/sub/user/created} endpoint. It is designed for internal use as a method in an R6 class and is
-not intended for direct consumption by end-users. The function performs the following steps:
+Creates a new sub-account on KuCoin asynchronously by sending a POST request to the \verb{/api/v2/sub/user/created} endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 }
 \details{
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Construction:}
-Retrieves the base URL using \code{get_base_url()} (or the user-supplied \code{base_url}) and appends the endpoint.
-\item \strong{Request Body Preparation:}
-Creates a list with the required parameters:
-\itemize{
-\item \code{password}: The sub‐account password (7–24 characters; must contain both letters and numbers).
-\item \code{subName}: The desired sub‐account name (7–32 characters; must include at least one letter and one number; no spaces).
-\item \code{access}: The permission type for the sub‐account (allowed values: \code{"Spot"}, \code{"Futures"}, \code{"Margin"}).
-\item \code{remarks} (optional): Remarks or notes about the sub‐account (if provided, 1–24 characters).
+\item \strong{URL Construction}: Retrieves the base URL using \code{get_base_url()} (or the user-supplied \code{base_url}) and appends the endpoint.
+\item \strong{Request Body Preparation}: Creates a list with required parameters (\code{password}, \code{subName}, \code{access}, and optional \code{remarks}), converted to JSON format using \code{jsonlite::toJSON()} with \code{auto_unbox = TRUE}.
+\item \strong{Header Preparation}: Generates authentication headers asynchronously via \code{build_headers()}, incorporating the signature, timestamp, encrypted passphrase, and API key details.
+\item \strong{API Request}: Sends a POST request using \code{httr::POST()} with the constructed URL, headers, and JSON body, applying a 3-second timeout.
+\item \strong{Response Handling}: Processes the JSON response with \code{process_kucoin_response()}, raising an error if the HTTP status is not 200 or the API code is not \code{"200000"}.
+\item \strong{Result Conversion}: Converts the \code{data} field of the successful response into a \code{data.table}.
+}
 }
 
-This list is converted to JSON format using \code{jsonlite::toJSON()} with \code{auto_unbox = TRUE}.
-\item \strong{Header Preparation:}
-Generates authentication headers asynchronously by calling \code{build_headers()}, which includes the necessary
-signature, timestamp, encrypted passphrase, and API key details.
-\item \strong{API Request:}
-Sends a POST request using \code{httr::POST()} with the constructed URL, headers and JSON body. A timeout of 3
-seconds is applied.
-\item \strong{Response Handling:}
-Processes the JSON response using \code{process_kucoin_response()}. If the HTTP status is not 200 or the API returns
-a code other than \code{"200000"}, an error is raised.
-\item \strong{Result Conversion:}
-On success, converts the \code{data} field of the response into a \code{data.table} and returns it.
+\subsection{API Endpoint}{
+
+\verb{POST https://api.kucoin.com/api/v2/sub/user/created}
 }
 
-\strong{Endpoint:} \verb{POST https://api.kucoin.com/api/v2/sub/user/created}
+\subsection{Usage}{
 
-\strong{Raw Response Schema:}
+Utilised internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount}{KuCoin Add Sub-Account}
+
+\strong{Raw Response Schema}:
 \itemize{
 \item \code{code} (string): Status code, where \code{"200000"} indicates success.
-\item \code{data} (object): Contains the sub‐account details as described above.
+\item \code{data} (object): Contains the sub-account details as described above.
 }
 
-The JSON response looks like:
-\preformatted{
-{
+Example JSON response:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\{
     "code": "200000",
-    "data": {
+    "data": \{
         "currentPage": 1,
         "pageSize": 10,
         "totalNum": 1,
         "totalPage": 1,
         "items": [
-            {
+            \{
                 "userId": "63743f07e0c5230001761d08",
                 "uid": 169579801,
                 "subName": "testapi6",
@@ -114,47 +97,32 @@ The JSON response looks like:
                 "access": "All",
                 "createdAt": 1668562696000,
                 "remarks": "remarks",
-                "tradeTypes": [
-                    "Spot",
-                    "Futures",
-                    "Margin"
-                ],
-                "openedTradeTypes": [
-                    "Spot"
-                ],
+                "tradeTypes": ["Spot", "Futures", "Margin"],
+                "openedTradeTypes": ["Spot"],
                 "hostedStatus": null
-            }
+            \}
         ]
-    }
+    \}
+\}
+}\if{html}{\out{</div>}}
 }
-}
-
-For more information, please refer to the
-\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount}{Add SubAccount API Documentation}.
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from the environment using get_api_keys()
-  keys <- get_api_keys()
-
-  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-  base_url <- "https://api.kucoin.com"
-
-  # Execute the asynchronous request using coro::async:
-  main_async <- coro::async(function() {
-    result <- await(add_subaccount_impl(keys, base_url,
-        password = "1234567",
-        subName = "Name1234567",
-        access = "Spot",
-        remarks = "Test sub-account"
-    ))
-    print(result)
-  })
-
-  main_async()
-  while (!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+main_async <- coro::async(function() {
+  result <- await(add_subaccount_impl(
+    keys = keys,
+    base_url = base_url,
+    password = "1234567",
+    subName = "Name1234567",
+    access = "Spot",
+    remarks = "Test sub-account"
+  ))
+  print(result)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

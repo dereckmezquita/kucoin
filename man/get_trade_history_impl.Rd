@@ -11,60 +11,57 @@ get_trade_history_impl(
 )
 }
 \arguments{
-\item{base_url}{A character string representing the base URL for the KuCoin API.
-Defaults to the value returned by \code{get_base_url()}.}
+\item{base_url}{Character string; base URL for the KuCoin API. Defaults to \code{get_base_url()}.}
 
-\item{symbol}{A character string representing the trading symbol (e.g., "BTC-USDT").}
+\item{symbol}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the trade history records.
-The data.table includes the following columns:
-\describe{
-\item{sequence}{(string) The sequence number for the trade.}
-\item{price}{(string) The filled price of the trade.}
-\item{size}{(string) The filled amount for the trade.}
-\item{side}{(string) The side of the trade ("buy" or "sell").}
-\item{time}{(integer) The original trade timestamp in nanoseconds.}
-\item{datetime}{(POSIXct) The trade timestamp converted to a datetime (UTC).}
+Promise resolving to a \code{data.table} containing:
+\itemize{
+\item \code{sequence} (character): Trade sequence number.
+\item \code{price} (character): Filled price.
+\item \code{size} (character): Filled amount.
+\item \code{side} (character): Trade side (\code{"buy"} or \code{"sell"}).
+\item \code{time} (integer): Trade timestamp in nanoseconds.
+\item \code{timestamp} (POSIXct): Converted trade timestamp in UTC.
 }
 }
 \description{
-This asynchronous function retrieves the trade history for a specified trading symbol from the KuCoin API.
-The endpoint returns the most recent 100 trade records, with each record including details such as the sequence number,
-filled price, filled size, trade side (buy/sell), and the timestamp (in nanoseconds).
+Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
 }
 \details{
-\strong{Workflow Overview:}
+\subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query String Construction:}
-Uses the helper function \code{build_query()} to construct a query string containing the required \code{symbol} parameter.
-\item \strong{URL Construction:}
-Constructs the full URL by concatenating the base URL (obtained via \code{get_base_url()}), the endpoint path
-\code{/api/v1/market/histories}, and the query string.
-\item \strong{HTTP Request:}
-Sends a GET request to the constructed URL using \code{httr::GET()} with a 10‑second timeout.
-\item \strong{Response Processing:}
-Processes the response using \code{process_kucoin_response()} to validate the HTTP status and API code,
-then extracts the \code{data} field which contains an array of trade history objects.
-\item \strong{Data Conversion:}
-Converts the array of trade history objects into a \code{data.table}.
-\item \strong{Timestamp Conversion:}
-Converts the trade timestamp from nanoseconds to a POSIXct datetime by dividing by 1e6 (to get milliseconds)
-and applying the helper function \code{time_convert_from_kucoin("ns")}.
+\item \strong{Query Construction}: Builds a query string with the \code{symbol} parameter using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/histories}, and the query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates the response with \code{process_kucoin_response()} and extracts the \code{"data"} field.
+\item \strong{Data Conversion}: Converts \code{"data"} to a \code{data.table}, adding a \code{timestamp} column via \code{time_convert_from_kucoin()}.
+}
 }
 
-\strong{API Documentation:}
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/market/histories}
+}
+
+\subsection{Usage}{
+
+Utilised to fetch recent trade history for a trading symbol, useful for tracking market activity.
+}
+
+\subsection{Official Documentation}{
+
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history}{KuCoin Get Trade History}
-
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/market/histories?symbol=<symbol>}
-
-This function uses a public API endpoint and does not require authentication.
+}
 }
 \examples{
 \dontrun{
-  # Retrieve the trade history for the BTC-USDT trading pair:
-  dt_trade_history <- await(market_data$get_trade_history(symbol = "BTC-USDT"))
-  print(dt_trade_history)
+main_async <- coro::async(function() {
+  trades <- await(get_trade_history_impl(symbol = "BTC-USDT"))
+  print(trades)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

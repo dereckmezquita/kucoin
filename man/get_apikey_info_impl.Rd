@@ -2,7 +2,7 @@
 % Please edit documentation in R/impl_account_and_funding.R
 \name{get_apikey_info_impl}
 \alias{get_apikey_info_impl}
-\title{Get API Key Information (Implementation)}
+\title{Retrieve API Key Information (Implementation)}
 \usage{
 get_apikey_info_impl(
   keys = get_api_keys(),
@@ -11,67 +11,68 @@ get_apikey_info_impl(
 )
 }
 \arguments{
-\item{keys}{A list containing API configuration parameters, as returned by \code{get_api_keys()}. The list must include:
+\item{keys}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
-\item \code{api_key}: Your KuCoin API key.
-\item \code{api_secret}: Your KuCoin API secret.
-\item \code{api_passphrase}: Your KuCoin API passphrase.
-\item \code{key_version}: The version of the API key (e.g., "2").
+\item \code{api_key}: Character string; your KuCoin API key.
+\item \code{api_secret}: Character string; your KuCoin API secret.
+\item \code{api_passphrase}: Character string; your KuCoin API passphrase.
+\item \code{key_version}: Character string; API key version (e.g., \code{"2"}).
+Defaults to \code{get_api_keys()}.
 }}
 
-\item{base_url}{A character string representing the base URL for the API. If not provided, the function uses \code{get_base_url()} to determine the base URL.}
+\item{base_url}{Character string representing the base URL for the API. Defaults to \code{get_base_url()}.}
 }
 \value{
-A promise that resolves to a \code{data.table} containing the API key information. The resulting data table is constructed
-from the \code{"data"} field of the raw API response and includes the following columns:
+Promise resolving to a \code{data.table} containing:
 \itemize{
-\item \strong{uid} (integer): Account UID.
-\item \strong{subName} (string, optional): Sub account name (if applicable; not provided for master accounts).
-\item \strong{remark} (string): Remarks associated with the API key.
-\item \strong{apiKey} (string): The API key.
-\item \strong{apiVersion} (integer): API version.
-\item \strong{permission} (string): A comma-separated list of permissions (e.g., "General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn").
-\item \strong{ipWhitelist} (string, optional): IP whitelist, if applicable.
-\item \strong{isMaster} (boolean): Indicates whether the API key belongs to the master account.
-\item \strong{createdAt} (integer): API key creation time in milliseconds.
+\item \code{uid} (integer): Account UID.
+\item \code{subName} (character, optional): Sub-account name (if applicable).
+\item \code{remark} (character): API key remarks.
+\item \code{apiKey} (character): API key string.
+\item \code{apiVersion} (integer): API version.
+\item \code{permission} (character): Comma-separated permissions list (e.g., "General, Spot").
+\item \code{ipWhitelist} (character, optional): IP whitelist.
+\item \code{isMaster} (logical): Master account indicator.
+\item \code{createdAt} (integer): Creation time in milliseconds.
 }
 }
 \description{
-This asynchronous function implements the logic for retrieving API key information from the KuCoin API.
-It is designed for internal use as a method in an R6 class and is \strong{not} intended for direct consumption by end-users.
-The function constructs the full API URL by calling \code{get_base_url()} (or using the user-supplied \code{base_url}),
-builds the authentication headers, sends the \code{GET} request to the endpoint, and processes the response,
-converting the \code{"data"} field into a \code{data.table}.
+Fetches detailed API key metadata from the KuCoin API asynchronously. This internal function is intended for use within an R6 class and is not meant for direct end-user consumption, providing details such as permissions and creation time.
 }
 \details{
-\strong{Endpoint:} \code{GET https://api.kucoin.com/api/v1/user/api-key}
-
-\strong{Raw Response Schema:}
-\itemize{
-\item \code{code} (string): Status code, where "200000" indicates success.
-\item \code{data} (object): Contains API key details as described above.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Construction}: Combines the base URL (from \code{get_base_url()} or provided \code{base_url}) with the endpoint \verb{/api/v1/user/api-key}.
+\item \strong{Header Preparation}: Constructs authentication headers using \code{build_headers()}.
+\item \strong{API Request}: Sends a GET request with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Processes the response with \code{process_kucoin_response()} and converts the \code{"data"} field into a \code{data.table}.
+}
 }
 
-For additional details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info}{KuCoin API Documentation}.
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v1/user/api-key}
+}
+
+\subsection{Usage}{
+
+Utilised internally by the \code{KucoinAccountAndFunding} class to expose API key details.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info}{KuCoin Get API Key Info}
+}
 }
 \examples{
 \dontrun{
-  # Retrieve API keys from the environment using get_api_keys()
-  keys <- get_api_keys()
-
-  # Optionally, specify a base URL; if not provided, defaults to the value from get_base_url()
-  base_url <- "https://api.kucoin.com"
-
-  # Execute the asynchronous request using coro::run:
-  main_async <- coro::async(function() {
-    dt <- await(get_apikey_info_impl(keys, base_url))
-    print(dt)
-  })
-
-  main_async()
-  while(!later::loop_empty()) {
-    later::run_now()
-  }
+keys <- get_api_keys()
+base_url <- "https://api.kucoin.com"
+main_async <- coro::async(function() {
+  dt <- await(get_apikey_info_impl(keys = keys, base_url = base_url))
+  print(dt)
+})
+main_async()
+while (!later::loop_empty()) later::run_now()
 }
-
 }

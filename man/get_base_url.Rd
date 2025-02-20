@@ -2,23 +2,32 @@
 % Please edit documentation in R/utils.R
 \name{get_base_url}
 \alias{get_base_url}
-\title{Get Base URL for KuCoin API}
+\title{Retrieve KuCoin API Base URL}
 \usage{
 get_base_url(url = Sys.getenv("KC-API-ENDPOINT"))
 }
 \arguments{
-\item{url}{A character string representing the base URL. Default is NULL, which triggers
-the fallback behavior.}
+\item{url}{Character string representing the base URL. Defaults to \code{Sys.getenv("KC-API-ENDPOINT")}.}
 }
 \value{
-A character string containing the determined base URL.
+Character string containing the determined base URL.
 }
 \description{
-Get Base URL for KuCoin API
+Returns the base URL for the KuCoin API, determined by the following priority:
 }
 \details{
-Returns the base URL for the KuCoin API. The URL is determined using the following priority:
-1. If a URL is explicitly provided via the `url` parameter, it will be used.
-2. If no URL is provided (NULL), it checks for the "KC-API-ENDPOINT" environment variable.
-3. If neither source provides a URL, it falls back to the default "https://api.kucoin.com".
+\enumerate{
+\item Uses the explicitly provided \code{url} parameter if specified.
+\item If \code{url} is \code{NULL} or empty, checks the \code{"KC-API-ENDPOINT"} environment variable.
+\item Falls back to the default \code{"https://api.kucoin.com"} if neither above source provides a value.
+}
+}
+\examples{
+\dontrun{
+# Default behavior (uses environment variable or fallback)
+get_base_url()  # Might return "https://api.kucoin.com" if KC-API-ENDPOINT is unset
+
+# Explicit URL
+get_base_url("https://testnet.kucoin.com")  # Returns "https://testnet.kucoin.com"
+}
 }
