@@ -420,3 +420,121 @@ cancel_all_orders_by_symbol_impl <- coro::async(function(
         rlang::abort(sprintf("Error in cancel_all_orders_by_symbol_impl: %s", conditionMessage(e)))
     })
 })
+
+#' Cancel All Orders (Implementation)
+#'
+#' Cancels all spot orders across all symbols on the KuCoin Spot trading system asynchronously.
+#' This endpoint sends a cancellation request for all open spot orders and returns a success indicator
+#' if the request is accepted. Note that this endpoint only initiates cancellation; the actual
+#' status of individual orders must be checked via order status endpoints or WebSocket subscription.
+#'
+#' @section Description:
+#' This function interacts with the KuCoin API endpoint `DELETE /api/v1/hf/orders/cancelAll`
+#' to cancel all spot orders for the authenticated account, regardless of symbol. It is useful
+#' for quickly clearing all open orders, such as during portfolio rebalancing or emergency stops.
+#'
+#' @section Differences from Other Cancellation Endpoints:
+#' - **Cancel Order By OrderId**: Cancels a single order using its unique order ID.
+#' - **Cancel Order By ClientOid**: Cancels a single order using a client-assigned ID.
+#' - **Cancel Partial Order**: Cancels a portion of a single order.
+#' - **Cancel All Orders By Symbol**: Cancels all orders for a specific symbol.
+#' - **Cancel All Orders**: Cancels **all** spot orders across all symbols in one request,
+#'   offering maximum efficiency for bulk cancellations.
+#'
+#' Use this function when you need to terminate all spot trading activity instantly.
+#'
+#' @section Workflow:
+#' 1. **Authentication**: Generates private API headers using the provided `keys`.
+#' 2. **API Request**: Sends a DELETE request to the KuCoin API with a 3-second timeout.
+#' 3. **Response Processing**: Parses the response and returns successful and failed symbols
+#'    if the request is accepted.
+#'
+#' @section API Details:
+#' - **Endpoint**: `DELETE https://api.kucoin.com/api/v1/hf/orders/cancelAll`
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: Spot
+#' - **Rate Limit Pool**: Spot
+#' - **Rate Limit Weight**: 30
+#' - **SDK Details**: Service: Spot, Sub-service: Order, Method: cancelAllOrders
+#' - **Official Documentation**: [KuCoin Cancel All Orders](https://www.kucoin.com/docs-new/rest/spot-trading/orders/cancel-all-orders)
+#'
+#' @param keys List; API configuration parameters (e.g., from `get_api_keys()`). Contains API key,
+#'   secret, passphrase, and key version. Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API (e.g., "https://api.kucoin.com").
+#'   Defaults to `get_base_url()`.
+#' @return Promise resolving to a `data.table` with:
+#'   - `succeedSymbols` (character): Vector of symbols for which orders were successfully canceled.
+#'   - `failedSymbols` (list): List of objects with `symbol` (character) and `error` (character)
+#'     for symbols where cancellation failed.
+#' @section Examples:
+#' ```r
+#' library(coro)
+#' library(data.table)
+#'
+#' main_async <- coro::async(function() {
+#'   # Cancel all spot orders
+#'   result <- await(cancel_all_orders_impl())
+#'   print(result)
+#' })
+#'
+#' # Run the async function
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' ```
+#' **Expected Output**:
+#' ```
+#'    succeedSymbols failedSymbols
+#' 1:    ETH-USDT            []
+#' 2:    BTC-USDT            []
+#' ```
+#'
+#' @importFrom coro async await
+#' @importFrom data.table data.table
+#' @importFrom httr DELETE timeout
+#' @importFrom rlang abort
+#' @export
+cancel_all_orders_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url()
+) {
+    tryCatch({
+        # Construct endpoint
+        endpoint <- "/api/v1/hf/orders/cancelAll"
+        full_url <- paste0(base_url, endpoint)
+
+        # Generate authentication headers
+        headers <- await(build_headers("DELETE", endpoint, NULL, keys))
+
+        # Send DELETE request
+        response <- httr::DELETE(
+            url = full_url,
+            headers,
+            httr::timeout(3)
+        )
+
+        # Process response
+        parsed_response <- process_kucoin_response(response, full_url)
+        if (parsed_response$code != "200000") {
+            rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
+        }
+
+        # Handle failedSymbols as a list of objects
+        failed_symbols <- if (length(parsed_response$data$failedSymbols) > 0) {
+            lapply(parsed_response$data$failedSymbols, function(x) {
+                list(symbol = x$symbol, error = x$error)
+            })
+        } else {
+            list()
+        }
+
+        # Return result as data.table
+        result_dt <- data.table::data.table(
+            succeedSymbols = I(list(parsed_response$data$succeedSymbols)),
+            failedSymbols = I(list(failed_symbols))
+        )
+        return(result_dt)
+    }, error = function(e) {
+        rlang::abort(sprintf("Error in cancel_all_orders_impl: %s", conditionMessage(e)))
+    })
+})
