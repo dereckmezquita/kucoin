@@ -10,6 +10,11 @@
 #     ],
 #     ./utils[ get_api_keys, get_base_url ]
 # )
+
+#' Kucoin Spot Market Data
+#'
+#' An R6 class to interface with the KuCoin spot market data API.
+#'
 #' @export
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
@@ -20,7 +25,7 @@ KucoinSpotMarketData <- R6::R6Class(
         base_url = NULL,
 
         #' Initialize KucoinSpotMarketData
-        #' @param keys A named list containing the
+        #' @param keys A named list containing the API keys for KuCoin.
         #' @param base_url The base URL for the KuCoin API.
         #' @return NULL
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
@@ -787,6 +792,8 @@ KucoinSpotMarketData <- R6::R6Class(
         #'
         #' **API Documentation:**  
         #' [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
+        #' 
+        #' @param symbol A character string representing the trading symbol (e.g., "BTC-USDT").
         #' 
         #' @return A promise that resolves to a \code{data.table} containing the 24-hour market statistics.
         #'         The resulting \code{data.table} includes the following columns:

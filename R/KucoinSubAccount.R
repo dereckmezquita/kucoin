@@ -5,6 +5,8 @@
 #     ./utils[ get_api_keys, get_base_url ]
 # )
 
+#' KuCoin SubAccount Class
+#' 
 #' @export
 KucoinSubAccount <- R6::R6Class(
     "KucoinSubAccount",
