@@ -63,6 +63,10 @@
 #'     print("Sub-Account Balance:")
 #'     print(balance)
 #'   }
+#' 
+#'   # Get Spot sub-account list (V2)
+#'   spot_accounts <- await(sub_acc$get_subaccount_spot_v2(page_size = 50, max_pages = 2))
+#'   print("Spot Sub-Accounts (V2):")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -233,6 +237,63 @@ KucoinSubAccount <- R6::R6Class(
         #'   Additional fields like `baseCurrency`, `baseAmount` may be present.
         get_subaccount_detail_balance = function(subUserId, includeBaseAmount = FALSE) {
             return(get_subaccount_detail_balance_impl(self$keys, self$base_url, subUserId, includeBaseAmount))
+        },
+
+        #' Get Spot Sub-Account List - Balance Details (V2)
+        #'
+        #' ### Description
+        #' Retrieves paginated Spot sub-account balance information for all sub-accounts associated with the master account asynchronously,
+        #' aggregating results into a `data.table`. This method fetches data from the KuCoin API endpoint `/api/v2/sub-accounts`, processes
+        #' balance details across account types (`mainAccounts`, `tradeAccounts`, `marginAccounts`, `tradeHFAccounts`), and combines them
+        #' into a single table. It calls `get_subaccount_spot_v2_impl`.
+        #'
+        #' ### Workflow Overview
+        #' 1. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and the specified `page_size`.
+        #' 2. **Page Fetching**: Defines an asynchronous helper to fetch each page, constructing the URL with query parameters and authentication headers.
+        #' 3. **Automatic Pagination**: Uses `auto_paginate` to fetch all pages up to `max_pages`, flattening items into a single list.
+        #' 4. **Balance Aggregation**: Processes each sub-account’s account type arrays, converting non-empty arrays into `data.table`s with an `accountType` column,
+        #'    and aggregates them with `subUserId` and `subName`.
+        #' 5. **Type Casting**: Converts balance-related fields to numeric types for consistency.
+        #'
+        #' ### API Endpoint
+        #' `GET https://api.kucoin.com/api/v2/sub-accounts`
+        #'
+        #' ### Usage
+        #' Utilised by users to obtain a comprehensive view of Spot sub-account balances across all sub-accounts under the master account. This method is ideal
+        #' for monitoring aggregated balance details without needing to query individual sub-accounts separately.
+        #'
+        #' ### Official Documentation
+        #' [KuCoin Get Sub-Account List - Spot Balance (V2)](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2)
+        #'
+        #' @param page_size Integer; number of sub-accounts per page (10–100, default 100). The KuCoin API enforces a minimum of 10 and a maximum of 100.
+        #' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages). Use a finite value to limit the number of API requests.
+        #'
+        #' @return Promise resolving to a `data.table` containing aggregated sub-account balance information, with columns:
+        #'   - `subUserId` (character): Sub-account user ID.
+        #'   - `subName` (character): Sub-account name.
+        #'   - `accountType` (character): Type of account (e.g., `"mainAccounts"`, `"tradeAccounts"`, `"marginAccounts"`, `"tradeHFAccounts"`).
+        #'   - `currency` (character): Currency code (e.g., `"USDT"`).
+        #'   - `balance` (numeric): Total balance in the currency.
+        #'   - `available` (numeric): Amount available for trading or withdrawal.
+        #'   - `holds` (numeric): Amount locked or held.
+        #'   - `baseCurrency` (character): Base currency code (e.g., `"BTC"`).
+        #'   - `baseCurrencyPrice` (numeric): Price of the base currency at the time of the snapshot.
+        #'   - `baseAmount` (numeric): Equivalent amount in the base currency.
+        #'   - `tag` (character): Tag associated with the account (e.g., `"DEFAULT"`).
+        #'   - If no balances are present across all sub-accounts, an empty `data.table` is returned.
+        #'
+        #' @details
+        #' This method leverages the `/api/v2/sub-accounts` endpoint, which provides paginated data including balance details for each sub-account’s account types.
+        #' Sub-accounts with no balance entries (i.e., all account type arrays empty) are excluded from the result, focusing only on sub-accounts with active balances.
+        #' Pagination is handled automatically, respecting the API’s constraints on `pageSize` (10–100) and using `currentPage` to iterate through results.
+        #' Numeric fields are explicitly cast from character strings to ensure proper data types for downstream analysis.
+        get_subaccount_spot_v2 = function(page_size = 100, max_pages = Inf) {
+            return(impl$get_subaccount_spot_v2_impl(
+                keys = self$keys,
+                base_url = self$base_url,
+                page_size = page_size,
+                max_pages = max_pages
+            ))
         }
     )
 )

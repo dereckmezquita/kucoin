@@ -104,10 +104,12 @@ add_subaccount_impl <- coro::async(function(
     base_url = get_base_url(),
     password,
     subName,
-    access,
+    access = c("Spot", "Futures", "Margin"),
     remarks = NULL
 ) {
+    access <- rlang::arg_match(access)
     tryCatch({
+
         endpoint <- "/api/v2/sub/user/created"
         method <- "POST"
         body_list <- list(
@@ -122,7 +124,9 @@ add_subaccount_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
         url <- paste0(base_url, endpoint)
         response <- httr::POST(url, headers, body = body, encode = "raw", httr::timeout(3))
+        saveRDS(response, "./api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
+        saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
@@ -158,10 +162,6 @@ add_subaccount_impl <- coro::async(function(
 #' @param page_size Integer specifying the number of results per page (minimum 1, maximum 100). Defaults to 100.
 #' @param max_pages Numeric specifying the maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
 #' @return Promise resolving to a `data.table` containing aggregated sub-account summary information, including:
-#'   - `currentPage` (integer): Current page number.
-#'   - `pageSize` (integer): Number of results per page.
-#'   - `totalNum` (integer): Total number of sub-accounts.
-#'   - `totalPage` (integer): Total number of pages.
 #'   - `userId` (character): Unique identifier of the master account.
 #'   - `uid` (integer): Unique identifier of the sub-account.
 #'   - `subName` (character): Sub-account name.
@@ -169,8 +169,12 @@ add_subaccount_impl <- coro::async(function(
 #'   - `type` (integer): Type of sub-account.
 #'   - `access` (character): Permission type granted (e.g., `"All"`, `"Spot"`, `"Futures"`, `"Margin"`).
 #'   - `createdAt` (integer): Timestamp of creation in milliseconds.
-#'   - `createdDatetime` (POSIXct): Converted human-readable datetime (if `createdAt` is present).
+#'   - `createdDatetime` (POSIXct): Converted human-readable datetime.
 #'   - `remarks` (character): Remarks or notes associated with the sub-account.
+#'   - `tradeTypes` (character): Separated by `;`, the trade types available to the sub-account (e.g. `"Spot;Futures;Margin"`).
+#'   - `openedTradeTypes` (character): Separated by `;`, the trade types currently open to the sub-account.
+#'   - `hostedStatus` (character): Hosted status of the sub-account.
+#'
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
@@ -245,7 +249,10 @@ get_subaccount_list_summary_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
+            file_name <- paste0("get_subaccount_list_summary_impl_", query$currentPage)
+            # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_list_summary_impl.ignore.Rds")
             parsed_response <- process_kucoin_response(response, url)
+            # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_list_summary_impl.Rds")
             return(parsed_response$data)
         })
 
@@ -253,7 +260,7 @@ get_subaccount_list_summary_impl <- coro::async(function(
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
         # Automatically paginate through all pages using the auto_paginate helper.
-        dt <- await(auto_paginate(
+        subaccount_summary_dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -266,17 +273,20 @@ get_subaccount_list_summary_impl <- coro::async(function(
                     # collapse certain fields into a single string
                     el$tradeTypes <- paste(el$tradeTypes, collapse = ";")
                     el$openTradeTypes <- paste(el$openTradeTypes, collapse = ";")
+                    if (is.null(el$remarks)) {
+                        el$remarks <- NA_character_
+                    }
                     return(el)
                 })
                 # rbindlist can convert list of lists to data.table
-                return(data.table::rbindlist(els, fill = TRUE))
+                return(data.table::rbindlist(els))
             },
             max_pages = max_pages
         ))
 
-        dt[, createdDatetime := time_convert_from_kucoin(createdAt, "ms")]
+        subaccount_summary_dt[, createdDatetime := time_convert_from_kucoin(createdAt, "ms")]
 
-        return(dt)
+        return(subaccount_summary_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
     })
@@ -312,20 +322,23 @@ get_subaccount_list_summary_impl <- coro::async(function(
 #' @param subUserId Character string representing the sub-account user ID for which balance details are retrieved.
 #' @param includeBaseAmount Logical flag indicating whether to include currencies with a zero balance in the response. Defaults to `FALSE`.
 #' @return Promise resolving to a `data.table` containing detailed balance information for the specified sub-account, with columns including:
-#'   - `currency` (character): Currency code.
-#'   - `balance` (character): Total balance.
-#'   - `available` (character): Amount available for trading or withdrawal.
-#'   - `holds` (character): Amount locked or held.
-#'   - `accountType` (character): Source account type (e.g., `"mainAccounts"`, `"tradeAccounts"`, `"marginAccounts"`, `"tradeHFAccounts"`).
 #'   - `subUserId` (character): Sub-account user ID.
 #'   - `subName` (character): Sub-account name.
-#'   Additional fields such as `baseCurrency`, `baseCurrencyPrice`, `baseAmount`, and `tag` may be present depending on the response.
+#'   - `currency` (character): Currency code.
+#'   - `balance` (numeric): Total balance.
+#'   - `available` (numeric): Amount available for trading or withdrawal.
+#'   - `holds` (numeric): Amount locked or held.
+#'   - `baseCurrency` (character): Base currency code.
+#'   - `baseCurrencyPrice` (numeric): Price of the base currency.
+#'   - `baseAmount` (numeric): Amount in the base currency.
+#'   - `tag` (character): Tag associated with the account.
+#'   - `accountType` (character): Source account type (e.g., `"mainAccounts"`, `"tradeAccounts"`, `"marginAccounts"`, `"tradeHFAccounts"`).
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
 #' - `data` (object): Contains `subUserId`, `subName`, and arrays for `mainAccounts`, `tradeAccounts`, `marginAccounts`, and `tradeHFAccounts`.  
 #' 
-#' Example JSON response:  
+#' KuCoin's API docs list this as the return data schema:
 #' ```
 #' {
 #'     "code": "200000",
@@ -400,6 +413,11 @@ get_subaccount_detail_balance_impl <- coro::async(function(
     subUserId,
     includeBaseAmount = FALSE
 ) {
+    if (is.null(subUserId) || !is.character(subUserId)) {
+        if (length(subUserId) != 1) {
+            rlang::abort("subUserId must be a scalar character string")
+        }
+    }
     tryCatch({
         # Construct the endpoint URL with the query parameter.
         endpoint <- paste0("/api/v1/sub-accounts/", subUserId)
@@ -417,46 +435,328 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 
         # Send the GET request.
         response <- httr::GET(url, headers, httr::timeout(3))
-        data <- process_kucoin_response(response, url)
+        # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_detail_balance_impl.ignore.Rds")
+        parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_detail_balance_impl.Rds")
+
+        data <- parsed_response$data
 
         # Initialize a list to collect data.tables for each account type.
         result_list <- list()
 
         # Process each account type array if present and non-empty.
         if (!is.null(data$mainAccounts) && length(data$mainAccounts) > 0) {
-            dt_main <- data.table::as.data.table(data$mainAccounts)
+            dt_main <- data.table::rbindlist(data$mainAccounts)
             dt_main[, accountType := "mainAccounts"]
             result_list[[length(result_list) + 1]] <- dt_main
         }
         if (!is.null(data$tradeAccounts) && length(data$tradeAccounts) > 0) {
-            dt_trade <- data.table::as.data.table(data$tradeAccounts)
+            dt_trade <- data.table::rbindlist(data$tradeAccounts)
             dt_trade[, accountType := "tradeAccounts"]
             result_list[[length(result_list) + 1]] <- dt_trade
         }
         if (!is.null(data$marginAccounts) && length(data$marginAccounts) > 0) {
-            dt_margin <- data.table::as.data.table(data$marginAccounts)
+            dt_margin <- data.table::rbindlist(data$marginAccounts)
             dt_margin[, accountType := "marginAccounts"]
             result_list[[length(result_list) + 1]] <- dt_margin
         }
         if (!is.null(data$tradeHFAccounts) && length(data$tradeHFAccounts) > 0) {
-            dt_tradeHF <- data.table::as.data.table(data$tradeHFAccounts)
+            dt_tradeHF <- data.table::rbindlist(data$tradeHFAccounts)
             dt_tradeHF[, accountType := "tradeHFAccounts"]
             result_list[[length(result_list) + 1]] <- dt_tradeHF
         }
 
         # Combine the results; if no data is available, return an empty data.table.
         if (length(result_list) == 0) {
-            dt <- data.table::data.table()
+            # TODO: update default empty data.table
+            result_dt <- data.table::data.table(
+                subUserId = character(0),
+                subName = character(0),
+                currency = character(0),
+                balance = numeric(0),
+                available = numeric(0),
+                holds = numeric(0),
+                baseCurrency = character(0),
+                baseCurrencyPrice = numeric(0),
+                baseAmount = numeric(0),
+                tag = character(0),
+                accountType = character(0)
+            )
         } else {
-            dt <- data.table::rbindlist(result_list, fill = TRUE)
+            result_dt <- data.table::rbindlist(result_list)
         }
 
         # Append metadata (subUserId and subName) from the parent response.
-        dt[, subUserId := data$subUserId]
-        dt[, subName := data$subName]
+        result_dt[, subUserId := parsed_response$data$subUserId]
+        result_dt[, subName := parsed_response$data$subName]
 
-        return(dt)
+        data.table::setcolorder(result_dt, c("subUserId", "subName", setdiff(names(result_dt), c("subUserId", "subName"))))
+
+        # cast numeric types
+        result_dt[, `:=`(
+            balance = as.numeric(balance),
+            available = as.numeric(available),
+            holds = as.numeric(holds),
+            baseCurrencyPrice = as.numeric(baseCurrencyPrice),
+            baseAmount = as.numeric(baseAmount)
+        )]
+
+        return(result_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_detail_balance_impl:", conditionMessage(e)))
+    })
+})
+
+#' Retrieve Spot Sub-Account List - Balance Details (V2) (Implementation)
+#'
+#' Retrieves paginated Spot sub-account information from KuCoin asynchronously, aggregating balance details into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
+#'
+#' ### Workflow Overview
+#' 1. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and the specified `page_size`.
+#' 2. **Page Fetching**: Defines an asynchronous helper function (`fetch_page`) to send a GET request for a given page, constructing the URL with current query parameters and authentication headers.
+#' 3. **Automatic Pagination**: Leverages `auto_paginate` to repeatedly call `fetch_page`, aggregating results until all pages are retrieved or `max_pages` is reached.
+#' 4. **Aggregation**: Processes each sub-account's account type arrays, converting them into `data.table`s with an added `accountType` column, and combines them into a single `data.table` with `subUserId` and `subName`.
+#'
+#' ### API Endpoint
+#' `GET https://api.kucoin.com/api/v2/sub-accounts`
+#'
+#' ### Usage
+#' Utilised internally to provide detailed balance information for all sub-accounts associated with a KuCoin master account.
+#'
+#' ### Official Documentation
+#' [KuCoin Get Sub-Account List - Spot Balance (V2)](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2)
+#'
+#' @param keys List containing API configuration parameters from `get_api_keys()`, including:
+#'   - `api_key`: Character string; your KuCoin API key.
+#'   - `api_secret`: Character string; your KuCoin API secret.
+#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
+#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   Defaults to `get_api_keys()`.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param page_size Integer specifying the number of results per page (minimum 10, maximum 100). Defaults to 100.
+#' @param max_pages Numeric specifying the maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
+#' @return Promise resolving to a `data.table` containing aggregated sub-account balance information, with columns including:
+#'   - `subUserId` (character): Sub-account user ID.
+#'   - `subName` (character): Sub-account name.
+#'   - `accountType` (character): Type of account (e.g., `"mainAccounts"`, `"tradeAccounts"`, `"marginAccounts"`, `"tradeHFAccounts"`).
+#'   - `currency` (character): Currency code.
+#'   - `balance` (numeric): Total balance.
+#'   - `available` (numeric): Amount available for trading or withdrawal.
+#'   - `holds` (numeric): Amount locked or held.
+#'   - `baseCurrency` (character): Base currency code.
+#'   - `baseCurrencyPrice` (numeric): Price of the base currency.
+#'   - `baseAmount` (numeric): Amount in the base currency.
+#'   - `tag` (character): Tag associated with the account.
+#' @details
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.  
+#' - `data` (object): Contains pagination metadata and an `items` array with sub-account details.  
+#' 
+#' Example JSON response:  
+#' ```json
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "currentPage": 1,
+#'         "pageSize": 10,
+#'         "totalNum": 3,
+#'         "totalPage": 1,
+#'         "items": [
+#'             {
+#'                 "subUserId": "63743f07e0c5230001761d08",
+#'                 "subName": "testapi6",
+#'                 "mainAccounts": [
+#'                     {
+#'                         "currency": "USDT",
+#'                         "balance": "0.01",
+#'                         "available": "0.01",
+#'                         "holds": "0",
+#'                         "baseCurrency": "BTC",
+#'                         "baseCurrencyPrice": "62514.5",
+#'                         "baseAmount": "0.00000015",
+#'                         "tag": "DEFAULT"
+#'                     }
+#'                 ],
+#'                 "tradeAccounts": [
+#'                     {
+#'                         "currency": "USDT",
+#'                         "balance": "0.01",
+#'                         "available": "0.01",
+#'                         "holds": "0",
+#'                         "baseCurrency": "BTC",
+#'                         "baseCurrencyPrice": "62514.5",
+#'                         "baseAmount": "0.00000015",
+#'                         "tag": "DEFAULT"
+#'                     }
+#'                 ],
+#'                 "marginAccounts": [
+#'                     {
+#'                         "currency": "USDT",
+#'                         "balance": "0.01",
+#'                         "available": "0.01",
+#'                         "holds": "0",
+#'                         "baseCurrency": "BTC",
+#'                         "baseCurrencyPrice": "62514.5",
+#'                         "baseAmount": "0.00000015",
+#'                         "tag": "DEFAULT"
+#'                     }
+#'                 ],
+#'                 "tradeHFAccounts": []
+#'             },
+#'             {
+#'                 "subUserId": "670538a31037eb000115b076",
+#'                 "subName": "Name1234567",
+#'                 "mainAccounts": [],
+#'                 "tradeAccounts": [],
+#'                 "marginAccounts": [],
+#'                 "tradeHFAccounts": []
+#'             },
+#'             {
+#'                 "subUserId": "66b0c0905fc1480001c14c36",
+#'                 "subName": "LTkucoin1491",
+#'                 "mainAccounts": [],
+#'                 "tradeAccounts": [],
+#'                 "marginAccounts": [],
+#'                 "tradeHFAccounts": []
+#'             }
+#'         ]
+#'     }
+#' }
+#' ```
+#' - The function handles pagination automatically, fetching all pages up to `max_pages`.
+#' - Balance fields are converted from character to numeric types.
+#' - Sub-accounts with no balance entries are not included in the resulting `data.table`.
+#' @examples
+#' \dontrun{
+#' keys <- get_api_keys()
+#' base_url <- "https://api.kucoin.com"
+#' main_async <- coro::async(function() {
+#'   dt <- await(get_spot_subaccount_list_v2_impl(
+#'     keys = keys,
+#'     base_url = base_url,
+#'     page_size = 50,
+#'     max_pages = 2
+#'   ))
+#'   print(dt)
+#' })
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
+#' @importFrom httr GET timeout
+#' @importFrom data.table rbindlist as.data.table
+#' @importFrom rlang abort
+#' @export
+get_subaccount_spot_v2_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    page_size = 100,
+    max_pages = Inf
+) {
+    tryCatch({
+        # Define the fetch_page function to retrieve a specific page of sub-account data.
+        fetch_page <- coro::async(function(query) {
+            endpoint <- "/api/v2/sub-accounts"
+            method <- "GET"
+            body <- ""
+            qs <- build_query(query)
+            full_endpoint <- paste0(endpoint, "?", qs)
+            headers <- await(build_headers(method, full_endpoint, body, keys))
+            url <- paste0(base_url, full_endpoint)
+            response <- httr::GET(url, headers, httr::timeout(3))
+            parsed_response <- process_kucoin_response(response, url)
+            return(parsed_response$data)
+        })
+
+        # Initialize the query with the first page.
+        initial_query <- list(currentPage = 1, pageSize = page_size)
+
+        # Automatically paginate through all pages using the auto_paginate helper.
+        spot_subaccount_list_dt <- await(auto_paginate(
+            fetch_page = fetch_page,
+            query = initial_query,
+            items_field = "items",
+            paginate_fields = list(
+                currentPage = "currentPage",
+                totalPage = "totalPage"
+            ),
+            aggregate_fn = function(acc) {
+                result_list <- list()
+                for (sub in acc) {
+                    sub_result_list <- list()
+                    # Process mainAccounts if not empty.
+                    if (!is.null(sub$mainAccounts) && length(sub$mainAccounts) > 0) {
+                        dt_main <- data.table::rbindlist(sub$mainAccounts)
+                        dt_main[, accountType := "mainAccounts"]
+                        sub_result_list[[length(sub_result_list) + 1]] <- dt_main
+                    }
+                    # Process tradeAccounts if not empty.
+                    if (!is.null(sub$tradeAccounts) && length(sub$tradeAccounts) > 0) {
+                        dt_trade <- data.table::rbindlist(sub$tradeAccounts)
+                        dt_trade[, accountType := "tradeAccounts"]
+                        sub_result_list[[length(sub_result_list) + 1]] <- dt_trade
+                    }
+                    # Process marginAccounts if not empty.
+                    if (!is.null(sub$marginAccounts) && length(sub$marginAccounts) > 0) {
+                        dt_margin <- data.table::rbindlist(sub$marginAccounts)
+                        dt_margin[, accountType := "marginAccounts"]
+                        sub_result_list[[length(sub_result_list) + 1]] <- dt_margin
+                    }
+                    # Process tradeHFAccounts if not empty.
+                    if (!is.null(sub$tradeHFAccounts) && length(sub$tradeHFAccounts) > 0) {
+                        dt_tradeHF <- data.table::rbindlist(sub$tradeHFAccounts)
+                        dt_tradeHF[, accountType := "tradeHFAccounts"]
+                        sub_result_list[[length(sub_result_list) + 1]] <- dt_tradeHF
+                    }
+                    # Combine results for this sub-account if there are any balances.
+                    if (length(sub_result_list) > 0) {
+                        sub_dt <- data.table::rbindlist(sub_result_list, fill = TRUE)
+                        sub_dt[, subUserId := sub$subUserId]
+                        sub_dt[, subName := sub$subName]
+                        result_list[[length(result_list) + 1]] <- sub_dt
+                    }
+                }
+                # Combine all sub-account results; if empty, return an empty data.table.
+                if (length(result_list) > 0) {
+                    final_dt <- data.table::rbindlist(result_list, fill = TRUE)
+                } else {
+                    final_dt <- data.table::data.table(
+                        subUserId = character(0),
+                        subName = character(0),
+                        accountType = character(0),
+                        currency = character(0),
+                        balance = numeric(0),
+                        available = numeric(0),
+                        holds = numeric(0),
+                        baseCurrency = character(0),
+                        baseCurrencyPrice = numeric(0),
+                        baseAmount = numeric(0),
+                        tag = character(0)
+                    )
+                }
+                # Cast numeric columns.
+                if (nrow(final_dt) > 0) {
+                    final_dt[, `:=`(
+                        balance = as.numeric(balance),
+                        available = as.numeric(available),
+                        holds = as.numeric(holds),
+                        baseCurrencyPrice = as.numeric(baseCurrencyPrice),
+                        baseAmount = as.numeric(baseAmount)
+                    )]
+                }
+                # Set column order.
+                data.table::setcolorder(final_dt, c(
+                    "subUserId", "subName", "accountType", "currency",
+                    "balance", "available", "holds", "baseCurrency",
+                    "baseCurrencyPrice", "baseAmount", "tag"
+                ))
+                return(final_dt)
+            },
+            max_pages = max_pages
+        ))
+
+        return(spot_subaccount_list_dt)
+    }, error = function(e) {
+        rlang::abort(paste("Error in get_spot_subaccount_list_v2_impl:", conditionMessage(e)))
     })
 })
