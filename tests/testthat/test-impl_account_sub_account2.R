@@ -1,25 +1,15 @@
 # tests/testthat/test-impl_account_sub_account_stub.R
-
 if (interactive()) setwd("./tests/testthat")
 
-# Prepend the stubs directory to Box's search path so that our stub is found.
-withr::local_envvar(list(R_BOX_PATH = file.path(getwd(), "stubs")))
-# Force Box to clear any cached modules so that it picks up our new stub.
-box::purge_cache()
+options(box.path = c("stubs/R", "../../"))
 
 box::use(
-    testthat[
-        test_that,
-        skip_if,
-        expect_true,
-        expect_null,
-        expect_match
-    ],
+    testthat[ test_that, skip_if, expect_true, expect_null, expect_match ],
     later[ loop_empty, run_now ],
     promises[ then, catch ],
     data.table[ is.data.table ],
-    subimpl = ../../R/impl_account_sub_account,
-    utils = ../../R/utils
+    subimpl = R/impl_account_sub_account,
+    utils   = R/utils
 )
 
 # Global delay (in seconds) between tests
@@ -47,13 +37,15 @@ test_that("add_subaccount_impl aborts using stubbed process_kucoin_response", {
     # Load the saved HTTP response from the RDS file.
     saved_response <- readRDS("../../api-responses/add_subaccount_impl.Rds")
 
-    # --- Mock the HTTP POST call  ---
-    testthat::local_mocked_bindings(POST = function(url, headers, body, encode, timeout) {
-        return(saved_response)
-    }, .package = "httr")
+    # --- Mock the HTTP POST call ---
+    testthat::local_mocked_bindings(
+        POST = function(url, headers, body, encode, timeout) {
+            return(saved_response)
+        },
+        .package = "httr"
+    )
 
     # Call the asynchronous function.
-    # With our stub in place, the call to process_kucoin_response() will stop with "YEETTTTT".
     subimpl$add_subaccount_impl(keys, base_url, password, subName, access, remarks)$
         then(function(dt) {
             result <<- dt
@@ -67,7 +59,7 @@ test_that("add_subaccount_impl aborts using stubbed process_kucoin_response", {
         run_now(timeoutSecs = 0.1)
     }
 
-    # Check that an error was thrown and that it contains "YEETTTTT"
+    # Check that an error was thrown and that its message contains "YEETTTTT".
     expect_true(!is.null(error))
     err_msg <- if (inherits(error, "error")) conditionMessage(error) else as.character(error)
     expect_match(err_msg, "YEETTTTT")
