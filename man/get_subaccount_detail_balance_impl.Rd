@@ -31,14 +31,17 @@ Defaults to \code{get_api_keys()}.
 \value{
 Promise resolving to a \code{data.table} containing detailed balance information for the specified sub-account, with columns including:
 \itemize{
-\item \code{currency} (character): Currency code.
-\item \code{balance} (character): Total balance.
-\item \code{available} (character): Amount available for trading or withdrawal.
-\item \code{holds} (character): Amount locked or held.
-\item \code{accountType} (character): Source account type (e.g., \code{"mainAccounts"}, \code{"tradeAccounts"}, \code{"marginAccounts"}, \code{"tradeHFAccounts"}).
 \item \code{subUserId} (character): Sub-account user ID.
 \item \code{subName} (character): Sub-account name.
-Additional fields such as \code{baseCurrency}, \code{baseCurrencyPrice}, \code{baseAmount}, and \code{tag} may be present depending on the response.
+\item \code{currency} (character): Currency code.
+\item \code{balance} (numeric): Total balance.
+\item \code{available} (numeric): Amount available for trading or withdrawal.
+\item \code{holds} (numeric): Amount locked or held.
+\item \code{baseCurrency} (character): Base currency code.
+\item \code{baseCurrencyPrice} (numeric): Price of the base currency.
+\item \code{baseAmount} (numeric): Amount in the base currency.
+\item \code{tag} (character): Tag associated with the account.
+\item \code{accountType} (character): Source account type (e.g., \code{"mainAccounts"}, \code{"tradeAccounts"}, \code{"marginAccounts"}, \code{"tradeHFAccounts"}).
 }
 }
 \description{
@@ -75,7 +78,7 @@ Utilised internally to provide detailed balance information across various accou
 \item \code{data} (object): Contains \code{subUserId}, \code{subName}, and arrays for \code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, and \code{tradeHFAccounts}.
 }
 
-Example JSON response:
+KuCoin's API docs list this as the return data schema:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{\{
     "code": "200000",

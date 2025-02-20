@@ -31,10 +31,6 @@ Defaults to \code{get_api_keys()}.
 \value{
 Promise resolving to a \code{data.table} containing aggregated sub-account summary information, including:
 \itemize{
-\item \code{currentPage} (integer): Current page number.
-\item \code{pageSize} (integer): Number of results per page.
-\item \code{totalNum} (integer): Total number of sub-accounts.
-\item \code{totalPage} (integer): Total number of pages.
 \item \code{userId} (character): Unique identifier of the master account.
 \item \code{uid} (integer): Unique identifier of the sub-account.
 \item \code{subName} (character): Sub-account name.
@@ -42,8 +38,11 @@ Promise resolving to a \code{data.table} containing aggregated sub-account summa
 \item \code{type} (integer): Type of sub-account.
 \item \code{access} (character): Permission type granted (e.g., \code{"All"}, \code{"Spot"}, \code{"Futures"}, \code{"Margin"}).
 \item \code{createdAt} (integer): Timestamp of creation in milliseconds.
-\item \code{createdDatetime} (POSIXct): Converted human-readable datetime (if \code{createdAt} is present).
+\item \code{createdDatetime} (POSIXct): Converted human-readable datetime.
 \item \code{remarks} (character): Remarks or notes associated with the sub-account.
+\item \code{tradeTypes} (character): Separated by \verb{;}, the trade types available to the sub-account (e.g. \code{"Spot;Futures;Margin"}).
+\item \code{openedTradeTypes} (character): Separated by \verb{;}, the trade types currently open to the sub-account.
+\item \code{hostedStatus} (character): Hosted status of the sub-account.
 }
 }
 \description{

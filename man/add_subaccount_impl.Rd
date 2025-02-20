@@ -9,7 +9,7 @@ add_subaccount_impl(
   base_url = get_base_url(),
   password,
   subName,
-  access,
+  access = c("Spot", "Futures", "Margin"),
   remarks = NULL,
   .__coro_env_parent__ = <environment>
 )

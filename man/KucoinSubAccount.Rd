@@ -33,6 +33,11 @@ information and response schemas, refer to the official \href{https://www.kucoin
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}
+
+This method leverages the \verb{/api/v2/sub-accounts} endpoint, which provides paginated data including balance details for each sub-account’s account types.
+Sub-accounts with no balance entries (i.e., all account type arrays empty) are excluded from the result, focusing only on sub-accounts with active balances.
+Pagination is handled automatically, respecting the API’s constraints on \code{pageSize} (10–100) and using \code{currentPage} to iterate through results.
+Numeric fields are explicitly cast from character strings to ensure proper data types for downstream analysis.
 }
 }
 \section{Methods}{
@@ -74,6 +79,10 @@ main_async <- coro::async(function() {
     print("Sub-Account Balance:")
     print(balance)
   }
+
+  # Get Spot sub-account list (V2)
+  spot_accounts <- await(sub_acc$get_subaccount_spot_v2(page_size = 50, max_pages = 2))
+  print("Spot Sub-Accounts (V2):")
 })
 main_async()
 while (!later::loop_empty()) later::run_now()
@@ -124,6 +133,7 @@ Utilised to create an instance of the class with authentication details for sub-
 \item \href{#method-KucoinSubAccount-add_subaccount}{\code{KucoinSubAccount$add_subaccount()}}
 \item \href{#method-KucoinSubAccount-get_subaccount_list_summary}{\code{KucoinSubAccount$get_subaccount_list_summary()}}
 \item \href{#method-KucoinSubAccount-get_subaccount_detail_balance}{\code{KucoinSubAccount$get_subaccount_detail_balance()}}
+\item \href{#method-KucoinSubAccount-get_subaccount_spot_v2}{\code{KucoinSubAccount$get_subaccount_spot_v2()}}
 \item \href{#method-KucoinSubAccount-clone}{\code{KucoinSubAccount$clone()}}
 }
 }
@@ -346,6 +356,76 @@ Promise resolving to a \code{data.table} containing:
 \item \code{subUserId} (character): Sub-account user ID.
 \item \code{subName} (character): Sub-account name.
 Additional fields like \code{baseCurrency}, \code{baseAmount} may be present.
+Get Spot Sub-Account List - Balance Details (V2)
+}
+\subsection{Description}{
+
+Retrieves paginated Spot sub-account balance information for all sub-accounts associated with the master account asynchronously,
+aggregating results into a \code{data.table}. This method fetches data from the KuCoin API endpoint \verb{/api/v2/sub-accounts}, processes
+balance details across account types (\code{mainAccounts}, \code{tradeAccounts}, \code{marginAccounts}, \code{tradeHFAccounts}), and combines them
+into a single table. It calls \code{get_subaccount_spot_v2_impl}.
+}
+
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Pagination Initialisation}: Sets an initial query with \code{currentPage = 1} and the specified \code{page_size}.
+\item \strong{Page Fetching}: Defines an asynchronous helper to fetch each page, constructing the URL with query parameters and authentication headers.
+\item \strong{Automatic Pagination}: Uses \code{auto_paginate} to fetch all pages up to \code{max_pages}, flattening items into a single list.
+\item \strong{Balance Aggregation}: Processes each sub-account’s account type arrays, converting non-empty arrays into \code{data.table}s with an \code{accountType} column,
+and aggregates them with \code{subUserId} and \code{subName}.
+\item \strong{Type Casting}: Converts balance-related fields to numeric types for consistency.
+}
+}
+
+\subsection{API Endpoint}{
+
+\verb{GET https://api.kucoin.com/api/v2/sub-accounts}
+}
+
+\subsection{Usage}{
+
+Utilised by users to obtain a comprehensive view of Spot sub-account balances across all sub-accounts under the master account. This method is ideal
+for monitoring aggregated balance details without needing to query individual sub-accounts separately.
+}
+
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2}{KuCoin Get Sub-Account List - Spot Balance (V2)}
+}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-KucoinSubAccount-get_subaccount_spot_v2"></a>}}
+\if{latex}{\out{\hypertarget{method-KucoinSubAccount-get_subaccount_spot_v2}{}}}
+\subsection{Method \code{get_subaccount_spot_v2()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{KucoinSubAccount$get_subaccount_spot_v2(page_size = 100, max_pages = Inf)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{page_size}}{Integer; number of sub-accounts per page (10–100, default 100). The KuCoin API enforces a minimum of 10 and a maximum of 100.}
+
+\item{\code{max_pages}}{Numeric; maximum number of pages to fetch (default \code{Inf} for all pages). Use a finite value to limit the number of API requests.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Promise resolving to a \code{data.table} containing aggregated sub-account balance information, with columns:
+\itemize{
+\item \code{subUserId} (character): Sub-account user ID.
+\item \code{subName} (character): Sub-account name.
+\item \code{accountType} (character): Type of account (e.g., \code{"mainAccounts"}, \code{"tradeAccounts"}, \code{"marginAccounts"}, \code{"tradeHFAccounts"}).
+\item \code{currency} (character): Currency code (e.g., \code{"USDT"}).
+\item \code{balance} (numeric): Total balance in the currency.
+\item \code{available} (numeric): Amount available for trading or withdrawal.
+\item \code{holds} (numeric): Amount locked or held.
+\item \code{baseCurrency} (character): Base currency code (e.g., \code{"BTC"}).
+\item \code{baseCurrencyPrice} (numeric): Price of the base currency at the time of the snapshot.
+\item \code{baseAmount} (numeric): Equivalent amount in the base currency.
+\item \code{tag} (character): Tag associated with the account (e.g., \code{"DEFAULT"}).
+\item If no balances are present across all sub-accounts, an empty \code{data.table} is returned.
 }
 }
 }
