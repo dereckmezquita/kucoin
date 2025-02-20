@@ -883,7 +883,7 @@ get_trade_history_impl <- coro::async(function(
         trade_history_dt <- data.table::as.data.table(parsed_response$data)
 
         # Convert the trade timestamp from nanoseconds to a POSIXct datetime.
-        trade_history_dt[, timestamp := time_convert_to_kucoin(time, "ns")]
+        trade_history_dt[, timestamp := time_convert_from_kucoin(time, "ns")]
 
         return(trade_history_dt)
     }, error = function(e) {
