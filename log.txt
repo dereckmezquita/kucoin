@@ -26,7 +26,7 @@ Checking the package with --as-cran...
 * checking extension type ... Package
 * this is package ‘kucoin’ version ‘2.0.0’
 * package encoding: UTF-8
-* checking CRAN incoming feasibility ... [4s/26s] NOTE
+* checking CRAN incoming feasibility ... [4s/44s] NOTE
 Maintainer: ‘Dereck Mezquita <dereck@mezquita.io>’
 
 New submission
@@ -661,7 +661,6 @@ get_trade_history_impl: no visible binding for global variable ‘type’
 Undefined global functions or variables:
   debugged fmls get_api_keys get_base_url state_machine type
 * checking Rd files ... NOTE
-checkRd: (-1) KucoinAccountAndFunding.Rd:532: Lost braces in \itemize; meant \describe ?
 checkRd: (-1) KucoinSubAccount.Rd:151: Lost braces; missing escapes or markup?
    151 | `GET https://api.kucoin.com/api/v1/sub-accounts/{subUserId}?includeBaseAmount={includeBaseAmount}`
        |                                                 ^
@@ -905,24 +904,7 @@ Extensions’ manual.
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ...
- ERROR
-Running the tests in ‘tests/testthat.R’ failed.
-Last 13 lines of output:
-  > 
-  > test_check("kucoin")
-  [ FAIL 1 | WARN 1 | SKIP 0 | PASS 0 ]
-  
-  ══ Failed tests ════════════════════════════════════════════════════════════════
-  ── Error ('test-impl_account_sub_account2.R:36:5'): add_subaccount_impl aborts using stubbed process_kucoin_response ──
-  Error in `gzfile(file, "rb")`: cannot open the connection
-  Backtrace:
-      ▆
-   1. └─base::readRDS("./api-responses/add_subaccount_impl.Rds") at test-impl_account_sub_account2.R:36:5
-   2.   └─base::gzfile(file, "rb")
-  
-  [ FAIL 1 | WARN 1 | SKIP 0 | PASS 0 ]
-  Error: Test failures
-  Execution halted
+ OK
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes ... OK
 * checking re-building of vignette outputs ... OK
@@ -931,14 +913,13 @@ Last 13 lines of output:
 Found the following HTML validation problems:
 KucoinAccountAndFunding.html:15:44 (KucoinAccountAndFunding.Rd:5): Error: <main> is not recognized!
 KucoinAccountAndFunding.html:15:44 (KucoinAccountAndFunding.Rd:5): Warning: discarding unexpected <main>
-KucoinAccountAndFunding.html:941:126 (KucoinAccountAndFunding.Rd:513): Warning: replacing invalid character code 128
-KucoinAccountAndFunding.html:941:127 (KucoinAccountAndFunding.Rd:513): Warning: replacing invalid character code 147
-KucoinAccountAndFunding.html:1039:1 (KucoinAccountAndFunding.Rd:559): Warning: discarding unexpected </main>
+KucoinAccountAndFunding.html:1003:126 (KucoinAccountAndFunding.Rd:493): Warning: replacing invalid character code 128
+KucoinAccountAndFunding.html:1003:127 (KucoinAccountAndFunding.Rd:493): Warning: replacing invalid character code 147
+KucoinAccountAndFunding.html:1099:1 (KucoinAccountAndFunding.Rd:538): Warning: discarding unexpected </main>
 KucoinAccountAndFunding.html:4:1 (KucoinAccountAndFunding.Rd:5): Warning: <link> inserting "type" attribute
 KucoinAccountAndFunding.html:12:1 (KucoinAccountAndFunding.Rd:5): Warning: <script> proprietary attribute "onload"
 KucoinAccountAndFunding.html:12:1 (KucoinAccountAndFunding.Rd:5): Warning: <script> inserting "type" attribute
 KucoinAccountAndFunding.html:17:1 (KucoinAccountAndFunding.Rd:5): Warning: <table> lacks "summary" attribute
-KucoinAccountAndFunding.html:985:1 (KucoinAccountAndFunding.Rd:532): Warning: trimming empty <li>
 KucoinSpotMarketData.html:15:44 (KucoinSpotMarketData.Rd:5): Error: <main> is not recognized!
 KucoinSpotMarketData.html:15:44 (KucoinSpotMarketData.Rd:5): Warning: discarding unexpected <main>
 KucoinSpotMarketData.html:373:192 (KucoinSpotMarketData.Rd:275): Warning: replacing invalid character code 128
@@ -985,30 +966,46 @@ KucoinSubAccount.html:12:1 (KucoinSubAccount.Rd:5): Warning: <script> inserting 
 KucoinSubAccount.html:17:1 (KucoinSubAccount.Rd:5): Warning: <table> lacks "summary" attribute
 add_subaccount_impl.html:15:44 (add_subaccount_impl.Rd:5): Error: <main> is not recognized!
 add_subaccount_impl.html:15:44 (add_subaccount_impl.Rd:5): Warning: discarding unexpected <main>
-add_subaccount_impl.html:70:37 (add_subaccount_impl.Rd:29): Warning: replacing invalid character code 128
-add_subaccount_impl.html:70:38 (add_subaccount_impl.Rd:29): Warning: discarding invalid character code 144
-add_subaccount_impl.html:80:45 (add_subaccount_impl.Rd:34): Warning: replacing invalid character code 128
-add_subaccount_impl.html:80:46 (add_subaccount_impl.Rd:34): Warning: discarding invalid character code 144
-add_subaccount_impl.html:90:61 (add_subaccount_impl.Rd:39): Warning: replacing invalid character code 128
-add_subaccount_impl.html:90:62 (add_subaccount_impl.Rd:39): Warning: discarding invalid character code 144
-add_subaccount_impl.html:100:69 (add_subaccount_impl.Rd:44): Warning: replacing invalid character code 128
-add_subaccount_impl.html:100:70 (add_subaccount_impl.Rd:44): Warning: discarding invalid character code 144
-add_subaccount_impl.html:122:64 (add_subaccount_impl.Rd:67): Warning: replacing invalid character code 128
-add_subaccount_impl.html:122:65 (add_subaccount_impl.Rd:67): Warning: discarding invalid character code 144
-add_subaccount_impl.html:167:83 (add_subaccount_impl.Rd:50): Warning: replacing invalid character code 128
-add_subaccount_impl.html:167:84 (add_subaccount_impl.Rd:50): Warning: discarding invalid character code 144
-add_subaccount_impl.html:171:85 (add_subaccount_impl.Rd:52): Warning: replacing invalid character code 128
-add_subaccount_impl.html:171:86 (add_subaccount_impl.Rd:52): Warning: discarding invalid character code 144
-add_subaccount_impl.html:174:74 (add_subaccount_impl.Rd:53): Warning: replacing invalid character code 128
-add_subaccount_impl.html:174:75 (add_subaccount_impl.Rd:53): Warning: discarding invalid character code 144
-add_subaccount_impl.html:180:92 (add_subaccount_impl.Rd:55): Warning: replacing invalid character code 128
-add_subaccount_impl.html:180:93 (add_subaccount_impl.Rd:55): Warning: discarding invalid character code 144
-add_subaccount_impl.html:215:1 (add_subaccount_impl.Rd:131): Warning: discarding unexpected </main>
+add_subaccount_impl.html:23:52 (add_subaccount_impl.Rd:59): Warning: replacing invalid character code 128
+add_subaccount_impl.html:23:53 (add_subaccount_impl.Rd:59): Warning: discarding invalid character code 144
+add_subaccount_impl.html:72:37 (add_subaccount_impl.Rd:29): Warning: replacing invalid character code 128
+add_subaccount_impl.html:72:38 (add_subaccount_impl.Rd:29): Warning: discarding invalid character code 144
+add_subaccount_impl.html:82:45 (add_subaccount_impl.Rd:34): Warning: replacing invalid character code 128
+add_subaccount_impl.html:82:46 (add_subaccount_impl.Rd:34): Warning: discarding invalid character code 144
+add_subaccount_impl.html:92:61 (add_subaccount_impl.Rd:39): Warning: replacing invalid character code 128
+add_subaccount_impl.html:92:62 (add_subaccount_impl.Rd:39): Warning: discarding invalid character code 144
+add_subaccount_impl.html:102:69 (add_subaccount_impl.Rd:44): Warning: replacing invalid character code 128
+add_subaccount_impl.html:102:70 (add_subaccount_impl.Rd:44): Warning: discarding invalid character code 144
+add_subaccount_impl.html:126:50 (add_subaccount_impl.Rd:70): Warning: replacing invalid character code 128
+add_subaccount_impl.html:126:51 (add_subaccount_impl.Rd:70): Warning: discarding invalid character code 144
+add_subaccount_impl.html:126:71 (add_subaccount_impl.Rd:70): Warning: replacing invalid character code 128
+add_subaccount_impl.html:126:72 (add_subaccount_impl.Rd:70): Warning: replacing invalid character code 147
+add_subaccount_impl.html:129:57 (add_subaccount_impl.Rd:71): Warning: replacing invalid character code 128
+add_subaccount_impl.html:129:58 (add_subaccount_impl.Rd:71): Warning: discarding invalid character code 144
+add_subaccount_impl.html:129:74 (add_subaccount_impl.Rd:71): Warning: replacing invalid character code 128
+add_subaccount_impl.html:129:75 (add_subaccount_impl.Rd:71): Warning: replacing invalid character code 147
+add_subaccount_impl.html:132:72 (add_subaccount_impl.Rd:72): Warning: replacing invalid character code 128
+add_subaccount_impl.html:132:73 (add_subaccount_impl.Rd:72): Warning: discarding invalid character code 144
+add_subaccount_impl.html:135:83 (add_subaccount_impl.Rd:73): Warning: replacing invalid character code 128
+add_subaccount_impl.html:135:84 (add_subaccount_impl.Rd:73): Warning: discarding invalid character code 144
+add_subaccount_impl.html:135:108 (add_subaccount_impl.Rd:73): Warning: replacing invalid character code 128
+add_subaccount_impl.html:135:109 (add_subaccount_impl.Rd:73): Warning: replacing invalid character code 147
+add_subaccount_impl.html:171:64 (add_subaccount_impl.Rd:95): Warning: replacing invalid character code 128
+add_subaccount_impl.html:171:65 (add_subaccount_impl.Rd:95): Warning: discarding invalid character code 144
+add_subaccount_impl.html:216:83 (add_subaccount_impl.Rd:50): Warning: replacing invalid character code 128
+add_subaccount_impl.html:216:84 (add_subaccount_impl.Rd:50): Warning: discarding invalid character code 144
+add_subaccount_impl.html:220:85 (add_subaccount_impl.Rd:52): Warning: replacing invalid character code 128
+add_subaccount_impl.html:220:86 (add_subaccount_impl.Rd:52): Warning: discarding invalid character code 144
+add_subaccount_impl.html:223:74 (add_subaccount_impl.Rd:53): Warning: replacing invalid character code 128
+add_subaccount_impl.html:223:75 (add_subaccount_impl.Rd:53): Warning: discarding invalid character code 144
+add_subaccount_impl.html:229:92 (add_subaccount_impl.Rd:55): Warning: replacing invalid character code 128
+add_subaccount_impl.html:229:93 (add_subaccount_impl.Rd:55): Warning: discarding invalid character code 144
+add_subaccount_impl.html:264:1 (add_subaccount_impl.Rd:159): Warning: discarding unexpected </main>
 add_subaccount_impl.html:4:1 (add_subaccount_impl.Rd:5): Warning: <link> inserting "type" attribute
 add_subaccount_impl.html:12:1 (add_subaccount_impl.Rd:5): Warning: <script> proprietary attribute "onload"
 add_subaccount_impl.html:12:1 (add_subaccount_impl.Rd:5): Warning: <script> inserting "type" attribute
 add_subaccount_impl.html:17:1 (add_subaccount_impl.Rd:5): Warning: <table> lacks "summary" attribute
-add_subaccount_impl.html:43:1 (add_subaccount_impl.Rd:18): Warning: <table> lacks "summary" attribute
+add_subaccount_impl.html:45:1 (add_subaccount_impl.Rd:18): Warning: <table> lacks "summary" attribute
 auto_paginate.html:15:44 (auto_paginate.Rd:5): Error: <main> is not recognized!
 auto_paginate.html:15:44 (auto_paginate.Rd:5): Warning: discarding unexpected <main>
 auto_paginate.html:118:1 (auto_paginate.Rd:37): Warning: discarding unexpected </main>
@@ -1281,40 +1278,96 @@ get_subaccount_detail_balance_impl.html:15:44 (get_subaccount_detail_balance_imp
 get_subaccount_detail_balance_impl.html:15:44 (get_subaccount_detail_balance_impl.Rd:5): Warning: discarding unexpected <main>
 get_subaccount_detail_balance_impl.html:19:31 (get_subaccount_detail_balance_impl.Rd:5): Warning: replacing invalid character code 128
 get_subaccount_detail_balance_impl.html:19:32 (get_subaccount_detail_balance_impl.Rd:5): Warning: replacing invalid character code 147
-get_subaccount_detail_balance_impl.html:23:30 (get_subaccount_detail_balance_impl.Rd:40): Warning: replacing invalid character code 128
-get_subaccount_detail_balance_impl.html:23:31 (get_subaccount_detail_balance_impl.Rd:40): Warning: replacing invalid character code 147
-get_subaccount_detail_balance_impl.html:68:37 (get_subaccount_detail_balance_impl.Rd:27): Warning: replacing invalid character code 128
-get_subaccount_detail_balance_impl.html:68:38 (get_subaccount_detail_balance_impl.Rd:27): Warning: discarding invalid character code 144
-get_subaccount_detail_balance_impl.html:85:130 (get_subaccount_detail_balance_impl.Rd:35): Warning: replacing invalid character code 128
-get_subaccount_detail_balance_impl.html:85:131 (get_subaccount_detail_balance_impl.Rd:35): Warning: discarding invalid character code 144
-get_subaccount_detail_balance_impl.html:90:1 (get_subaccount_detail_balance_impl.Rd:37): Warning: discarding unexpected </main>
+get_subaccount_detail_balance_impl.html:23:83 (get_subaccount_detail_balance_impl.Rd:40): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:23:84 (get_subaccount_detail_balance_impl.Rd:40): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:24:59 (get_subaccount_detail_balance_impl.Rd:41): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:24:60 (get_subaccount_detail_balance_impl.Rd:41): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:25:75 (get_subaccount_detail_balance_impl.Rd:42): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:25:76 (get_subaccount_detail_balance_impl.Rd:42): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:26:148 (get_subaccount_detail_balance_impl.Rd:43): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:26:149 (get_subaccount_detail_balance_impl.Rd:43): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:28:65 (get_subaccount_detail_balance_impl.Rd:45): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:28:66 (get_subaccount_detail_balance_impl.Rd:45): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:73:37 (get_subaccount_detail_balance_impl.Rd:27): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:73:38 (get_subaccount_detail_balance_impl.Rd:27): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:98:73 (get_subaccount_detail_balance_impl.Rd:54): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:98:74 (get_subaccount_detail_balance_impl.Rd:54): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:99:95 (get_subaccount_detail_balance_impl.Rd:55): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:99:96 (get_subaccount_detail_balance_impl.Rd:55): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:109:78 (get_subaccount_detail_balance_impl.Rd:61): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:109:79 (get_subaccount_detail_balance_impl.Rd:61): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:127:51 (get_subaccount_detail_balance_impl.Rd:71): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:127:52 (get_subaccount_detail_balance_impl.Rd:71): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:130:49 (get_subaccount_detail_balance_impl.Rd:72): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:130:50 (get_subaccount_detail_balance_impl.Rd:72): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:142:86 (get_subaccount_detail_balance_impl.Rd:76): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:142:87 (get_subaccount_detail_balance_impl.Rd:76): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:217:118 (get_subaccount_detail_balance_impl.Rd:138): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:217:119 (get_subaccount_detail_balance_impl.Rd:138): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:246:20 (get_subaccount_detail_balance_impl.Rd:155): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:246:21 (get_subaccount_detail_balance_impl.Rd:155): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:247:5 (get_subaccount_detail_balance_impl.Rd:156): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:247:6 (get_subaccount_detail_balance_impl.Rd:156): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:256:130 (get_subaccount_detail_balance_impl.Rd:35): Warning: replacing invalid character code 128
+get_subaccount_detail_balance_impl.html:256:131 (get_subaccount_detail_balance_impl.Rd:35): Warning: discarding invalid character code 144
+get_subaccount_detail_balance_impl.html:261:1 (get_subaccount_detail_balance_impl.Rd:37): Warning: discarding unexpected </main>
 get_subaccount_detail_balance_impl.html:4:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <link> inserting "type" attribute
 get_subaccount_detail_balance_impl.html:12:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <script> proprietary attribute "onload"
 get_subaccount_detail_balance_impl.html:12:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <script> inserting "type" attribute
 get_subaccount_detail_balance_impl.html:17:1 (get_subaccount_detail_balance_impl.Rd:5): Warning: <table> lacks "summary" attribute
-get_subaccount_detail_balance_impl.html:41:1 (get_subaccount_detail_balance_impl.Rd:16): Warning: <table> lacks "summary" attribute
+get_subaccount_detail_balance_impl.html:46:1 (get_subaccount_detail_balance_impl.Rd:16): Warning: <table> lacks "summary" attribute
 get_subaccount_list_summary_impl.html:15:44 (get_subaccount_list_summary_impl.Rd:5): Error: <main> is not recognized!
 get_subaccount_list_summary_impl.html:15:44 (get_subaccount_list_summary_impl.Rd:5): Warning: discarding unexpected <main>
-get_subaccount_list_summary_impl.html:87:125 (get_subaccount_list_summary_impl.Rd:52): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:87:126 (get_subaccount_list_summary_impl.Rd:52): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:126:121 (get_subaccount_list_summary_impl.Rd:90): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:126:122 (get_subaccount_list_summary_impl.Rd:90): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:132:101 (get_subaccount_list_summary_impl.Rd:31): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:132:102 (get_subaccount_list_summary_impl.Rd:31): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:143:80 (get_subaccount_list_summary_impl.Rd:36): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:143:81 (get_subaccount_list_summary_impl.Rd:36): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:149:59 (get_subaccount_list_summary_impl.Rd:38): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:149:60 (get_subaccount_list_summary_impl.Rd:38): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:151:118 (get_subaccount_list_summary_impl.Rd:40): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:151:119 (get_subaccount_list_summary_impl.Rd:40): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:166:21 (get_subaccount_list_summary_impl.Rd:100): Warning: replacing invalid character code 128
-get_subaccount_list_summary_impl.html:166:22 (get_subaccount_list_summary_impl.Rd:100): Warning: discarding invalid character code 144
-get_subaccount_list_summary_impl.html:184:1 (get_subaccount_list_summary_impl.Rd:114): Warning: discarding unexpected </main>
+get_subaccount_list_summary_impl.html:23:71 (get_subaccount_list_summary_impl.Rd:44): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:23:72 (get_subaccount_list_summary_impl.Rd:44): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:24:101 (get_subaccount_list_summary_impl.Rd:45): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:24:102 (get_subaccount_list_summary_impl.Rd:45): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:26:37 (get_subaccount_list_summary_impl.Rd:47): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:26:38 (get_subaccount_list_summary_impl.Rd:47): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:27:74 (get_subaccount_list_summary_impl.Rd:48): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:27:75 (get_subaccount_list_summary_impl.Rd:48): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:90:56 (get_subaccount_list_summary_impl.Rd:57): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:90:57 (get_subaccount_list_summary_impl.Rd:57): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:92:8 (get_subaccount_list_summary_impl.Rd:59): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:92:9 (get_subaccount_list_summary_impl.Rd:59): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:112:76 (get_subaccount_list_summary_impl.Rd:69): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:112:77 (get_subaccount_list_summary_impl.Rd:69): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:118:88 (get_subaccount_list_summary_impl.Rd:71): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:118:89 (get_subaccount_list_summary_impl.Rd:71): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:125:70 (get_subaccount_list_summary_impl.Rd:74): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:125:71 (get_subaccount_list_summary_impl.Rd:74): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:128:49 (get_subaccount_list_summary_impl.Rd:75): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:128:50 (get_subaccount_list_summary_impl.Rd:75): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:131:70 (get_subaccount_list_summary_impl.Rd:76): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:131:71 (get_subaccount_list_summary_impl.Rd:76): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:134:54 (get_subaccount_list_summary_impl.Rd:77): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:134:55 (get_subaccount_list_summary_impl.Rd:77): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:140:88 (get_subaccount_list_summary_impl.Rd:79): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:140:89 (get_subaccount_list_summary_impl.Rd:79): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:143:82 (get_subaccount_list_summary_impl.Rd:80): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:143:83 (get_subaccount_list_summary_impl.Rd:80): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:152:121 (get_subaccount_list_summary_impl.Rd:86): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:152:122 (get_subaccount_list_summary_impl.Rd:86): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:191:125 (get_subaccount_list_summary_impl.Rd:110): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:191:126 (get_subaccount_list_summary_impl.Rd:110): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:230:121 (get_subaccount_list_summary_impl.Rd:148): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:230:122 (get_subaccount_list_summary_impl.Rd:148): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:237:101 (get_subaccount_list_summary_impl.Rd:31): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:237:102 (get_subaccount_list_summary_impl.Rd:31): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:248:80 (get_subaccount_list_summary_impl.Rd:36): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:248:81 (get_subaccount_list_summary_impl.Rd:36): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:254:59 (get_subaccount_list_summary_impl.Rd:38): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:254:60 (get_subaccount_list_summary_impl.Rd:38): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:256:118 (get_subaccount_list_summary_impl.Rd:40): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:256:119 (get_subaccount_list_summary_impl.Rd:40): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:271:21 (get_subaccount_list_summary_impl.Rd:159): Warning: replacing invalid character code 128
+get_subaccount_list_summary_impl.html:271:22 (get_subaccount_list_summary_impl.Rd:159): Warning: discarding invalid character code 144
+get_subaccount_list_summary_impl.html:289:1 (get_subaccount_list_summary_impl.Rd:173): Warning: discarding unexpected </main>
 get_subaccount_list_summary_impl.html:4:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <link> inserting "type" attribute
 get_subaccount_list_summary_impl.html:12:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <script> proprietary attribute "onload"
 get_subaccount_list_summary_impl.html:12:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <script> inserting "type" attribute
 get_subaccount_list_summary_impl.html:17:1 (get_subaccount_list_summary_impl.Rd:5): Warning: <table> lacks "summary" attribute
-get_subaccount_list_summary_impl.html:41:1 (get_subaccount_list_summary_impl.Rd:16): Warning: <table> lacks "summary" attribute
+get_subaccount_list_summary_impl.html:45:1 (get_subaccount_list_summary_impl.Rd:16): Warning: <table> lacks "summary" attribute
 get_symbol_impl.html:15:44 (get_symbol_impl.Rd:5): Error: <main> is not recognized!
 get_symbol_impl.html:15:44 (get_symbol_impl.Rd:5): Warning: discarding unexpected <main>
 get_symbol_impl.html:69:89 (get_symbol_impl.Rd:58): Warning: replacing invalid character code 128
@@ -1388,4 +1441,18 @@ verify_symbol.html:35:1 (verify_symbol.Rd:10): Warning: <table> lacks "summary" 
 * checking for non-standard things in the check directory ... OK
 * checking for detritus in the temp directory ... OK
 * DONE
-Status: 1 ERROR, 2 WARNINGs, 7 NOTEs
+Status: 2 WARNINGs, 7 NOTEs
+Installing the package...
+Loading .Rprofile.
+Setting conda environment to base.
+Multi-threading for data.table using: 7 cores.
+Loading .Rprofile.
+Setting conda environment to base.
+Multi-threading for data.table using: 7 cores.
+Loading .Rprofile.
+Setting conda environment to base.
+Multi-threading for data.table using: 7 cores.
+Loading .Rprofile.
+Setting conda environment to base.
+Multi-threading for data.table using: 7 cores.
+Build, check, and installation complete!

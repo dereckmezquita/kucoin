@@ -30,10 +30,10 @@ refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Document
 
 This method utilises the internal asynchronous function \code{get_account_summary_info_impl} to execute the following steps:
 \enumerate{
-\item{\strong{URL Construction:} The full API URL is constructed by appending the endpoint to the base URL.}
-\item{\strong{Header Preparation:} Authentication headers are built based on the HTTP method, endpoint, and request body.}
-\item{\strong{API Request:} A \code{GET} request is sent to the KuCoin API to retrieve account summary information.}
-\item{\strong{Response Processing:} The API response is processed, and the \code{"data"} field is converted into a \code{data.table}.}
+\item \strong{URL Construction:} The full API URL is constructed by appending the endpoint to the base URL.
+\item \strong{Header Preparation:} Authentication headers are built based on the HTTP method, endpoint, and request body.
+\item \strong{API Request:} A \code{GET} request is sent to the KuCoin API to retrieve account summary information.
+\item \strong{Response Processing:} The API response is processed, and the \code{"data"} field is converted into a \code{data.table}.
 }
 
 For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info}{KuCoin API Documentation}.
@@ -41,10 +41,10 @@ Retrieve API Key Information
 
 This method utilises the internal asynchronous function \code{get_apikey_info_impl} to perform the following operations:
 \enumerate{
-\item{\strong{URL Construction:} The complete API URL is formed by combining the base URL with the endpoint \verb{/api/v1/user/api-key}.}
-\item{\strong{Header Preparation:} Authentication headers are generated based on the HTTP method, endpoint, and request body.}
-\item{\strong{API Request:} An asynchronous GET request is sent to the KuCoin API.}
-\item{\strong{Response Processing:} The JSON response is processed, and the \code{"data"} field is converted into a \code{data.table}.}
+\item \strong{URL Construction:} The complete API URL is formed by combining the base URL with the endpoint \verb{/api/v1/user/api-key}.
+\item \strong{Header Preparation:} Authentication headers are generated based on the HTTP method, endpoint, and request body.
+\item \strong{API Request:} An asynchronous GET request is sent to the KuCoin API.
+\item \strong{Response Processing:} The JSON response is processed, and the \code{"data"} field is converted into a \code{data.table}.
 }
 
 For additional details on the endpoint, including rate limits and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info}{KuCoin API Documentation}.
@@ -52,36 +52,33 @@ Retrieve Spot Account Type.
 
 This method leverages the internal asynchronous function \code{get_spot_account_dt_impl} to perform several operations:
 \enumerate{
-\item{\strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v1/accounts} along with any query }
-parameters (e.g., filtering by currency or account type) to the base URL.
-\item{\strong{Header Preparation:} Generates the required authentication headers using the HTTP method, full endpoint,}
-and an empty request body.
-\item{\strong{API Request:} Sends an asynchronous GET request to the constructed URL with a specified timeout to manage network delays.}
-\item{\strong{Response Processing:} Processes the API response by extracting the \code{"data"} field from the JSON response and converting it into a \code{data.table}.}
-\item{\strong{Error Handling:} Catches and handles errors encountered during any of the above steps, providing a descriptive error message.}
+\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v1/accounts} along with any query parameters (e.g., filtering by currency or account type) to the base URL.
+\item \strong{Header Preparation:} Generates the required authentication headers using the HTTP method, full endpoint, and an empty request body.
+\item \strong{API Request:} Sends an asynchronous GET request to the constructed URL with a specified timeout to manage network delays.
+\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field from the JSON response and converting it into a \code{data.table}.
+\item \strong{Error Handling:} Catches and handles errors encountered during any of the above steps, providing a descriptive error message.
 }
 
-For further details, including rate limits, authentication requirements, and response schema, please refer to the
-\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot}{Spot Account List Documentation}.
+For further details, including rate limits, authentication requirements, and response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot}{Spot Account List Documentation}.
 
 This method leverages the internal asynchronous function \code{get_spot_account_detail_impl} to perform the following steps:
 \enumerate{
-\item{\strong{URL Construction:} Constructs the full API URL by embedding the provided \code{accountId} into the endpoint \verb{/api/v1/accounts/} and appending it to the base URL.}
-\item{\strong{Header Preparation:} Generates the required authentication headers based on the HTTP method, endpoint, and an empty request body to ensure secure access.}
-\item{\strong{API Request:} Dispatches an asynchronous GET request to the constructed URL with a defined timeout to manage network delays.}
-\item{\strong{Response Processing:} Processes the API response using a helper function (\code{process_kucoin_response}). This function extracts the \code{"data"} field from the JSON payload and converts it into a \code{data.table}.}
-\item{\strong{Error Handling:} Captures any errors encountered during the process and returns a descriptive error message.}
+\item \strong{URL Construction:} Constructs the full API URL by embedding the provided \code{accountId} into the endpoint \verb{/api/v1/accounts/} and appending it to the base URL.
+\item \strong{Header Preparation:} Generates the required authentication headers based on the HTTP method, endpoint, and an empty request body to ensure secure access.
+\item \strong{API Request:} Dispatches an asynchronous GET request to the constructed URL with a defined timeout to manage network delays.
+\item \strong{Response Processing:} Processes the API response using a helper function (\code{process_kucoin_response}). This function extracts the \code{"data"} field from the JSON payload and converts it into a \code{data.table}.
+\item \strong{Error Handling:} Captures any errors encountered during the process and returns a descriptive error message.
 }
 
 This method leverages the internal asynchronous function \code{get_cross_margin_account_impl} to perform the following steps:
 \enumerate{
-\item{\strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v3/margin/accounts} along with any query parameters to the base URL.}
-\item{\strong{Header Preparation:} Generates the necessary authentication headers using the provided API keys.}
-\item{\strong{API Request:} Sends an asynchronous GET request to the specified endpoint.}
-\item{\strong{Response Processing:} Processes the API response by extracting the \code{"data"} field and converting it into two separate data tables:}
+\item \strong{URL Construction:} Constructs the full API URL by appending \verb{/api/v3/margin/accounts} along with any query parameters to the base URL.
+\item \strong{Header Preparation:} Generates the necessary authentication headers using the provided API keys.
+\item \strong{API Request:} Sends an asynchronous GET request to the specified endpoint.
+\item \strong{Response Processing:} Processes the API response by extracting the \code{"data"} field and converting it into two separate data tables:
 \itemize{
-\item{A summary data table containing overall cross margin account information.}
-\item{A detailed data table containing the list of margin account objects.}
+\item A summary data table containing overall cross margin account information.
+\item A detailed data table containing the list of margin account objects.
 }
 }
 }
@@ -160,27 +157,26 @@ the total number of sub-accounts, and a breakdown of sub-accounts by type (spot,
 \strong{API Endpoint:}
 \verb{GET https://api.kucoin.com/api/v2/user-info}
 
-Internally, this method calls the asynchronous implementation function
-\code{get_account_summary_info_impl} to handle the API request and response processing.
+Internally, this method calls the asynchronous implementation function \code{get_account_summary_info_impl} to handle the API request and response processing.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_account_summary_info()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the account summary data. The table comprises the following columns:
-\describe{
-\item{\code{level}}{(integer) The user's VIP level.}
-\item{\code{subQuantity}}{(integer) Total number of sub-accounts.}
-\item{\code{spotSubQuantity}}{(integer) Number of sub-accounts with spot trading permissions.}
-\item{\code{marginSubQuantity}}{(integer) Number of sub-accounts with margin trading permissions.}
-\item{\code{futuresSubQuantity}}{(integer) Number of sub-accounts with futures trading permissions.}
-\item{\code{optionSubQuantity}}{(integer) Number of sub-accounts with option trading permissions.}
-\item{\code{maxSubQuantity}}{(integer) Maximum allowed sub-accounts (calculated as the sum of \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).}
-\item{\code{maxDefaultSubQuantity}}{(integer) Maximum default open sub-accounts based on VIP level.}
-\item{\code{maxSpotSubQuantity}}{(integer) Maximum additional sub-accounts with spot trading permissions.}
-\item{\code{maxMarginSubQuantity}}{(integer) Maximum additional sub-accounts with margin trading permissions.}
-\item{\code{maxFuturesSubQuantity}}{(integer) Maximum additional sub-accounts with futures trading permissions.}
-\item{\code{maxOptionSubQuantity}}{(integer) Maximum additional sub-accounts with option trading permissions.}
+A promise that resolves to a \code{data.table} containing the account summary data with the following columns:
+\itemize{
+\item \code{level} (integer): The user's VIP level.
+\item \code{subQuantity} (integer): Total number of sub-accounts.
+\item \code{spotSubQuantity} (integer): Number of sub-accounts with spot trading permissions.
+\item \code{marginSubQuantity} (integer): Number of sub-accounts with margin trading permissions.
+\item \code{futuresSubQuantity} (integer): Number of sub-accounts with futures trading permissions.
+\item \code{optionSubQuantity} (integer): Number of sub-accounts with option trading permissions.
+\item \code{maxSubQuantity} (integer): Maximum allowed sub-accounts (calculated as the sum of \code{maxDefaultSubQuantity} and \code{maxSpotSubQuantity}).
+\item \code{maxDefaultSubQuantity} (integer): Maximum default open sub-accounts based on VIP level.
+\item \code{maxSpotSubQuantity} (integer): Maximum additional sub-accounts with spot trading permissions.
+\item \code{maxMarginSubQuantity} (integer): Maximum additional sub-accounts with margin trading permissions.
+\item \code{maxFuturesSubQuantity} (integer): Maximum additional sub-accounts with futures trading permissions.
+\item \code{maxOptionSubQuantity} (integer): Maximum additional sub-accounts with option trading permissions.
 }
 }
 }
@@ -197,17 +193,17 @@ This method retrieves detailed API key information from the KuCoin API. It fetch
 }
 
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the API key information. The resulting data.table includes the following columns:
-\describe{
-\item{\code{uid}}{(integer) The account UID.}
-\item{\code{subName}}{(character, optional) The sub-account name, if applicable. This field is not provided for master accounts.}
-\item{\code{remark}}{(character) Remarks associated with the API key.}
-\item{\code{apiKey}}{(character) The API key string.}
-\item{\code{apiVersion}}{(integer) The API version.}
-\item{\code{permission}}{(character) A comma-separated list of permissions. Possible values include: \emph{General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn}.}
-\item{\code{ipWhitelist}}{(character, optional) The IP whitelist, if applicable.}
-\item{\code{isMaster}}{(logical) Indicates whether the API key belongs to the master account.}
-\item{\code{createdAt}}{(integer) The API key creation time in milliseconds.}
+A promise that resolves to a \code{data.table} containing the API key information with the following columns:
+\itemize{
+\item \code{uid} (integer): The account UID.
+\item \code{subName} (character, optional): The sub-account name, if applicable. This field is not provided for master accounts.
+\item \code{remark} (character): Remarks associated with the API key.
+\item \code{apiKey} (character): The API key string.
+\item \code{apiVersion} (integer): The API version.
+\item \code{permission} (character): A comma-separated list of permissions. Possible values include: \emph{General, Spot, Margin, Futures, InnerTransfer, Transfer, Earn}.
+\item \code{ipWhitelist} (character, optional): The IP whitelist, if applicable.
+\item \code{isMaster} (logical): Indicates whether the API key belongs to the master account.
+\item \code{createdAt} (integer): The API key creation time in milliseconds.
 }
 }
 }
@@ -259,17 +255,16 @@ where each row represents a distinct spot account with key financial metrics.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a \code{data.table} containing the spot account list. The table includes the following columns:
-\describe{
-\item{\code{id}}{(character) The unique account ID.}
-\item{\code{currency}}{(character) The currency code associated with the account.}
-\item{\code{type}}{(character) The account type (e.g., "main", "trade", or "balance").}
-\item{\code{balance}}{(character) The total funds held in the account.}
-\item{\code{available}}{(character) The funds available for withdrawal or trading.}
-\item{\code{holds}}{(character) The funds on hold (not available for immediate use).}
-}
-
+A promise that resolves to a \code{data.table} containing the spot account list with the following columns:
+\itemize{
+\item \code{id} (character): The unique account ID.
+\item \code{currency} (character): The currency code associated with the account.
+\item \code{type} (character): The account type (e.g., "main", "trade", or "balance").
+\item \code{balance} (character): The total funds held in the account.
+\item \code{available} (character): The funds available for withdrawal or trading.
+\item \code{holds} (character): The funds on hold (not available for immediate use).
 Retrieve Spot Account Detail.
+}
 }
 }
 \if{html}{\out{<hr>}}
@@ -294,15 +289,14 @@ Retrieve Cross Margin Account Information.}
 }
 \subsection{Returns}{
 A promise that resolves to a \code{data.table} containing the following columns:
-\describe{
-\item{\code{currency}}{(character) The currency of the account.}
-\item{\code{balance}}{(character) The total funds in the account.}
-\item{\code{available}}{(character) The funds available for withdrawal or trading.}
-\item{\code{holds}}{(character) The funds on hold and not available for immediate use.}
+\itemize{
+\item \code{currency} (character): The currency of the account.
+\item \code{balance} (character): The total funds in the account.
+\item \code{available} (character): The funds available for withdrawal or trading.
+\item \code{holds} (character): The funds on hold and not available for immediate use.
 }
 
-For further details, including rate limits, authentication requirements, and the full response schema, please refer to the
-\href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot}{Spot Account Detail Documentation}.
+For further details, including rate limits, authentication requirements, and the full response schema, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot}{Spot Account Detail Documentation}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -321,40 +315,37 @@ Retrieves detailed information about the cross margin account, which allows for 
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{query}}{A named list of query parameters to filter the account information. Supported parameters include:
-\describe{
-\item{\code{quoteCurrency}}{(string, optional): Filter by quote currency (default is \code{"USDT"}).}
-\item{\code{queryType}}{(string, optional): Filter by account type (\code{"MARGIN"}, \code{"MARGIN_V2"}, or \code{"ALL"}; default is \code{"MARGIN"}).}
+\itemize{
+\item \code{quoteCurrency} (string, optional): Filter by quote currency (default is "USDT").
+\item \code{queryType} (string, optional): Filter by account type ("MARGIN", "MARGIN_V2", or "ALL"; default is "MARGIN").
 }}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A promise that resolves to a named list with two elements:
-\describe{
-\item{\code{summary}}{A data.table containing the overall cross margin account summary with the following columns:
-\describe{
-\item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-\item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-\item{\code{debtRatio}}{(string) The debt ratio.}
-\item{\code{status}}{(string) The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").}
+\itemize{
+\item \code{summary}: A \code{data.table} containing the overall cross margin account summary with the following columns:
+\itemize{
+\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
+\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
+\item \code{debtRatio} (string): The debt ratio.
+\item \code{status} (string): The position status (e.g., "EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", or "BORROW").
 }
-}
-\item{\code{accounts}}{A data.table containing detailed margin account information. Each row represents a margin account and includes the following columns:
-\describe{
-\item{\code{currency}}{(string) Currency code.}
-\item{\code{total}}{(string) Total funds in the account.}
-\item{\code{available}}{(string) Funds available for withdrawal or trading.}
-\item{\code{hold}}{(string) Funds on hold.}
-\item{\code{liability}}{(string) Current liabilities.}
-\item{\code{maxBorrowSize}}{(string) Maximum borrowable amount.}
-\item{\code{borrowEnabled}}{(boolean) Indicates whether borrowing is enabled.}
-\item{\code{transferInEnabled}}{(boolean) Indicates whether transfers into the account are enabled.}
-}
+\item \code{accounts}: A \code{data.table} containing detailed margin account information. Each row represents a margin account and includes the following columns:
+\itemize{
+\item \code{currency} (string): Currency code.
+\item \code{total} (string): Total funds in the account.
+\item \code{available} (string): Funds available for withdrawal or trading.
+\item \code{hold} (string): Funds on hold.
+\item \code{liability} (string): Current liabilities.
+\item \code{maxBorrowSize} (string): Maximum borrowable amount.
+\item \code{borrowEnabled} (boolean): Indicates whether borrowing is enabled.
+\item \code{transferInEnabled} (boolean): Indicates whether transfers into the account are enabled.
 }
 }
 
 For further details, please refer to the \href{https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin}{Cross Margin API Documentation}.
-
 Retrieve Isolated Margin Account Information.
 }
 }
@@ -362,9 +353,7 @@ Retrieve Isolated Margin Account Information.
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_isolated_margin_account"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_isolated_margin_account}{}}}
 \subsection{Method \code{get_isolated_margin_account()}}{
-Retrieves isolated margin account details for specific trading pairs. Isolated margin allows you to limit risk exposure
-to an individual trading pair by segregating collateral. The response includes detailed asset and liability information
-for each trading pair.
+Retrieves isolated margin account details for specific trading pairs. Isolated margin allows you to limit risk exposure to an individual trading pair by segregating collateral. The response includes detailed asset and liability information for each trading pair.
 
 \strong{API Endpoint:}
 \verb{GET https://api.kucoin.com/api/v3/isolated/accounts}
@@ -375,37 +364,35 @@ for each trading pair.
 \item Generates authentication headers.
 \item Sends an asynchronous GET request.
 \item Processes the response and converts the \code{"data"} field into a flat structure consisting of two data.tables:
-\describe{
-\item{\code{summary}}{Contains overall isolated margin account information, including:
-\describe{
-\item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-\item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-\item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-\item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin("ms")}).}
+\itemize{
+\item \strong{summary:} Contains overall isolated margin account information, including:
+\itemize{
+\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
+\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
+\item \code{timestamp} (integer): The raw timestamp in milliseconds.
+\item \code{datetime} (POSIXct): The converted date-time (via \code{time_convert_from_kucoin("ms")}).
 }
-}
-\item{\code{assets}}{Contains detailed information for each isolated margin account asset with the following flattened columns:
-\describe{
-\item{\code{symbol}}{(string) Trading pair symbol (e.g., "BTC-USDT").}
-\item{\code{status}}{(string) Position status.}
-\item{\code{debtRatio}}{(string) Debt ratio.}
-\item{\code{base_currency}}{(string) Currency code from the base asset.}
-\item{\code{base_borrowEnabled}}{(boolean) Indicates whether borrowing is enabled for the base asset.}
-\item{\code{base_transferInEnabled}}{(boolean) Indicates whether transfers into the base asset account are enabled.}
-\item{\code{base_liability}}{(string) Liability for the base asset.}
-\item{\code{base_total}}{(string) Total amount of the base asset.}
-\item{\code{base_available}}{(string) Available amount of the base asset.}
-\item{\code{base_hold}}{(string) Base asset amount on hold.}
-\item{\code{base_maxBorrowSize}}{(string) Maximum borrowable amount for the base asset.}
-\item{\code{quote_currency}}{(string) Currency code from the quote asset.}
-\item{\code{quote_borrowEnabled}}{(boolean) Indicates whether borrowing is enabled for the quote asset.}
-\item{\code{quote_transferInEnabled}}{(boolean) Indicates whether transfers into the quote asset account are enabled.}
-\item{\code{quote_liability}}{(string) Liability for the quote asset.}
-\item{\code{quote_total}}{(string) Total amount of the quote asset.}
-\item{\code{quote_available}}{(string) Available amount of the quote asset.}
-\item{\code{quote_hold}}{(string) Quote asset amount on hold.}
-\item{\code{quote_maxBorrowSize}}{(string) Maximum borrowable amount for the quote asset.}
-}
+\item \strong{assets:} Contains detailed information for each isolated margin account asset with the following columns:
+\itemize{
+\item \code{symbol} (string): Trading pair symbol (e.g., "BTC-USDT").
+\item \code{status} (string): Position status.
+\item \code{debtRatio} (string): Debt ratio.
+\item \code{base_currency} (string): Currency code from the base asset.
+\item \code{base_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the base asset.
+\item \code{base_transferInEnabled} (boolean): Indicates whether transfers into the base asset account are enabled.
+\item \code{base_liability} (string): Liability for the base asset.
+\item \code{base_total} (string): Total amount of the base asset.
+\item \code{base_available} (string): Available amount of the base asset.
+\item \code{base_hold} (string): Base asset amount on hold.
+\item \code{base_maxBorrowSize} (string): Maximum borrowable amount for the base asset.
+\item \code{quote_currency} (string): Currency code from the quote asset.
+\item \code{quote_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the quote asset.
+\item \code{quote_transferInEnabled} (boolean): Indicates whether transfers into the quote asset account are enabled.
+\item \code{quote_liability} (string): Liability for the quote asset.
+\item \code{quote_total} (string): Total amount of the quote asset.
+\item \code{quote_available} (string): Available amount of the quote asset.
+\item \code{quote_hold} (string): Quote asset amount on hold.
+\item \code{quote_maxBorrowSize} (string): Maximum borrowable amount for the quote asset.
 }
 }
 }
@@ -431,52 +418,45 @@ For more details, refer to the \href{https://www.kucoin.com/docs-new/rest/accoun
 }
 \subsection{Returns}{
 A promise that resolves to a named list with two elements:
-\describe{
-\item{\code{summary}}{
-A data.table with the following columns:
-\describe{
-\item{\code{totalAssetOfQuoteCurrency}}{(string) Total assets in the quote currency.}
-\item{\code{totalLiabilityOfQuoteCurrency}}{(string) Total liabilities in the quote currency.}
-\item{\code{timestamp}}{(integer) The raw timestamp in milliseconds.}
-\item{\code{datetime}}{(POSIXct) The converted date-time (via \code{time_convert_from_kucoin("ms")}).}
+\itemize{
+\item \code{summary}: A \code{data.table} with the following columns:
+\itemize{
+\item \code{totalAssetOfQuoteCurrency} (string): Total assets in the quote currency.
+\item \code{totalLiabilityOfQuoteCurrency} (string): Total liabilities in the quote currency.
+\item \code{timestamp} (integer): The raw timestamp in milliseconds.
+\item \code{datetime} (POSIXct): The converted date-time (via \code{time_convert_from_kucoin("ms")}).
 }
-}
-\item{\code{assets}}{
-A data.table where each row represents an isolated margin account asset with the following columns:
-\describe{
-\item{\code{symbol}}{(string) Trading pair symbol (e.g., "BTC-USDT").}
-\item{\code{status}}{(string) Position status.}
-\item{\code{debtRatio}}{(string) Debt ratio.}
-\item{\code{base_currency}}{(string) Currency code from the base asset.}
-\item{\code{base_borrowEnabled}}{(boolean) Indicates whether borrowing is enabled for the base asset.}
-\item{\code{base_transferInEnabled}}{(boolean) Indicates whether transfers into the base asset account are enabled.}
-\item{\code{base_liability}}{(string) Liability for the base asset.}
-\item{\code{base_total}}{(string) Total amount of the base asset.}
-\item{\code{base_available}}{(string) Available amount of the base asset.}
-\item{\code{base_hold}}{(string) Base asset amount on hold.}
-\item{\code{base_maxBorrowSize}}{(string) Maximum borrowable amount for the base asset.}
-\item{\code{quote_currency}}{(string) Currency code from the quote asset.}
-\item{\code{quote_borrowEnabled}}{(boolean) Indicates whether borrowing is enabled for the quote asset.}
-\item{\code{quote_transferInEnabled}}{(boolean) Indicates whether transfers into the quote asset account are enabled.}
-\item{\code{quote_liability}}{(string) Liability for the quote asset.}
-\item{\code{quote_total}}{(string) Total amount of the quote asset.}
-\item{\code{quote_available}}{(string) Available amount of the quote asset.}
-\item{\code{quote_hold}}{(string) Quote asset amount on hold.}
-\item{\code{quote_maxBorrowSize}}{(string) Maximum borrowable amount for the quote asset.}
-}
-}
-}
-Retrieves isolated margin account information by invoking the internal implementation.
+\item \code{assets}: A \code{data.table} where each row represents an isolated margin account asset with the following columns:
+\itemize{
+\item \code{symbol} (string): Trading pair symbol (e.g., "BTC-USDT").
+\item \code{status} (string): Position status.
+\item \code{debtRatio} (string): Debt ratio.
+\item \code{base_currency} (string): Currency code from the base asset.
+\item \code{base_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the base asset.
+\item \code{base_transferInEnabled} (boolean): Indicates whether transfers into the base asset account are enabled.
+\item \code{base_liability} (string): Liability for the base asset.
+\item \code{base_total} (string): Total amount of the base asset.
+\item \code{base_available} (string): Available amount of the base asset.
+\item \code{base_hold} (string): Base asset amount on hold.
+\item \code{base_maxBorrowSize} (string): Maximum borrowable amount for the base asset.
+\item \code{quote_currency} (string): Currency code from the quote asset.
+\item \code{quote_borrowEnabled} (boolean): Indicates whether borrowing is enabled for the quote asset.
+\item \code{quote_transferInEnabled} (boolean): Indicates whether transfers into the quote asset account are enabled.
+\item \code{quote_liability} (string): Liability for the quote asset.
+\item \code{quote_total} (string): Total amount of the quote asset.
+\item \code{quote_available} (string): Available amount of the quote asset.
+\item \code{quote_hold} (string): Quote asset amount on hold.
+\item \code{quote_maxBorrowSize} (string): Maximum borrowable amount for the quote asset.
 Retrieve Spot Ledger Records.
+}
+}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_ledger"></a>}}
 \if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_ledger}{}}}
 \subsection{Method \code{get_spot_ledger()}}{
-Retrieves detailed ledger records for spot and margin accounts, including transaction histories for deposits, withdrawals, transfers, and trades.
-The response is paginated and includes metadata such as current page, page size, total number of records, and total pages.
-The results are aggregated into a single flat data.table.
+Retrieves detailed ledger records for spot and margin accounts, including transaction histories for deposits, withdrawals, transfers, and trades. The response is paginated and includes metadata such as current page, page size, total number of records, and total pages. The results are aggregated into a single flat \code{data.table}.
 
 \strong{API Endpoint:}
 \verb{GET https://api.kucoin.com/api/v1/accounts/ledgers}
@@ -487,7 +467,7 @@ The results are aggregated into a single flat data.table.
 \item Generates authentication headers.
 \item Sends an asynchronous GET request.
 \item Automatically paginates through all pages using the \code{auto_paginate} helper. Pagination parameters are supplied as separate arguments.
-\item Aggregates the ledger records into a single data.table.
+\item Aggregates the ledger records into a single \code{data.table}.
 }
 
 \strong{Query Parameters:}
@@ -517,8 +497,7 @@ The results are aggregated into a single flat data.table.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A promise that resolves to a data.table containing the aggregated ledger records.
-Each row represents a ledger record with columns including:
+A promise that resolves to a \code{data.table} containing the aggregated ledger records. Each row represents a ledger record with the following columns:
 \itemize{
 \item \code{id}: Ledger record ID.
 \item \code{currency}: The currency.
@@ -529,7 +508,7 @@ Each row represents a ledger record with columns including:
 \item \code{bizType}: Business type (e.g., "TRANSFER").
 \item \code{direction}: Transaction direction ("in" or "out").
 \item \code{createdAt}: Transaction timestamp in milliseconds.
-\item \item{\code{createdAtDatetime}}{(POSIXct) The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).}
+\item \code{createdAtDatetime} (POSIXct): The converted date-time value (obtained via \code{time_convert_from_kucoin("ms")}).
 \item \code{context}: Additional context for the transaction.
 \item \code{currentPage}: Current page number from the response.
 \item \code{pageSize}: Page size from the response.
