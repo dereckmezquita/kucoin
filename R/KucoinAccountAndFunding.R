@@ -38,6 +38,8 @@
 #' - **get_spot_ledger(query):** Retrieves detailed ledger records for spot and margin accounts, including pagination.
 #'
 #' @md
+#' 
+#' @importFrom R6 R6Class
 #' @export
 KucoinAccountAndFunding <- R6::R6Class(
     "KucoinAccountAndFunding",

@@ -7,6 +7,7 @@
 
 #' KuCoin SubAccount Class
 #' 
+#' @importFrom R6 R6Class
 #' @export
 KucoinSubAccount <- R6::R6Class(
     "KucoinSubAccount",

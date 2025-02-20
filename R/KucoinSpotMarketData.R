@@ -15,6 +15,7 @@
 #'
 #' An R6 class to interface with the KuCoin spot market data API.
 #'
+#' @importFrom R6 R6Class
 #' @export
 KucoinSpotMarketData <- R6::R6Class(
     "KucoinSpotMarketData",
