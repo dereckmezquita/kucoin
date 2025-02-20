@@ -25,3 +25,6 @@ research/
 api-responses/
 
 merged_files.txt
+tests-manual/
+tests-temp/
+log.txt
