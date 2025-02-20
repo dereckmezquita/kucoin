@@ -26,7 +26,7 @@ freq_to_second_map <- list(
 )
 
 #' Check Allowed Frequency String
-#' @param freq A character string representing the frequency (e.g. "1min", "3min", etc.).
+#' @param freq_str A character string representing the frequency (e.g. "1min", "3min", etc.).
 #' @export
 check_allowed_frequency_str <- function(freq_str) {
     if (!freq_str %in% names(freq_to_second_map)) {
@@ -35,7 +35,7 @@ check_allowed_frequency_str <- function(freq_str) {
 }
 
 #' Check Allowed Frequency in Seconds
-#' @param freq A numeric value representing the frequency in seconds.
+#' @param freq_s A numeric value representing the frequency in seconds.
 #' @export
 check_allowed_frequency_s <- function(freq_s) {
     if (!freq_s %in% unlist(freq_to_second_map)) {

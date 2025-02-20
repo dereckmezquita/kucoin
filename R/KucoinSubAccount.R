@@ -126,7 +126,7 @@ KucoinSubAccount <- R6::R6Class(
         #' @return A promise that resolves to a `data.table` containing detailed balance information for the sub-account. 
         #'         Each row includes currency information, an "accountType" column, and the sub-account's `subUserId` and `subName`.
         get_subaccount_detail_balance = function(subUserId, includeBaseAmount = FALSE) {
-            return(impl$get_subaccount_detail_balance_impl(self$config, subUserId, includeBaseAmount))
+            return(impl$get_subaccount_detail_balance_impl(self$keys, self$base_url, subUserId, includeBaseAmount))
         }
     )
 )

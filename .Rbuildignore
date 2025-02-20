@@ -20,3 +20,6 @@ research/
 ^scripts/
 
 ^README\.html$
+
+\.env$
+api-responses/

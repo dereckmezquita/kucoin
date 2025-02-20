@@ -14,8 +14,8 @@ if (interactive()) setwd("./tests/testthat")
 delay_seconds <- 2
 
 # Retrieve API keys and base URL once.
-keys     <- utils$get_api_keys()
-base_url <- utils$get_base_url()
+keys     <- get_api_keys()
+base_url <- get_base_url()
 
 # Determine whether to skip live tests.
 skip_live <- is.null(keys$api_key) || keys$api_key == ""

@@ -93,6 +93,14 @@
 #' }
 #'
 #' @md
+#' 
+#' @importFrom data.table rbindlist
+#' @importFrom coro async
+#' @importFrom httr GET
+#' @importFrom utils modifyList
+#' @importFrom rlang abort
+#' @importFrom kucoin build_query process_kucoin_response get_base_url auto_paginate
+#' 
 #' @export
 get_announcements_impl <- coro::async(function(
   base_url = get_base_url(),
