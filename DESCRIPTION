@@ -22,7 +22,9 @@ Imports:
     data.table,
     coro,
     promises,
-    httr
+    httr,
+    base64enc,
+    digest
 Suggests:
     later,
     testthat (>= 3.0.0),
