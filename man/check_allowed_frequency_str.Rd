@@ -7,7 +7,7 @@
 check_allowed_frequency_str(freq_str)
 }
 \arguments{
-\item{freq}{A character string representing the frequency (e.g. "1min", "3min", etc.).}
+\item{freq_str}{A character string representing the frequency (e.g. "1min", "3min", etc.).}
 }
 \description{
 Check Allowed Frequency String

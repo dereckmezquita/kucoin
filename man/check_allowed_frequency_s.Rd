@@ -7,7 +7,7 @@
 check_allowed_frequency_s(freq_s)
 }
 \arguments{
-\item{freq}{A numeric value representing the frequency in seconds.}
+\item{freq_s}{A numeric value representing the frequency in seconds.}
 }
 \description{
 Check Allowed Frequency in Seconds

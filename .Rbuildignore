@@ -23,3 +23,5 @@ research/
 
 \.env$
 api-responses/
+
+merged_files.txt
