@@ -170,17 +170,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
         #'
         #' @return A new instance of the `KucoinSpotMarketData` class.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   ticker <- await(market$get_ticker("BTC-USDT"))
-        #'   print(ticker)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
             self$keys <- keys
             self$base_url <- base_url
@@ -230,17 +219,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `pageSize` (integer): Records per page.
         #'   - `totalNum` (integer): Total announcements.
         #'   - `totalPage` (integer): Total pages.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   announcements <- await(market$get_announcements(list(annType = "activities", page_size = 20)))
-        #'   print(announcements)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_announcements = function(query = list(), page_size = 50, max_pages = Inf) {
             return(get_announcements_impl(
                 base_url = self$base_url,
@@ -290,17 +268,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `low` (numeric): Lowest price.
         #'   - `volume` (numeric): Trading volume.
         #'   - `turnover` (numeric): Trading turnover.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
-        #'   print(klines)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_klines = function(
             symbol,
             freq = "15min",
@@ -357,17 +324,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `isMarginEnabled` (logical): Margin trading status.
         #'   - `isDebitEnabled` (logical): Debit status.
         #'   - Chain-specific fields (e.g., `chainName`, `withdrawalMinSize`).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   btc <- await(market$get_currency("BTC", "ERC20"))
-        #'   print(btc)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_currency = function(currency, chain = NULL) {
             return(get_currency_impl(
                 base_url = self$base_url,
@@ -412,17 +368,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'     - `chainName` (character or NA): Blockchain name.
         #'     - `withdrawalMinSize` (character or NA): Minimum withdrawal amount.
         #'     - And more (see implementation docs).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   currencies <- await(market$get_all_currencies())
-        #'   print(currencies)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_all_currencies = function() {
             return(get_all_currencies_impl(base_url = self$base_url))
         },
@@ -459,17 +404,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `market` (character): Trading market.
         #'   - `baseMinSize` (character): Minimum order quantity.
         #'   - And more (see implementation docs).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   symbol <- await(market$get_symbol("BTC-USDT"))
-        #'   print(symbol)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_symbol = function(symbol) {
             return(get_symbol_impl(
                 base_url = self$base_url,
@@ -510,17 +444,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `market` (character): Trading market.
         #'   - `baseMinSize` (character): Minimum order quantity.
         #'   - And more (see implementation docs).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   symbols <- await(market$get_all_symbols("ALTS"))
-        #'   print(symbols)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_all_symbols = function(market = NULL) {
             return(get_all_symbols_impl(
                 base_url = self$base_url,
@@ -563,17 +486,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `bestBidSize` (character): Best bid size.
         #'   - `bestAsk` (character): Best ask price.
         #'   - `bestAskSize` (character): Best ask size.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   ticker <- await(market$get_ticker("BTC-USDT"))
-        #'   print(ticker)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_ticker = function(symbol) {
             return(get_ticker_impl(
                 base_url = self$base_url,
@@ -611,17 +523,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `bestAskSize` (character): Best ask size.
         #'   - `changeRate` (character): 24-hour change rate.
         #'   - And more (see implementation docs).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   tickers <- await(market$get_all_tickers())
-        #'   print(tickers)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_all_tickers = function() {
             return(get_all_tickers_impl(base_url = self$base_url))
         },
@@ -657,17 +558,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `side` (character): Trade side (`"buy"` or `"sell"`).
         #'   - `time` (integer): Trade timestamp in nanoseconds.
         #'   - `timestamp` (POSIXct): Converted timestamp in UTC.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   trades <- await(market$get_trade_history("BTC-USDT"))
-        #'   print(trades)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_trade_history = function(symbol) {
             return(get_trade_history_impl(
                 base_url = self$base_url,
@@ -707,17 +597,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `side` (character): Order side (`"bid"` or `"ask"`).
         #'   - `price` (character): Aggregated price level.
         #'   - `size` (character): Aggregated size.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   orderbook <- await(market$get_part_orderbook("BTC-USDT", 100))
-        #'   print(orderbook)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_part_orderbook = function(symbol, size = 20) {
             return(get_part_orderbook_impl(
                 base_url = self$base_url,
@@ -757,17 +636,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `side` (character): Order side (`"bid"` or `"ask"`).
         #'   - `price` (character): Aggregated price level.
         #'   - `size` (character): Aggregated size.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   orderbook <- await(market$get_full_orderbook("BTC-USDT"))
-        #'   print(orderbook)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_full_orderbook = function(symbol) {
             return(get_full_orderbook_impl(
                 keys = self$keys,
@@ -808,17 +676,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #'   - `sell` (character): Best ask price.
         #'   - `changeRate` (character): 24-hour change rate.
         #'   - And more (see implementation docs).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   stats <- await(market$get_24hr_stats("BTC-USDT"))
-        #'   print(stats)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_24hr_stats = function(symbol) {
             return(get_24hr_stats_impl(
                 base_url = self$base_url,
@@ -847,17 +704,6 @@ KucoinSpotMarketData <- R6::R6Class(
         #' [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
         #'
         #' @return Promise resolving to a character vector of market identifiers (e.g., `"USDS"`, `"TON"`).
-        #'
-        #' @examples
-        #' \dontrun{
-        #' market <- KucoinSpotMarketData$new()
-        #' main_async <- coro::async(function() {
-        #'   markets <- await(market$get_market_list())
-        #'   print(markets)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_market_list = function() {
             return(get_market_list_impl(
                 base_url = self$base_url

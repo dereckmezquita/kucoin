@@ -79,137 +79,6 @@ main_async()
 while (!later::loop_empty()) later::run_now()
 }
 
-
-## ------------------------------------------------
-## Method `KucoinSubAccount$new`
-## ------------------------------------------------
-
-\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary())
-  print(summary)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Add Sub-Account
-
-### Description
-Creates a new sub-account under the master account asynchronously by sending a POST request to the KuCoin API.
-This method constructs a JSON request body, generates authentication headers, and processes the response into a `data.table`.
-It calls `add_subaccount_impl`.
-
-### Workflow Overview
-1. **URL Construction**: Combines the base URL with `/api/v2/sub/user/created`.
-2. **Request Body Preparation**: Builds a list with `password`, `subName`, `access`, and optional `remarks`, converted to JSON.
-3. **Header Preparation**: Generates authentication headers asynchronously using `build_headers()`.
-4. **API Request**: Sends a POST request with a 3-second timeout via `httr::POST()`.
-5. **Response Processing**: Validates the response and converts the `"data"` field into a `data.table`.
-
-### API Endpoint
-`POST https://api.kucoin.com/api/v2/sub/user/created`
-
-### Usage
-Utilised by users to create sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
-
-### Official Documentation
-[KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
-
-
-## ------------------------------------------------
-## Method `KucoinSubAccount$add_subaccount`
-## ------------------------------------------------
-
-\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  new_sub <- await(sub_acc$add_subaccount(
-    password = "TestPass123",
-    subName = "TestSub123",
-    access = "Spot",
-    remarks = "Test sub-account"
-  ))
-  print(new_sub)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Get Sub-Account List Summary (Paginated)
-
-### Description
-Retrieves a paginated summary of all sub-accounts associated with the master account asynchronously, aggregating results into a `data.table`.
-This method converts `createdAt` timestamps to POSIXct and calls `get_subaccount_list_summary_impl`.
-
-### Workflow Overview
-1. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and specified `page_size`.
-2. **Page Fetching**: Defines an async helper to fetch each page with authentication headers.
-3. **Automatic Pagination**: Uses `auto_paginate` to fetch all pages up to `max_pages`.
-4. **Aggregation**: Combines results into a `data.table`, converting `createdAt` to `createdDatetime`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/sub/user`
-
-### Usage
-Utilised by users to obtain a comprehensive overview of all sub-accounts, including creation details and permissions.
-
-### Official Documentation
-[KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info)
-
-
-## ------------------------------------------------
-## Method `KucoinSubAccount$get_subaccount_list_summary`
-## ------------------------------------------------
-
-\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary(page_size = 50, max_pages = 2))
-  print(summary)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Get Sub-Account Detail - Balance
-
-### Description
-Retrieves detailed balance information for a specific sub-account identified by `subUserId` asynchronously.
-This method aggregates balances across account types into a `data.table` and calls `get_subaccount_detail_balance_impl`.
-Use `get_subaccount_list_summary()` to obtain `subUserId`.
-
-### Workflow Overview
-1. **URL Construction**: Combines the base URL with `/api/v1/sub-accounts/{subUserId}` and a query string for `includeBaseAmount`.
-2. **Header Preparation**: Generates authentication headers using `build_headers()`.
-3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
-4. **Response Processing**: Aggregates non-empty account type arrays (`mainAccounts`, etc.) into a `data.table`, adding `accountType`, `subUserId`, and `subName`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/sub-accounts/{subUserId}?includeBaseAmount={includeBaseAmount}`
-
-### Usage
-Utilised by users to monitor detailed balances across various account types for a specific sub-account.
-
-### Official Documentation
-[KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
-
-
-## ------------------------------------------------
-## Method `KucoinSubAccount$get_subaccount_detail_balance`
-## ------------------------------------------------
-
-\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary())
-  if (nrow(summary) > 0) {
-    sub_id <- summary[1, uid]
-    balance <- await(sub_acc$get_subaccount_detail_balance(sub_id, includeBaseAmount = TRUE))
-    print(balance)
-  }
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -284,46 +153,39 @@ Defaults to \code{get_api_keys()}.
 }
 \subsection{Returns}{
 A new instance of the \code{KucoinSubAccount} class.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary())
-  print(summary)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Add Sub-Account
+\subsection{Description}{
 
-### Description
 Creates a new sub-account under the master account asynchronously by sending a POST request to the KuCoin API.
-This method constructs a JSON request body, generates authentication headers, and processes the response into a `data.table`.
-It calls `add_subaccount_impl`.
+This method constructs a JSON request body, generates authentication headers, and processes the response into a \code{data.table}.
+It calls \code{add_subaccount_impl}.
+}
 
-### Workflow Overview
-1. **URL Construction**: Combines the base URL with `/api/v2/sub/user/created`.
-2. **Request Body Preparation**: Builds a list with `password`, `subName`, `access`, and optional `remarks`, converted to JSON.
-3. **Header Preparation**: Generates authentication headers asynchronously using `build_headers()`.
-4. **API Request**: Sends a POST request with a 3-second timeout via `httr::POST()`.
-5. **Response Processing**: Validates the response and converts the `"data"` field into a `data.table`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Construction}: Combines the base URL with \verb{/api/v2/sub/user/created}.
+\item \strong{Request Body Preparation}: Builds a list with \code{password}, \code{subName}, \code{access}, and optional \code{remarks}, converted to JSON.
+\item \strong{Header Preparation}: Generates authentication headers asynchronously using \code{build_headers()}.
+\item \strong{API Request}: Sends a POST request with a 3-second timeout via \code{httr::POST()}.
+\item \strong{Response Processing}: Validates the response and converts the \code{"data"} field into a \code{data.table}.
+}
+}
 
-### API Endpoint
-`POST https://api.kucoin.com/api/v2/sub/user/created`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{POST https://api.kucoin.com/api/v2/sub/user/created}
+}
+
+\subsection{Usage}{
+
 Utilised by users to create sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
-
-### Official Documentation
-[KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount}{KuCoin Add Sub-Account}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSubAccount-add_subaccount"></a>}}
@@ -353,50 +215,38 @@ Promise resolving to a \code{data.table} containing:
 \item \code{subName} (character): Sub-account name.
 \item \code{remarks} (character): Provided remarks or notes.
 \item \code{access} (character): Permission type granted.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  new_sub <- await(sub_acc$add_subaccount(
-    password = "TestPass123",
-    subName = "TestSub123",
-    access = "Spot",
-    remarks = "Test sub-account"
-  ))
-  print(new_sub)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Get Sub-Account List Summary (Paginated)
+}
+\subsection{Description}{
 
-### Description
-Retrieves a paginated summary of all sub-accounts associated with the master account asynchronously, aggregating results into a `data.table`.
-This method converts `createdAt` timestamps to POSIXct and calls `get_subaccount_list_summary_impl`.
+Retrieves a paginated summary of all sub-accounts associated with the master account asynchronously, aggregating results into a \code{data.table}.
+This method converts \code{createdAt} timestamps to POSIXct and calls \code{get_subaccount_list_summary_impl}.
+}
 
-### Workflow Overview
-1. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and specified `page_size`.
-2. **Page Fetching**: Defines an async helper to fetch each page with authentication headers.
-3. **Automatic Pagination**: Uses `auto_paginate` to fetch all pages up to `max_pages`.
-4. **Aggregation**: Combines results into a `data.table`, converting `createdAt` to `createdDatetime`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Pagination Initialisation}: Sets an initial query with \code{currentPage = 1} and specified \code{page_size}.
+\item \strong{Page Fetching}: Defines an async helper to fetch each page with authentication headers.
+\item \strong{Automatic Pagination}: Uses \code{auto_paginate} to fetch all pages up to \code{max_pages}.
+\item \strong{Aggregation}: Combines results into a \code{data.table}, converting \code{createdAt} to \code{createdDatetime}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/sub/user`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v2/sub/user}
+}
+
+\subsection{Usage}{
+
 Utilised by users to obtain a comprehensive overview of all sub-accounts, including creation details and permissions.
-
-### Official Documentation
-[KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info}{KuCoin Get Sub-Account List Summary Info}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSubAccount-get_subaccount_list_summary"></a>}}
@@ -431,46 +281,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{createdAt} (integer): Creation timestamp in milliseconds.
 \item \code{createdDatetime} (POSIXct): Converted creation datetime.
 \item \code{remarks} (character): Sub-account remarks.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary(page_size = 50, max_pages = 2))
-  print(summary)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Get Sub-Account Detail - Balance
+}
+\subsection{Description}{
 
-### Description
-Retrieves detailed balance information for a specific sub-account identified by `subUserId` asynchronously.
-This method aggregates balances across account types into a `data.table` and calls `get_subaccount_detail_balance_impl`.
-Use `get_subaccount_list_summary()` to obtain `subUserId`.
+Retrieves detailed balance information for a specific sub-account identified by \code{subUserId} asynchronously.
+This method aggregates balances across account types into a \code{data.table} and calls \code{get_subaccount_detail_balance_impl}.
+Use \code{get_subaccount_list_summary()} to obtain \code{subUserId}.
+}
 
-### Workflow Overview
-1. **URL Construction**: Combines the base URL with `/api/v1/sub-accounts/{subUserId}` and a query string for `includeBaseAmount`.
-2. **Header Preparation**: Generates authentication headers using `build_headers()`.
-3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
-4. **Response Processing**: Aggregates non-empty account type arrays (`mainAccounts`, etc.) into a `data.table`, adding `accountType`, `subUserId`, and `subName`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Construction}: Combines the base URL with \verb{/api/v1/sub-accounts/\{subUserId\}} and a query string for \code{includeBaseAmount}.
+\item \strong{Header Preparation}: Generates authentication headers using \code{build_headers()}.
+\item \strong{API Request}: Sends a GET request with a 3-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Aggregates non-empty account type arrays (\code{mainAccounts}, etc.) into a \code{data.table}, adding \code{accountType}, \code{subUserId}, and \code{subName}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/sub-accounts/{subUserId}?includeBaseAmount={includeBaseAmount}`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/sub-accounts/\{subUserId\}?includeBaseAmount=\{includeBaseAmount\}}
+}
+
+\subsection{Usage}{
+
 Utilised by users to monitor detailed balances across various account types for a specific sub-account.
-
-### Official Documentation
-[KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance}{KuCoin Get Sub-Account Detail Balance}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSubAccount-get_subaccount_detail_balance"></a>}}
@@ -505,26 +348,6 @@ Promise resolving to a \code{data.table} containing:
 Additional fields like \code{baseCurrency}, \code{baseAmount} may be present.
 }
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-sub_acc <- KucoinSubAccount$new()
-main_async <- coro::async(function() {
-  summary <- await(sub_acc$get_subaccount_list_summary())
-  if (nrow(summary) > 0) {
-    sub_id <- summary[1, uid]
-    balance <- await(sub_acc$get_subaccount_detail_balance(sub_id, includeBaseAmount = TRUE))
-    print(balance)
-  }
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSubAccount-clone"></a>}}

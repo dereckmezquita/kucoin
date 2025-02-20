@@ -136,485 +136,6 @@ main_async()
 while (!later::loop_empty()) later::run_now()
 }
 
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$new`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  ticker <- await(market$get_ticker("BTC-USDT"))
-  print(ticker)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Announcements
-
-### Description
-Retrieves paginated market announcements from the KuCoin API asynchronously, aggregating results into a `data.table`.
-This includes updates, promotions, and other news. This method calls `get_announcements_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Merges defaults (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) with `query`.
-2. **URL Assembly**: Combines `base_url` with `/api/v3/announcements` and the query string.
-3. **Page Fetching**: Uses an async helper to send GET requests with a 10-second timeout.
-4. **Pagination**: Fetches all pages up to `max_pages` using `auto_paginate`, extracting `"items"`.
-5. **Aggregation**: Combines results into a `data.table` with `data.table::rbindlist()`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/announcements`
-
-### Usage
-Utilised by users to monitor market news and developments, correlating with other market data like tickers or stats.
-
-### Official Documentation
-[KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_announcements`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  announcements <- await(market$get_announcements(list(annType = "activities", page_size = 20)))
-  print(announcements)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Historical Klines Data
-
-### Description
-Retrieves historical candlestick (klines) data for a trading pair from the KuCoin API asynchronously, segmenting
-requests to handle the 1500-candle limit per request. This method calls `get_klines_impl`.
-
-### Workflow Overview
-1. **Input Validation**: Converts `from` and `to` to POSIXct, ensures `from` < `to`.
-2. **Frequency Conversion**: Translates `freq` to seconds using `frequency_to_seconds()`.
-3. **Segmentation**: Splits the time range into segments with `split_time_range_by_candles()`.
-4. **Segment Fetching**: Creates promises for each segment via `fetch_klines_segment()`.
-5. **Execution Mode**: Fetches concurrently with `promises::promise_all()` if `concurrent = TRUE`, or sequentially.
-6. **Aggregation**: Combines results, removes duplicates by `timestamp`, orders by `datetime`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/candles`
-
-### Usage
-Utilised by users to fetch historical price and volume data for analysis, with options for concurrent or sequential retrieval.
-
-### Official Documentation
-[KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_klines`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
-  print(klines)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Currency Details
-
-### Description
-Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific
-details for multi-chain currencies. This method calls `get_currency_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Builds a query string with optional `chain` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v3/currencies/`, `currency`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Splits `"data"` into summary and `chains` data, combines into a `data.table`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/currencies/{currency}`
-
-### Usage
-Utilised by users to obtain currency metadata (e.g., precision, chain support) for trading or configuration purposes.
-
-### Official Documentation
-[KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_currency`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  btc <- await(market$get_currency("BTC", "ERC20"))
-  print(btc)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve All Currencies
-
-### Description
-Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details
-into a `data.table`. This method calls `get_all_currencies_impl`.
-
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v3/currencies`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Iteration**: Loops through currencies, extracting summary and chain data.
-5. **Result Assembly**: Combines into a `data.table`, adding dummy chain columns if none exist.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/currencies`
-
-### Usage
-Utilised by users to fetch comprehensive currency details for market analysis or configuration.
-
-### Official Documentation
-[KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_all_currencies`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  currencies <- await(market$get_all_currencies())
-  print(currencies)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Symbol Details
-
-### Description
-Retrieves detailed information for a specified trading symbol from the KuCoin API asynchronously. This method calls
-`get_symbol_impl`.
-
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url`, `/api/v2/symbols/`, and `symbol`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Conversion**: Converts `"data"` into a `data.table`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/symbols/{symbol}`
-
-### Usage
-Utilised by users to fetch metadata for a specific trading symbol, such as price increments and trading limits.
-
-### Official Documentation
-[KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_symbol`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  symbol <- await(market$get_symbol("BTC-USDT"))
-  print(symbol)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve All Trading Symbols
-
-### Description
-Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
-This method calls `get_all_symbols_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Builds a query string with optional `market` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v2/symbols`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts `"data"` into a `data.table`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/symbols`
-
-### Usage
-Utilised by users to obtain a comprehensive list of trading symbols for market exploration or filtering.
-
-### Official Documentation
-[KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_all_symbols`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  symbols <- await(market$get_all_symbols("ALTS"))
-  print(symbols)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Ticker Information
-
-### Description
-Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
-This method calls `get_ticker_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level1`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, adds `symbol`, renames `time` to `time_ms`, adds `timestamp`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/orderbook/level1`
-
-### Usage
-Utilised by users to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
-
-### Official Documentation
-[KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_ticker`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  ticker <- await(market$get_ticker("BTC-USDT"))
-  print(ticker)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve All Tickers
-
-### Description
-Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
-This method calls `get_all_tickers_impl`.
-
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v1/market/allTickers`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Conversion**: Converts `"ticker"` array to a `data.table`, adds `globalTime_ms` and `globalTime_datetime`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/allTickers`
-
-### Usage
-Utilised by users to fetch a snapshot of market data across all trading pairs for monitoring or analysis.
-
-### Official Documentation
-[KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_all_tickers`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  tickers <- await(market$get_all_tickers())
-  print(tickers)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Trade History
-
-### Description
-Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
-This method calls `get_trade_history_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/histories`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, adds `timestamp` via `time_convert_from_kucoin()`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/histories`
-
-### Usage
-Utilised by users to fetch recent trade history for tracking market activity.
-
-### Official Documentation
-[KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_trade_history`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  trades <- await(market$get_trade_history("BTC-USDT"))
-  print(trades)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Partial Orderbook
-
-### Description
-Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API
-asynchronously. This method calls `get_part_orderbook_impl`.
-
-### Workflow Overview
-1. **Input Validation**: Ensures `size` is 20 or 100, aborts if invalid.
-2. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level2_{size}`, and query string.
-4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}`
-
-### Usage
-Utilised by users to obtain a snapshot of the orderbook, showing aggregated bid and ask levels.
-
-### Official Documentation
-[KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_part_orderbook`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  orderbook <- await(market$get_part_orderbook("BTC-USDT", 100))
-  print(orderbook)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Full Orderbook (Authenticated)
-
-### Description
-Retrieves full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring
-authentication. This method calls `get_full_orderbook_impl`.
-
-### Workflow Overview
-1. **Header Preparation**: Constructs authentication headers with `build_headers()` using `keys`.
-2. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-3. **URL Assembly**: Combines `base_url`, `/api/v3/market/orderbook/level2`, and query string.
-4. **HTTP Request**: Sends a GET request with headers and a 10-second timeout via `httr::GET()`.
-5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/market/orderbook/level2`
-
-### Usage
-Utilised by users to fetch the complete orderbook, requiring API authentication for detailed depth data.
-
-### Official Documentation
-[KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_full_orderbook`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  orderbook <- await(market$get_full_orderbook("BTC-USDT"))
-  print(orderbook)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve 24-Hour Market Statistics
-
-### Description
-Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously. This method
-calls `get_24hr_stats_impl`.
-
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/stats`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, renames `time` to `time_ms`, adds `timestamp`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/stats`
-
-### Usage
-Utilised by users to fetch a 24-hour snapshot of market statistics, including volume and price changes.
-
-### Official Documentation
-[KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_24hr_stats`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  stats <- await(market$get_24hr_stats("BTC-USDT"))
-  print(stats)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-Retrieve Market List
-
-### Description
-Retrieves a list of all available trading markets from the KuCoin API asynchronously as a character vector.
-This method calls `get_market_list_impl`.
-
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v1/markets`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/markets`
-
-### Usage
-Utilised by users to identify available trading markets for filtering or querying market-specific data.
-
-### Official Documentation
-[KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
-
-
-## ------------------------------------------------
-## Method `KucoinSpotMarketData$get_market_list`
-## ------------------------------------------------
-
-\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  markets <- await(market$get_market_list())
-  print(markets)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -700,45 +221,38 @@ Defaults to \code{get_api_keys()}.
 }
 \subsection{Returns}{
 A new instance of the \code{KucoinSpotMarketData} class.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  ticker <- await(market$get_ticker("BTC-USDT"))
-  print(ticker)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Announcements
+\subsection{Description}{
 
-### Description
-Retrieves paginated market announcements from the KuCoin API asynchronously, aggregating results into a `data.table`.
-This includes updates, promotions, and other news. This method calls `get_announcements_impl`.
+Retrieves paginated market announcements from the KuCoin API asynchronously, aggregating results into a \code{data.table}.
+This includes updates, promotions, and other news. This method calls \code{get_announcements_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Merges defaults (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) with `query`.
-2. **URL Assembly**: Combines `base_url` with `/api/v3/announcements` and the query string.
-3. **Page Fetching**: Uses an async helper to send GET requests with a 10-second timeout.
-4. **Pagination**: Fetches all pages up to `max_pages` using `auto_paginate`, extracting `"items"`.
-5. **Aggregation**: Combines results into a `data.table` with `data.table::rbindlist()`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Merges defaults (\code{currentPage = 1}, \code{pageSize = 50}, \code{annType = "latest-announcements"}, \code{lang = "en_US"}) with \code{query}.
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/announcements} and the query string.
+\item \strong{Page Fetching}: Uses an async helper to send GET requests with a 10-second timeout.
+\item \strong{Pagination}: Fetches all pages up to \code{max_pages} using \code{auto_paginate}, extracting \code{"items"}.
+\item \strong{Aggregation}: Combines results into a \code{data.table} with \code{data.table::rbindlist()}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/announcements`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v3/announcements}
+}
+
+\subsection{Usage}{
+
 Utilised by users to monitor market news and developments, correlating with other market data like tickers or stats.
-
-### Official Documentation
-[KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements}{KuCoin Get Announcements}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_announcements"></a>}}
@@ -785,47 +299,40 @@ Promise resolving to a \code{data.table} containing:
 \item \code{pageSize} (integer): Records per page.
 \item \code{totalNum} (integer): Total announcements.
 \item \code{totalPage} (integer): Total pages.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  announcements <- await(market$get_announcements(list(annType = "activities", page_size = 20)))
-  print(announcements)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Historical Klines Data
+}
+\subsection{Description}{
 
-### Description
 Retrieves historical candlestick (klines) data for a trading pair from the KuCoin API asynchronously, segmenting
-requests to handle the 1500-candle limit per request. This method calls `get_klines_impl`.
+requests to handle the 1500-candle limit per request. This method calls \code{get_klines_impl}.
+}
 
-### Workflow Overview
-1. **Input Validation**: Converts `from` and `to` to POSIXct, ensures `from` < `to`.
-2. **Frequency Conversion**: Translates `freq` to seconds using `frequency_to_seconds()`.
-3. **Segmentation**: Splits the time range into segments with `split_time_range_by_candles()`.
-4. **Segment Fetching**: Creates promises for each segment via `fetch_klines_segment()`.
-5. **Execution Mode**: Fetches concurrently with `promises::promise_all()` if `concurrent = TRUE`, or sequentially.
-6. **Aggregation**: Combines results, removes duplicates by `timestamp`, orders by `datetime`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Input Validation}: Converts \code{from} and \code{to} to POSIXct, ensures \code{from} < \code{to}.
+\item \strong{Frequency Conversion}: Translates \code{freq} to seconds using \code{frequency_to_seconds()}.
+\item \strong{Segmentation}: Splits the time range into segments with \code{split_time_range_by_candles()}.
+\item \strong{Segment Fetching}: Creates promises for each segment via \code{fetch_klines_segment()}.
+\item \strong{Execution Mode}: Fetches concurrently with \code{promises::promise_all()} if \code{concurrent = TRUE}, or sequentially.
+\item \strong{Aggregation}: Combines results, removes duplicates by \code{timestamp}, orders by \code{datetime}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/candles`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/candles}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch historical price and volume data for analysis, with options for concurrent or sequential retrieval.
-
-### Official Documentation
-[KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines}{KuCoin Get Klines}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_klines"></a>}}
@@ -873,46 +380,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{low} (numeric): Lowest price.
 \item \code{volume} (numeric): Trading volume.
 \item \code{turnover} (numeric): Trading turnover.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
-  print(klines)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Currency Details
+}
+\subsection{Description}{
 
-### Description
 Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific
-details for multi-chain currencies. This method calls `get_currency_impl`.
+details for multi-chain currencies. This method calls \code{get_currency_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Builds a query string with optional `chain` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v3/currencies/`, `currency`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Splits `"data"` into summary and `chains` data, combines into a `data.table`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Builds a query string with optional \code{chain} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/currencies/}, \code{currency}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Splits \code{"data"} into summary and \code{chains} data, combines into a \code{data.table}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/currencies/{currency}`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v3/currencies/\{currency\}}
+}
+
+\subsection{Usage}{
+
 Utilised by users to obtain currency metadata (e.g., precision, chain support) for trading or configuration purposes.
-
-### Official Documentation
-[KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency}{KuCoin Get Currency}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_currency"></a>}}
@@ -943,46 +443,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{isMarginEnabled} (logical): Margin trading status.
 \item \code{isDebitEnabled} (logical): Debit status.
 \item Chain-specific fields (e.g., \code{chainName}, \code{withdrawalMinSize}).
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  btc <- await(market$get_currency("BTC", "ERC20"))
-  print(btc)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve All Currencies
+}
+\subsection{Description}{
 
-### Description
 Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details
-into a `data.table`. This method calls `get_all_currencies_impl`.
+into a \code{data.table}. This method calls \code{get_all_currencies_impl}.
+}
 
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v3/currencies`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Iteration**: Loops through currencies, extracting summary and chain data.
-5. **Result Assembly**: Combines into a `data.table`, adding dummy chain columns if none exist.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/currencies}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Iteration}: Loops through currencies, extracting summary and chain data.
+\item \strong{Result Assembly}: Combines into a \code{data.table}, adding dummy chain columns if none exist.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/currencies`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v3/currencies}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch comprehensive currency details for market analysis or configuration.
-
-### Official Documentation
-[KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies}{KuCoin Get All Currencies}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_all_currencies"></a>}}
@@ -1011,46 +504,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{chainName} (character or NA): Blockchain name.
 \item \code{withdrawalMinSize} (character or NA): Minimum withdrawal amount.
 \item And more (see implementation docs).
-}
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  currencies <- await(market$get_all_currencies())
-  print(currencies)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Symbol Details
+}
+}
+\subsection{Description}{
 
-### Description
 Retrieves detailed information for a specified trading symbol from the KuCoin API asynchronously. This method calls
-`get_symbol_impl`.
+\code{get_symbol_impl}.
+}
 
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url`, `/api/v2/symbols/`, and `symbol`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Conversion**: Converts `"data"` into a `data.table`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v2/symbols/}, and \code{symbol}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts \code{"data"} into a \code{data.table}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/symbols/{symbol}`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v2/symbols/\{symbol\}}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch metadata for a specific trading symbol, such as price increments and trading limits.
-
-### Official Documentation
-[KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols}{KuCoin Get Symbol}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_symbol"></a>}}
@@ -1078,46 +564,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{market} (character): Trading market.
 \item \code{baseMinSize} (character): Minimum order quantity.
 \item And more (see implementation docs).
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  symbol <- await(market$get_symbol("BTC-USDT"))
-  print(symbol)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve All Trading Symbols
+}
+\subsection{Description}{
 
-### Description
 Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
-This method calls `get_all_symbols_impl`.
+This method calls \code{get_all_symbols_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Builds a query string with optional `market` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v2/symbols`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts `"data"` into a `data.table`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Builds a query string with optional \code{market} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v2/symbols}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts \code{"data"} into a \code{data.table}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v2/symbols`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v2/symbols}
+}
+
+\subsection{Usage}{
+
 Utilised by users to obtain a comprehensive list of trading symbols for market exploration or filtering.
-
-### Official Documentation
-[KuCoin Get All Symbols](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols}{KuCoin Get All Symbols}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_all_symbols"></a>}}
@@ -1145,46 +624,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{market} (character): Trading market.
 \item \code{baseMinSize} (character): Minimum order quantity.
 \item And more (see implementation docs).
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  symbols <- await(market$get_all_symbols("ALTS"))
-  print(symbols)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Ticker Information
+}
+\subsection{Description}{
 
-### Description
 Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
-This method calls `get_ticker_impl`.
+This method calls \code{get_ticker_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level1`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, adds `symbol`, renames `time` to `time_ms`, adds `timestamp`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level1}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts to a \code{data.table}, adds \code{symbol}, renames \code{time} to \code{time_ms}, adds \code{timestamp}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/orderbook/level1`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/orderbook/level1}
+}
+
+\subsection{Usage}{
+
 Utilised by users to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
-
-### Official Documentation
-[KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker}{KuCoin Get Ticker}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_ticker"></a>}}
@@ -1214,45 +686,38 @@ Promise resolving to a \code{data.table} containing:
 \item \code{bestBidSize} (character): Best bid size.
 \item \code{bestAsk} (character): Best ask price.
 \item \code{bestAskSize} (character): Best ask size.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  ticker <- await(market$get_ticker("BTC-USDT"))
-  print(ticker)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve All Tickers
+}
+\subsection{Description}{
 
-### Description
 Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
-This method calls `get_all_tickers_impl`.
+This method calls \code{get_all_tickers_impl}.
+}
 
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v1/market/allTickers`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-4. **Data Conversion**: Converts `"ticker"` array to a `data.table`, adds `globalTime_ms` and `globalTime_datetime`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/market/allTickers}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts \code{"ticker"} array to a \code{data.table}, adds \code{globalTime_ms} and \code{globalTime_datetime}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/allTickers`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/allTickers}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch a snapshot of market data across all trading pairs for monitoring or analysis.
-
-### Official Documentation
-[KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers}{KuCoin Get All Tickers}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_all_tickers"></a>}}
@@ -1273,46 +738,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{bestAskSize} (character): Best ask size.
 \item \code{changeRate} (character): 24-hour change rate.
 \item And more (see implementation docs).
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  tickers <- await(market$get_all_tickers())
-  print(tickers)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Trade History
+}
+\subsection{Description}{
 
-### Description
 Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
-This method calls `get_trade_history_impl`.
+This method calls \code{get_trade_history_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/histories`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, adds `timestamp` via `time_convert_from_kucoin()`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/histories}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts to a \code{data.table}, adds \code{timestamp} via \code{time_convert_from_kucoin()}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/histories`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/histories}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch recent trade history for tracking market activity.
-
-### Official Documentation
-[KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history}{KuCoin Get Trade History}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_trade_history"></a>}}
@@ -1338,46 +796,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{side} (character): Trade side (\code{"buy"} or \code{"sell"}).
 \item \code{time} (integer): Trade timestamp in nanoseconds.
 \item \code{timestamp} (POSIXct): Converted timestamp in UTC.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  trades <- await(market$get_trade_history("BTC-USDT"))
-  print(trades)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Partial Orderbook
+}
+\subsection{Description}{
 
-### Description
 Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API
-asynchronously. This method calls `get_part_orderbook_impl`.
+asynchronously. This method calls \code{get_part_orderbook_impl}.
+}
 
-### Workflow Overview
-1. **Input Validation**: Ensures `size` is 20 or 100, aborts if invalid.
-2. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level2_{size}`, and query string.
-4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Input Validation}: Ensures \code{size} is 20 or 100, aborts if invalid.
+\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level2_\{size\}}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}, converts bids/asks.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/orderbook/level2_\{size\}}
+}
+
+\subsection{Usage}{
+
 Utilised by users to obtain a snapshot of the orderbook, showing aggregated bid and ask levels.
-
-### Official Documentation
-[KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook}{KuCoin Get Part OrderBook}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_part_orderbook"></a>}}
@@ -1405,46 +856,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
 \item \code{price} (character): Aggregated price level.
 \item \code{size} (character): Aggregated size.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  orderbook <- await(market$get_part_orderbook("BTC-USDT", 100))
-  print(orderbook)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Full Orderbook (Authenticated)
+}
+\subsection{Description}{
 
-### Description
 Retrieves full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring
-authentication. This method calls `get_full_orderbook_impl`.
+authentication. This method calls \code{get_full_orderbook_impl}.
+}
 
-### Workflow Overview
-1. **Header Preparation**: Constructs authentication headers with `build_headers()` using `keys`.
-2. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-3. **URL Assembly**: Combines `base_url`, `/api/v3/market/orderbook/level2`, and query string.
-4. **HTTP Request**: Sends a GET request with headers and a 10-second timeout via `httr::GET()`.
-5. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`, converts bids/asks.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Header Preparation}: Constructs authentication headers with \code{build_headers()} using \code{keys}.
+\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/market/orderbook/level2}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with headers and a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}, converts bids/asks.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v3/market/orderbook/level2`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v3/market/orderbook/level2}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch the complete orderbook, requiring API authentication for detailed depth data.
-
-### Official Documentation
-[KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook}{KuCoin Get Full OrderBook}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_full_orderbook"></a>}}
@@ -1470,46 +914,39 @@ Promise resolving to a \code{data.table} containing:
 \item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
 \item \code{price} (character): Aggregated price level.
 \item \code{size} (character): Aggregated size.
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  orderbook <- await(market$get_full_orderbook("BTC-USDT"))
-  print(orderbook)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve 24-Hour Market Statistics
+}
+\subsection{Description}{
 
-### Description
 Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously. This method
-calls `get_24hr_stats_impl`.
+calls \code{get_24hr_stats_impl}.
+}
 
-### Workflow Overview
-1. **Query Construction**: Builds a query string with `symbol` using `build_query()`.
-2. **URL Assembly**: Combines `base_url`, `/api/v1/market/stats`, and query string.
-3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-4. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
-5. **Data Conversion**: Converts to a `data.table`, renames `time` to `time_ms`, adds `timestamp`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
+\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/stats}, and query string.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Data Conversion}: Converts to a \code{data.table}, renames \code{time} to \code{time_ms}, adds \code{timestamp}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/market/stats`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/market/stats}
+}
+
+\subsection{Usage}{
+
 Utilised by users to fetch a 24-hour snapshot of market statistics, including volume and price changes.
-
-### Official Documentation
-[KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats}{KuCoin Get 24hr Stats}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_24hr_stats"></a>}}
@@ -1536,44 +973,37 @@ Promise resolving to a \code{data.table} containing:
 \item \code{sell} (character): Best ask price.
 \item \code{changeRate} (character): 24-hour change rate.
 \item And more (see implementation docs).
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  stats <- await(market$get_24hr_stats("BTC-USDT"))
-  print(stats)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
 Retrieve Market List
+}
+\subsection{Description}{
 
-### Description
 Retrieves a list of all available trading markets from the KuCoin API asynchronously as a character vector.
-This method calls `get_market_list_impl`.
+This method calls \code{get_market_list_impl}.
+}
 
-### Workflow Overview
-1. **URL Assembly**: Combines `base_url` with `/api/v1/markets`.
-2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-3. **Response Processing**: Validates with `process_kucoin_response()`, extracts `"data"`.
+\subsection{Workflow Overview}{
+\enumerate{
+\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/markets}.
+\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
+\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+}
+}
 
-### API Endpoint
-`GET https://api.kucoin.com/api/v1/markets`
+\subsection{API Endpoint}{
 
-### Usage
+\verb{GET https://api.kucoin.com/api/v1/markets}
+}
+
+\subsection{Usage}{
+
 Utilised by users to identify available trading markets for filtering or querying market-specific data.
-
-### Official Documentation
-[KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
-
-}
-\if{html}{\out{</div>}}
-
 }
 
+\subsection{Official Documentation}{
+
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list}{KuCoin Get Market List}
+}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-get_market_list"></a>}}
@@ -1586,22 +1016,6 @@ Utilised by users to identify available trading markets for filtering or queryin
 \subsection{Returns}{
 Promise resolving to a character vector of market identifiers (e.g., \code{"USDS"}, \code{"TON"}).
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-market <- KucoinSpotMarketData$new()
-main_async <- coro::async(function() {
-  markets <- await(market$get_market_list())
-  print(markets)
-})
-main_async()
-while (!later::loop_empty()) later::run_now()
-}
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-KucoinSpotMarketData-clone"></a>}}

@@ -106,17 +106,6 @@ KucoinSubAccount <- R6::R6Class(
         #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
         #'
         #' @return A new instance of the `KucoinSubAccount` class.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' sub_acc <- KucoinSubAccount$new()
-        #' main_async <- coro::async(function() {
-        #'   summary <- await(sub_acc$get_subaccount_list_summary())
-        #'   print(summary)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
             self$keys <- keys
             self$base_url <- base_url
@@ -155,22 +144,6 @@ KucoinSubAccount <- R6::R6Class(
         #'   - `subName` (character): Sub-account name.
         #'   - `remarks` (character): Provided remarks or notes.
         #'   - `access` (character): Permission type granted.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' sub_acc <- KucoinSubAccount$new()
-        #' main_async <- coro::async(function() {
-        #'   new_sub <- await(sub_acc$add_subaccount(
-        #'     password = "TestPass123",
-        #'     subName = "TestSub123",
-        #'     access = "Spot",
-        #'     remarks = "Test sub-account"
-        #'   ))
-        #'   print(new_sub)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         add_subaccount = function(password, subName, access, remarks = NULL) {
             return(add_subaccount_impl(
                 keys = self$keys,
@@ -220,17 +193,6 @@ KucoinSubAccount <- R6::R6Class(
         #'   - `createdAt` (integer): Creation timestamp in milliseconds.
         #'   - `createdDatetime` (POSIXct): Converted creation datetime.
         #'   - `remarks` (character): Sub-account remarks.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' sub_acc <- KucoinSubAccount$new()
-        #' main_async <- coro::async(function() {
-        #'   summary <- await(sub_acc$get_subaccount_list_summary(page_size = 50, max_pages = 2))
-        #'   print(summary)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_subaccount_list_summary = function(page_size = 100, max_pages = Inf) {
             return(get_subaccount_list_summary_impl(self$keys, self$base_url, page_size, max_pages))
         },
@@ -269,21 +231,6 @@ KucoinSubAccount <- R6::R6Class(
         #'   - `subUserId` (character): Sub-account user ID.
         #'   - `subName` (character): Sub-account name.
         #'   Additional fields like `baseCurrency`, `baseAmount` may be present.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' sub_acc <- KucoinSubAccount$new()
-        #' main_async <- coro::async(function() {
-        #'   summary <- await(sub_acc$get_subaccount_list_summary())
-        #'   if (nrow(summary) > 0) {
-        #'     sub_id <- summary[1, uid]
-        #'     balance <- await(sub_acc$get_subaccount_detail_balance(sub_id, includeBaseAmount = TRUE))
-        #'     print(balance)
-        #'   }
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_subaccount_detail_balance = function(subUserId, includeBaseAmount = FALSE) {
             return(get_subaccount_detail_balance_impl(self$keys, self$base_url, subUserId, includeBaseAmount))
         }

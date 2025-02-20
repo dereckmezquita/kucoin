@@ -106,6 +106,8 @@
 #' }
 #'
 #' @importFrom R6 R6Class
+#' @importFrom coro async
+#' @importFrom data.table data.table
 #' @export
 KucoinAccountAndFunding <- R6::R6Class(
     "KucoinAccountAndFunding",
@@ -143,11 +145,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
         #'
         #' @return A new instance of the `KucoinAccountAndFunding` class.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' account <- KucoinAccountAndFunding$new()
-        #' }
         initialize = function(keys = get_api_keys(), base_url = get_base_url()) {
             self$keys <- keys
             self$base_url <- base_url
@@ -186,17 +183,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `maxMarginSubQuantity` (integer): Maximum additional margin sub-accounts.
         #'   - `maxFuturesSubQuantity` (integer): Maximum additional futures sub-accounts.
         #'   - `maxOptionSubQuantity` (integer): Maximum additional option sub-accounts.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   summary <- await(account$get_account_summary_info())
-        #'   print(summary)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_account_summary_info = function() {
             return(get_account_summary_info_impl(self$keys, self$base_url))
         },
@@ -231,17 +217,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `ipWhitelist` (character, optional): IP whitelist.
         #'   - `isMaster` (logical): Master account indicator.
         #'   - `createdAt` (integer): Creation timestamp in milliseconds.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   key_info <- await(account$get_apikey_info())
-        #'   print(key_info)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_apikey_info = function() {
             return(get_apikey_info_impl(self$keys, self$base_url))
         },
@@ -269,17 +244,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' @return Promise resolving to a logical value:
         #'   - `TRUE`: High-frequency spot account.
         #'   - `FALSE`: Low-frequency spot account.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   is_high_freq <- await(account$get_spot_account_type())
-        #'   cat("Spot Account High-Frequency:", is_high_freq, "\n")
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_spot_account_type = function() {
             return(get_spot_account_type_impl(self$keys, self$base_url))
         },
@@ -315,17 +279,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `balance` (numeric): Total funds.
         #'   - `available` (numeric): Available funds.
         #'   - `holds` (numeric): Funds on hold.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
-        #'   print(spot_accounts)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_spot_account_dt = function(query = list()) {
             return(get_spot_account_dt_impl(self$keys, self$base_url, query))
         },
@@ -357,21 +310,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `balance` (numeric): Total funds.
         #'   - `available` (numeric): Available funds.
         #'   - `holds` (numeric): Funds on hold.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT")))
-        #'   if (nrow(spot_accounts) > 0) {
-        #'     account_id <- spot_accounts[1, id]
-        #'     detail <- await(account$get_spot_account_detail(account_id))
-        #'     print(detail)
-        #'   }
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_spot_account_detail = function(accountId) {
             return(get_spot_account_detail_impl(self$keys, self$base_url, accountId))
         },
@@ -415,18 +353,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'     - `maxBorrowSize` (character): Maximum borrowable amount.
         #'     - `borrowEnabled` (logical): Borrowing enabled.
         #'     - `transferInEnabled` (logical): Transfer-in enabled.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   cross_margin <- await(account$get_cross_margin_account(list(quoteCurrency = "USDT")))
-        #'   print(cross_margin$summary)
-        #'   print(cross_margin$accounts)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_cross_margin_account = function(query = list()) {
             return(get_cross_margin_account_impl(self$keys, self$base_url, query))
         },
@@ -482,18 +408,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'     - `quote_available` (character): Quote available funds.
         #'     - `quote_hold` (character): Quote funds on hold.
         #'     - `quote_maxBorrowSize` (character): Quote max borrowable.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   isolated_margin <- await(account$get_isolated_margin_account(list(symbol = "BTC-USDT")))
-        #'   print(isolated_margin$summary)
-        #'   print(isolated_margin$assets)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_isolated_margin_account = function(query = list()) {
             return(get_isolated_margin_account_impl(self$keys, self$base_url, query))
         },
@@ -543,18 +457,6 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `pageSize` (integer): Page size.
         #'   - `totalNum` (integer): Total records.
         #'   - `totalPage` (integer): Total pages.
-        #'
-        #' @examples
-        #' \dontrun{
-        #' main_async <- coro::async(function() {
-        #'   account <- KucoinAccountAndFunding$new()
-        #'   query <- list(currency = "BTC", bizType = "TRANSFER", startAt = as.integer(Sys.time() - 86400) * 1000, endAt = as.integer(Sys.time()) * 1000)
-        #'   ledger <- await(account$get_spot_ledger(query, page_size = 50, max_pages = 2))
-        #'   print(ledger)
-        #' })
-        #' main_async()
-        #' while (!later::loop_empty()) later::run_now()
-        #' }
         get_spot_ledger = function(query = list(), page_size = 50, max_pages = Inf) {
             return(get_spot_ledger_impl(
                 keys = self$keys,
