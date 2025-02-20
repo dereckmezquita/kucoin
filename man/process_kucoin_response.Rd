@@ -18,10 +18,11 @@ A list representing the parsed JSON response. Users are responsible for extracti
 This function processes an HTTP response from a KuCoin API request. It validates that the response
 has a successful HTTP status and that the API-specific response code indicates success. If the response is
 valid, it returns the parsed JSON object.
-The actual data is often in the \verb{$data} field or \verb{$data$items} etc. especially if the end point is paginated.
-as needed.
 }
 \details{
+The actual data is often in the \verb{$data} field or \verb{$data$items} etc. especially if the end point is paginated.
+as needed.
+
 \strong{Response Validation Workflow:}
 \enumerate{
 \item Checks if the HTTP status code is 200.

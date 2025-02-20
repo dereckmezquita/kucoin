@@ -30,20 +30,20 @@ The server time is used to generate signatures and validate request freshness, h
 \href{https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-server-time}{KuCoin Futures Get Server Time}
 }
 \examples{
-\dontrun{
-    # Asynchronously retrieve the server time.
-    get_server_time()$
-        then(function(timestamp) {
-            cat("KuCoin Server Time:", timestamp, "\n")
-        })$
-        catch(function(e) {
-            message("Error retrieving server time: ", conditionMessage(e))
-        })
+```r
+# Asynchronously retrieve the server time.
+get_server_time()$
+    then(function(timestamp) {
+        cat("KuCoin Server Time:", timestamp, "\n")
+    })$
+    catch(function(e) {
+        message("Error retrieving server time: ", conditionMessage(e))
+    })
 
-    # Run the event loop until all asynchronous tasks are processed.
-    while (!later::loop_empty()) {
-        later::run_now(timeoutSecs = Inf, all = TRUE)
-    }
+# Run the event loop until all asynchronous tasks are processed.
+while (!later::loop_empty()) {
+    later::run_now(timeoutSecs = Inf, all = TRUE)
 }
+```
 
 }

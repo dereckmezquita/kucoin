@@ -12,6 +12,15 @@ build_headers(
   .__coro_env_parent__ = <environment>
 )
 }
+\arguments{
+\item{method}{A character string specifying the HTTP method (e.g., "GET", "POST").}
+
+\item{endpoint}{A character string representing the API endpoint (e.g., "/api/v1/orders").}
+
+\item{body}{A character string containing the JSON-formatted request body; use an empty string (\code{""}) if no payload is required.}
+
+\item{keys}{A list of API credentials and configuration parameters.}
+}
 \description{
 Asynchronously constructs the HTTP request headers required for making authenticated requests to the KuCoin API.
 These headers include your API key, an HMAC-SHA256 signature computed over a prehash string, a timestamp,
@@ -61,26 +70,26 @@ Optionally, a \code{base_url} may be provided, though this function relies on \c
 
 \strong{Return Value:}
 Returns a list of HTTP headers created using \code{httr::add_headers()}.
-
-\strong{Usage Example:}
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{\dontrun{
-  keys <- list(
-      api_key = "your_api_key",
-      api_secret = "your_api_secret",
-      api_passphrase = "your_api_passphrase",
-      key_version = "2"
-      # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
-  )
-
-  # Build headers for a POST request with a JSON payload.
-  headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
-  print(headers)
-
-  # Build headers for a GET request with no payload:
-  headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
-  print(headers)
 }
-}\if{html}{\out{</div>}}
 }
+\examples{
+```r
+# Example usage for building headers for a POST request with a JSON payload.
+keys <- list(
+    api_key = "your_api_key",
+    api_secret = "your_api_secret",
+    api_passphrase = "your_api_passphrase",
+    key_version = "2"
+    # Optionally, base_url can be provided; however, build_headers() uses get_base_url() internally.
+)
+
+# Build headers for a POST request.
+headers <- coro::await(build_headers("POST", "/api/v1/orders", '{"size": 1}', keys))
+print(headers)
+
+# Build headers for a GET request with no payload.
+headers <- coro::await(build_headers("GET", "/api/v1/orders", "", keys))
+print(headers)
+```
+
 }
