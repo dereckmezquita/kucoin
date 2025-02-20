@@ -1,8 +1,8 @@
 # File: ./R/KucoinSpotMarketData.R
 
 # box::use(
-#     ./impl_market_data_get_klines[ get_klines_impl ],
-#     ./impl_market_data[
+#     ./impl_spottrading_market_data_get_klines[ get_klines_impl ],
+#     ./impl_spottrading_market_data[
 #         get_announcements_impl, get_currency_impl, get_all_currencies_impl,
 #         get_symbol_impl, get_all_symbols_impl, get_ticker_impl,
 #         get_all_tickers_impl, get_trade_history_impl, get_part_orderbook_impl,

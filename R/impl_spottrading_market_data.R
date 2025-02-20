@@ -1,4 +1,4 @@
-# File: ./R/impl_market_data_new.R
+# File: ./R/impl_spottrading_market_data.R
 
 # box::use(
 #     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
