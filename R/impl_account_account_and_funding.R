@@ -1,4 +1,4 @@
-# File: ./R/impl_account_and_funding.R
+# File: ./R/impl_account_account_and_funding.R
 
 # box::use(
 #     ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
@@ -77,10 +77,10 @@ get_account_summary_info_impl <- coro::async(function(
 
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_account_summary_info_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_account_summary_info_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_account_summary_info_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_account_summary_info_impl.Rds")
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
@@ -151,10 +151,10 @@ get_apikey_info_impl <- coro::async(function(
 
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_apikey_info_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_apikey_info_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_apikey_info_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_apikey_info_impl.Rds")
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
@@ -215,10 +215,10 @@ get_spot_account_type_impl <- coro::async(function(
 
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_spot_account_type_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_type_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_spot_account_type_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_type_impl.Rds")
         return(parsed_response$data)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_type_impl:", conditionMessage(e)))
@@ -293,10 +293,10 @@ get_spot_account_dt_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_spot_account_dt_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_dt_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_spot_account_dt_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_dt_impl.Rds")
         account_dt <- data.table::rbindlist(parsed_response$data)
 
         if (nrow(account_dt) == 0) {
@@ -387,9 +387,9 @@ get_spot_account_detail_impl <- coro::async(function(
         url <- paste0(base_url, endpoint)
 
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_spot_account_detail_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_detail_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_spot_account_detail_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_detail_impl.Rds")
 
         account_detail_dt <- data.table::as.data.table(parsed_response$data)
         if (nrow(account_detail_dt) == 0) {
@@ -491,10 +491,10 @@ get_cross_margin_account_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_cross_margin_account_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_cross_margin_account_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
         summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status")
@@ -596,10 +596,10 @@ get_isolated_margin_account_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_and_funding/response-get_isolated_margin_account_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_isolated_margin_account_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
         summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "timestamp")
@@ -728,9 +728,9 @@ get_spot_ledger_impl <- coro::async(function(
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
             # file_name <- paste0("get_spot_ledger_impl_", q$current_page)
-            # saveRDS(response, paste0("./api-responses/impl_account_and_funding/response-", file_name, ".ignore.Rds"))
+            # saveRDS(response, paste0("./api-responses/impl_account_account_and_funding/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
-            # saveRDS(parsed_response, paste0("./api-responses/impl_account_and_funding/parsed_response-", file_name, ".Rds"))
+            # saveRDS(parsed_response, paste0("./api-responses/impl_account_account_and_funding/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
 

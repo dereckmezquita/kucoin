@@ -14,7 +14,7 @@ box::use(
     later[ loop_empty, run_now ],
     promises[ then, catch ],
     data.table[ is.data.table ],
-    impl = ../../R/impl_account_and_funding,
+    impl = ../../R/impl_account_account_and_funding,
     utils = ../../R/utils
 )
 

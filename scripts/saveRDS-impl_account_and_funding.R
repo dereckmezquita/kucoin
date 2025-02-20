@@ -1,5 +1,5 @@
 box::use(
-    ../R/impl_account_and_funding[
+    ../R/impl_account_account_and_funding[
         get_account_summary_info_impl,
         get_apikey_info_impl,
         get_spot_account_type_impl,

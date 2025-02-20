@@ -1,7 +1,7 @@
 # File: ./R/KucoinAccountAndFunding.R
 
 # box::use(
-#     impl = ./impl_account_and_funding,
+#     impl = ./impl_account_account_and_funding,
 #     ./utils[ get_api_keys, get_base_url ]
 # )
 
