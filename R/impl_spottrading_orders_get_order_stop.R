@@ -13,10 +13,14 @@ box::use(
 #' Get Stop Orders List (Implementation)
 #'
 #' Retrieves a paginated list of untriggered stop orders from the KuCoin Spot trading system asynchronously.
-#' This function returns a `data.table` containing details of stop orders, sorted by the latest update time in descending order.
+#' This function constructs a GET request to the KuCoin API and returns a promise that resolves to a `data.table`
+#' containing details of stop orders, sorted by the latest update time in descending order.
 #'
 #' ## Description
-#' This endpoint fetches a list of stop orders that have not yet been triggered. Stop orders are conditional orders that become active when the market price reaches a specified `stopPrice`. The list is paginated and sorted to show the most recent orders first. Users can filter the results using various query parameters such as `symbol`, `side`, `type`, and time range.
+#' This endpoint fetches a list of stop orders that have not yet been triggered. Stop orders are conditional orders
+#' that become active when the market price reaches a specified `stopPrice`. The list is paginated and sorted to show
+#' the most recent orders first. Users can filter the results using various query parameters such as `symbol`, `side`,
+#' `type`, and time range.
 #'
 #' ## Workflow
 #' 1. **Parameter Validation**: Ensures that provided parameters are valid, such as `symbol`, `side`, `type`, and pagination settings.
@@ -149,41 +153,41 @@ box::use(
 #'
 #' @param keys List; API configuration parameters from `get_api_keys()`. Defaults to `get_api_keys()`.
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @param query Named list; query parameters for filtering and pagination (e.g., `list(symbol = "BTC-USDT", side = "buy", pageSize = 10)`).
-#' @return Promise resolving to a `data.table` with columns corresponding to the stop order fields, including:
-#'   - `id` (character): Order ID.
-#'   - `symbol` (character): Trading pair.
-#'   - `userId` (character): User ID.
-#'   - `status` (character): Order status.
-#'   - `type` (character): Order type.
-#'   - `side` (character): Order side.
+#' @param query Named list; query parameters for filtering and pagination (e.g., `list(symbol = "BTC-USDT", side = "buy", pageSize = 10)`). Optional.
+#' @return Promise resolving to a `data.table` containing stop order details, with the following columns:
+#'   - `id` (character): Unique order ID assigned by KuCoin.
+#'   - `symbol` (character): Trading pair (e.g., "KCS-USDT").
+#'   - `userId` (character): User ID associated with the order.
+#'   - `status` (character): Order status (e.g., "NEW", "TRIGGERED").
+#'   - `type` (character): Order type (e.g., "limit", "market").
+#'   - `side` (character): Order side ("buy" or "sell").
 #'   - `price` (character): Order price.
 #'   - `size` (character): Order size.
-#'   - `funds` (character): Order funds.
-#'   - `stp` (character): Self Trade Prevention.
-#'   - `timeInForce` (character): Time in force.
-#'   - `cancelAfter` (integer): Cancel after n seconds.
-#'   - `postOnly` (logical): Post-only flag.
-#'   - `hidden` (logical): Hidden order flag.
-#'   - `iceberg` (logical): Iceberg order flag.
-#'   - `visibleSize` (character): Visible size for iceberg orders.
-#'   - `channel` (character): Order channel.
-#'   - `clientOid` (character): Client order ID.
-#'   - `remark` (character): Order remarks.
-#'   - `tags` (character): Order tags.
-#'   - `orderTime` (numeric): Order time in nanoseconds.
-#'   - `domainId` (character): Domain ID.
-#'   - `tradeSource` (character): Trade source.
-#'   - `tradeType` (character): Trade type.
-#'   - `feeCurrency` (character): Fee currency.
+#'   - `funds` (character or NA): Order funds (NULL for untriggered orders).
+#'   - `stp` (character or NA): Self Trade Prevention strategy (e.g., "DC", "CO", "CN", "CB").
+#'   - `timeInForce` (character): Time in force (e.g., "GTC", "GTT", "IOC", "FOK").
+#'   - `cancelAfter` (integer): Seconds until cancellation for GTT (-1 if not applicable).
+#'   - `postOnly` (logical): Whether the order is post-only.
+#'   - `hidden` (logical): Whether the order is hidden.
+#'   - `iceberg` (logical): Whether the order is an iceberg order.
+#'   - `visibleSize` (character or NA): Visible size for iceberg orders.
+#'   - `channel` (character): Order source (e.g., "API").
+#'   - `clientOid` (character): Client-assigned order ID.
+#'   - `remark` (character or NA): Order remarks.
+#'   - `tags` (character or NA): Order tags.
+#'   - `orderTime` (numeric): Order creation time in nanoseconds.
+#'   - `domainId` (character): Domain ID (e.g., "kucoin").
+#'   - `tradeSource` (character): Trade source (e.g., "USER").
+#'   - `tradeType` (character): Trade type (e.g., "TRADE").
+#'   - `feeCurrency` (character): Currency used for fees.
 #'   - `takerFeeRate` (character): Taker fee rate.
 #'   - `makerFeeRate` (character): Maker fee rate.
 #'   - `createdAt` (integer): Creation timestamp in milliseconds.
-#'   - `stop` (character): Stop order type.
-#'   - `stopTriggerTime` (integer): Stop trigger time.
+#'   - `stop` (character): Stop order type (e.g., "loss", "entry").
+#'   - `stopTriggerTime` (integer or NA): Trigger time in milliseconds (NULL if untriggered).
 #'   - `stopPrice` (character): Stop price.
-#'   - `createdAtDatetime` (POSIXct): Creation time in UTC.
-#'   - `orderTimeDatetime` (POSIXct): Order time in UTC.
+#'   - `createdAtDatetime` (POSIXct): Creation time in UTC (derived from `createdAt`).
+#'   - `orderTimeDatetime` (POSIXct): Order placement time in UTC (derived from `orderTime`).
 #' @examples
 #' \dontrun{
 #' library(coro)
@@ -216,6 +220,9 @@ get_stop_orders_list_impl <- coro::async(function(
         if (!is.list(query)) {
             rlang::abort("Parameter 'query' must be a named list.")
         }
+        if ("symbol" %in% names(query) && !is.null(query$symbol) && !verify_symbol(query$symbol)) {
+            rlang::abort("Parameter 'query$symbol', if provided, must be a valid trading pair (e.g., 'BTC-USDT').")
+        }
 
         # Construct endpoint and query string
         endpoint <- "/api/v1/stop-order"
@@ -223,7 +230,7 @@ get_stop_orders_list_impl <- coro::async(function(
         full_url <- paste0(base_url, endpoint, query_string)
 
         # Generate authentication headers
-        headers <- await(build_headers("GET", endpoint, query_string, keys))
+        headers <- await(build_headers("GET", paste0(endpoint, query_string), NULL, keys))
 
         # Send GET request
         response <- httr::GET(
@@ -290,10 +297,13 @@ get_stop_orders_list_impl <- coro::async(function(
 #' Get Stop Order By OrderId (Implementation)
 #'
 #' Retrieves detailed information for a single stop order using its order ID from the KuCoin Spot trading system asynchronously.
-#' This function returns a `data.table` with comprehensive stop order details, including additional UTC datetime columns derived from timestamps.
+#' This function constructs a GET request to the KuCoin API and returns a promise that resolves to a `data.table`
+#' with comprehensive stop order details, including additional UTC datetime columns derived from timestamps.
 #'
 #' ## Description
-#' This endpoint fetches data for a specific stop order identified by its `orderId`. The stop order can be in various states, such as "NEW" or "TRIGGERED".
+#' This endpoint fetches data for a specific stop order identified by its `orderId`, which is the unique identifier
+#' assigned by the KuCoin system when the order is created. The stop order can be in various states, such as "NEW"
+#' (untriggered) or "TRIGGERED" (activated).
 #'
 #' ## Workflow
 #' 1. **Parameter Validation**: Ensures `orderId` is a non-empty string.
@@ -316,11 +326,11 @@ get_stop_orders_list_impl <- coro::async(function(
 #'
 #' ## Request
 #' ### Path Parameters
-#' - `orderId`: String (required) - The unique order ID generated by the trading system.
+#' - `orderId`: String (required) - The unique order ID generated by the trading system (e.g., "vs8hoo8q2ceshiue003b67c0").
 #'
 #' ### Example Request
 #' ```bash
-#' curl --location --request GET 'https://api.kucoin.com/api/v1/stop-order/671124f9365ccb00073debd4'
+#' curl --location --request GET 'https://api.kucoin.com/api/v1/stop-order/vs8hoo8q2ceshiue003b67c0'
 #' ```
 #'
 #' ## Response
@@ -404,41 +414,41 @@ get_stop_orders_list_impl <- coro::async(function(
 #'
 #' @param keys List; API configuration parameters from `get_api_keys()`. Defaults to `get_api_keys()`.
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @param orderId Character string; the unique order ID to retrieve (e.g., "671124f9365ccb00073debd4"). Required.
-#' @return Promise resolving to a `data.table` with one row containing stop order details, including:
-#'   - `id` (character): Order ID.
-#'   - `symbol` (character): Trading pair.
-#'   - `userId` (character): User ID.
-#'   - `status` (character): Order status.
-#'   - `type` (character): Order type.
-#'   - `side` (character): Order side.
+#' @param orderId Character string; the unique order ID to retrieve (e.g., "vs8hoo8q2ceshiue003b67c0"). Required.
+#' @return Promise resolving to a `data.table` with one row containing stop order details, with the following columns:
+#'   - `id` (character): Unique order ID assigned by KuCoin.
+#'   - `symbol` (character): Trading pair (e.g., "KCS-USDT").
+#'   - `userId` (character): User ID associated with the order.
+#'   - `status` (character): Order status (e.g., "NEW", "TRIGGERED").
+#'   - `type` (character): Order type (e.g., "limit", "market").
+#'   - `side` (character): Order side ("buy" or "sell").
 #'   - `price` (character): Order price.
 #'   - `size` (character): Order size.
-#'   - `funds` (character): Order funds.
-#'   - `stp` (character): Self Trade Prevention.
-#'   - `timeInForce` (character): Time in force.
-#'   - `cancelAfter` (integer): Cancel after n seconds.
-#'   - `postOnly` (logical): Post-only flag.
-#'   - `hidden` (logical): Hidden order flag.
-#'   - `iceberg` (logical): Iceberg order flag.
-#'   - `visibleSize` (character): Visible size for iceberg orders.
-#'   - `channel` (character): Order channel.
-#'   - `clientOid` (character): Client order ID.
-#'   - `remark` (character): Order remarks.
-#'   - `tags` (character): Order tags.
-#'   - `orderTime` (numeric): Order time in nanoseconds.
-#'   - `domainId` (character): Domain ID.
-#'   - `tradeSource` (character): Trade source.
-#'   - `tradeType` (character): Trade type.
-#'   - `feeCurrency` (character): Fee currency.
+#'   - `funds` (character or NA): Order funds (NULL for untriggered orders).
+#'   - `stp` (character or NA): Self Trade Prevention strategy (e.g., "DC", "CO", "CN", "CB").
+#'   - `timeInForce` (character): Time in force (e.g., "GTC", "GTT", "IOC", "FOK").
+#'   - `cancelAfter` (integer): Seconds until cancellation for GTT (-1 if not applicable).
+#'   - `postOnly` (logical): Whether the order is post-only.
+#'   - `hidden` (logical): Whether the order is hidden.
+#'   - `iceberg` (logical): Whether the order is an iceberg order.
+#'   - `visibleSize` (character or NA): Visible size for iceberg orders.
+#'   - `channel` (character): Order source (e.g., "API").
+#'   - `clientOid` (character): Client-assigned order ID.
+#'   - `remark` (character or NA): Order remarks.
+#'   - `tags` (character or NA): Order tags.
+#'   - `orderTime` (numeric): Order creation time in nanoseconds.
+#'   - `domainId` (character): Domain ID (e.g., "kucoin").
+#'   - `tradeSource` (character): Trade source (e.g., "USER").
+#'   - `tradeType` (character): Trade type (e.g., "TRADE").
+#'   - `feeCurrency` (character): Currency used for fees.
 #'   - `takerFeeRate` (character): Taker fee rate.
 #'   - `makerFeeRate` (character): Maker fee rate.
 #'   - `createdAt` (integer): Creation timestamp in milliseconds.
-#'   - `stop` (character): Stop order type.
-#'   - `stopTriggerTime` (integer): Stop trigger time.
+#'   - `stop` (character): Stop order type (e.g., "loss", "entry").
+#'   - `stopTriggerTime` (integer or NA): Trigger time in milliseconds (NULL if untriggered).
 #'   - `stopPrice` (character): Stop price.
-#'   - `createdAtDatetime` (POSIXct): Creation time in UTC.
-#'   - `orderTimeDatetime` (POSIXct): Order time in UTC.
+#'   - `createdAtDatetime` (POSIXct): Creation time in UTC (derived from `createdAt`).
+#'   - `orderTimeDatetime` (POSIXct): Order placement time in UTC (derived from `orderTime`).
 #' @examples
 #' \dontrun{
 #' library(coro)
@@ -447,7 +457,7 @@ get_stop_orders_list_impl <- coro::async(function(
 #' main_async <- coro::async(function() {
 #'   # Retrieve stop order details by orderId
 #'   stop_order_details <- await(get_stop_order_by_order_id_impl(
-#'     orderId = "671124f9365ccb00073debd4"
+#'     orderId = "vs8hoo8q2ceshiue003b67c0"
 #'   ))
 #'   print(stop_order_details)
 #' })
@@ -508,18 +518,20 @@ get_stop_order_by_order_id_impl <- coro::async(function(
 #' Get Stop Order By ClientOid (Implementation)
 #'
 #' Retrieves detailed information for a single stop order using its client order ID (`clientOid`) from the KuCoin Spot trading system asynchronously.
-#' This function returns a `data.table` with comprehensive stop order details, including additional UTC datetime columns derived from timestamps.
+#' This function constructs a GET request to the KuCoin API and returns a promise that resolves to a `data.table`
+#' with comprehensive stop order details, including additional UTC datetime columns derived from timestamps.
 #'
 #' ## Description
-#' This endpoint fetches data for a specific stop order identified by its `clientOid`, a unique identifier assigned by the user when placing the order.
-#' The stop order can be in various states, such as "NEW" or "TRIGGERED".
+#' This endpoint fetches data for a specific stop order identified by its `clientOid`, a unique identifier assigned
+#' by the user when placing the order. The stop order can be in various states, such as "NEW" (untriggered) or
+#' "TRIGGERED" (activated).
 #'
 #' ## Workflow
-#' 1. **Parameter Validation**: Ensures `clientOid` and `symbol` (if provided) are valid strings.
-#' 2. **Request Construction**: Builds the endpoint URL with query parameters `clientOid` and `symbol`.
+#' 1. **Parameter Validation**: Ensures `clientOid` is a non-empty string and `symbol` (if provided) is a valid trading pair.
+#' 2. **Request Construction**: Builds the endpoint URL with query parameters `clientOid` and optionally `symbol`.
 #' 3. **Authentication**: Generates private API headers using `build_headers()` with the GET method and endpoint.
 #' 4. **API Request**: Sends a GET request to the KuCoin API with a 3-second timeout.
-#' 5. **Response Processing**: Parses the response, converts the `data` object to a `data.table`, and adds `createdAtDatetime` and `orderTimeDatetime` columns.
+#' 5. **Response Processing**: Parses the response, converts the `data` array to a `data.table`, and adds `createdAtDatetime` and `orderTimeDatetime` columns.
 #'
 #' ## API Details
 #' - **Endpoint**: `GET https://api.kucoin.com/api/v1/stop-order/queryOrderByClientOid`
@@ -535,8 +547,8 @@ get_stop_order_by_order_id_impl <- coro::async(function(
 #'
 #' ## Request
 #' ### Query Parameters
-#' - `clientOid`: String (required) - The unique client order ID.
-#' - `symbol`: String (optional) - The trading pair symbol (e.g., "BTC-USDT").
+#' - `clientOid`: String (required) - The unique client order ID (e.g., "2b700942b5db41cebe578cff48960e09").
+#' - `symbol`: String (optional) - The trading pair symbol (e.g., "KCS-USDT").
 #'
 #' ### Example Request
 #' ```bash
@@ -628,40 +640,40 @@ get_stop_order_by_order_id_impl <- coro::async(function(
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param clientOid Character string; the unique client order ID to retrieve (e.g., "2b700942b5db41cebe578cff48960e09"). Required.
 #' @param symbol Character string; the trading pair symbol (e.g., "KCS-USDT"). Optional.
-#' @return Promise resolving to a `data.table` with one row containing stop order details, including:
-#'   - `id` (character): Order ID.
-#'   - `symbol` (character): Trading pair.
-#'   - `userId` (character): User ID.
-#'   - `status` (character): Order status.
-#'   - `type` (character): Order type.
-#'   - `side` (character): Order side.
+#' @return Promise resolving to a `data.table` with typically one row containing stop order details, with the following columns:
+#'   - `id` (character): Unique order ID assigned by KuCoin.
+#'   - `symbol` (character): Trading pair (e.g., "KCS-USDT").
+#'   - `userId` (character): User ID associated with the order.
+#'   - `status` (character): Order status (e.g., "NEW", "TRIGGERED").
+#'   - `type` (character): Order type (e.g., "limit", "market").
+#'   - `side` (character): Order side ("buy" or "sell").
 #'   - `price` (character): Order price.
 #'   - `size` (character): Order size.
-#'   - `funds` (character): Order funds.
-#'   - `stp` (character): Self Trade Prevention.
-#'   - `timeInForce` (character): Time in force.
-#'   - `cancelAfter` (integer): Cancel after n seconds.
-#'   - `postOnly` (logical): Post-only flag.
-#'   - `hidden` (logical): Hidden order flag.
-#'   - `iceberg` (logical): Iceberg order flag.
-#'   - `visibleSize` (character): Visible size for iceberg orders.
-#'   - `channel` (character): Order channel.
-#'   - `clientOid` (character): Client order ID.
-#'   - `remark` (character): Order remarks.
-#'   - `tags` (character): Order tags.
-#'   - `orderTime` (numeric): Order time in nanoseconds.
-#'   - `domainId` (character): Domain ID.
-#'   - `tradeSource` (character): Trade source.
-#'   - `tradeType` (character): Trade type.
-#'   - `feeCurrency` (character): Fee currency.
+#'   - `funds` (character or NA): Order funds (NULL for untriggered orders).
+#'   - `stp` (character or NA): Self Trade Prevention strategy (e.g., "DC", "CO", "CN", "CB").
+#'   - `timeInForce` (character): Time in force (e.g., "GTC", "GTT", "IOC", "FOK").
+#'   - `cancelAfter` (integer): Seconds until cancellation for GTT (-1 if not applicable).
+#'   - `postOnly` (logical): Whether the order is post-only.
+#'   - `hidden` (logical): Whether the order is hidden.
+#'   - `iceberg` (logical): Whether the order is an iceberg order.
+#'   - `visibleSize` (character or NA): Visible size for iceberg orders.
+#'   - `channel` (character): Order source (e.g., "API").
+#'   - `clientOid` (character): Client-assigned order ID.
+#'   - `remark` (character or NA): Order remarks.
+#'   - `tags` (character or NA): Order tags.
+#'   - `orderTime` (numeric): Order creation time in nanoseconds.
+#'   - `domainId` (character): Domain ID (e.g., "kucoin").
+#'   - `tradeSource` (character): Trade source (e.g., "USER").
+#'   - `tradeType` (character): Trade type (e.g., "TRADE").
+#'   - `feeCurrency` (character): Currency used for fees.
 #'   - `takerFeeRate` (character): Taker fee rate.
 #'   - `makerFeeRate` (character): Maker fee rate.
 #'   - `createdAt` (integer): Creation timestamp in milliseconds.
-#'   - `stop` (character): Stop order type.
-#'   - `stopTriggerTime` (integer): Stop trigger time.
+#'   - `stop` (character): Stop order type (e.g., "loss", "entry").
+#'   - `stopTriggerTime` (integer or NA): Trigger time in milliseconds (NULL if untriggered).
 #'   - `stopPrice` (character): Stop price.
-#'   - `createdAtDatetime` (POSIXct): Creation time in UTC.
-#'   - `orderTimeDatetime` (POSIXct): Order time in UTC.
+#'   - `createdAtDatetime` (POSIXct): Creation time in UTC (derived from `createdAt`).
+#'   - `orderTimeDatetime` (POSIXct): Order placement time in UTC (derived from `orderTime`).
 #' @examples
 #' \dontrun{
 #' library(coro)
@@ -710,7 +722,7 @@ get_stop_order_by_client_oid_impl <- coro::async(function(
         full_url <- paste0(base_url, endpoint, query_string)
 
         # Generate authentication headers
-        headers <- await(build_headers("GET", endpoint, query_string, keys))
+        headers <- await(build_headers("GET", paste0(endpoint, query_string), NULL, keys))
 
         # Send GET request
         response <- httr::GET(
