@@ -778,7 +778,7 @@ cancel_stop_order_by_order_id_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Retrieve stop orders list for BTC-USDT
-#'   stop_orders <- await(get_stop_orders_list_impl(
+#'   stop_orders <- await(get_stop_order_list_impl(
 #'     query = list(symbol = "BTC-USDT", side = "buy", pageSize = 10)
 #'   ))
 #'   print(stop_orders)
@@ -793,7 +793,7 @@ cancel_stop_order_by_order_id_impl <- coro::async(function(
 #' @importFrom httr GET timeout
 #' @importFrom rlang abort
 #' @export
-get_stop_orders_list_impl <- coro::async(function(
+get_stop_order_list_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -873,7 +873,7 @@ get_stop_orders_list_impl <- coro::async(function(
 
         return(stop_orders_dt)
     }, error = function(e) {
-        rlang::abort(sprintf("Error in get_stop_orders_list_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in get_stop_order_list_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -1450,7 +1450,7 @@ get_stop_order_by_client_oid_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Batch cancel stop orders for ETH-BTC
-#'   canceled_orders <- await(cancel_stop_orders_batch_impl(
+#'   canceled_orders <- await(cancel_stop_order_batch_impl(
 #'     query = list(
 #'       symbol = "ETH-BTC",
 #'       tradeType = "TRADE",
@@ -1469,7 +1469,7 @@ get_stop_order_by_client_oid_impl <- coro::async(function(
 #' @importFrom httr DELETE timeout
 #' @importFrom rlang abort arg_match0
 #' @export
-cancel_stop_orders_batch_impl <- coro::async(function(
+cancel_stop_order_batch_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -1517,6 +1517,6 @@ cancel_stop_orders_batch_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in cancel_stop_orders_batch_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in cancel_stop_order_batch_impl: %s", conditionMessage(e)))
     })
 })
