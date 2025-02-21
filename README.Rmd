@@ -58,8 +58,6 @@ KC-API-PASSPHRASE = XXXXXXXXXX
 
 For a run down on `asynchronous` in see my blog post here: [Async programming in R for JS devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
 
-Quick start:
-
 ```{r get-market-data}
 box::use(
     kucoin[ KucoinSpotMarketData ],
