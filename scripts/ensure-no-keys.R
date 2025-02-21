@@ -72,7 +72,7 @@ if (length(all_sensitive_data) > 0) {
     cat("Summary: No potential sensitive data found in any files.\n")
 }
 
-sensitive_file_name <- "./api-responses/impl_account_account_and_funding/parsed_response-get_apikey_info_impl.Rds"
+sensitive_file_name <- "./api-responses/impl_account_and_funding/parsed_response-get_apikey_info_impl.Rds"
 sensitive_data <- readRDS(sensitive_file_name)
 
 # set the key to something random
