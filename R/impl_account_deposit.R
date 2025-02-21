@@ -1,15 +1,15 @@
 # File: ./R/impl_account_deposit.R
 
-box::use(
-    ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
-    ./utils[get_api_keys, get_base_url, build_query],
-    ./utils_time_convert_kucoin[time_convert_from_kucoin],
-    coro[async, await],
-    data.table[as.data.table, rbindlist],
-    httr[POST, GET, timeout],
-    jsonlite[toJSON],
-    rlang[abort, arg_match]
-)
+# box::use(
+#     ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
+#     ./utils[get_api_keys, get_base_url, build_query],
+#     ./utils_time_convert_kucoin[time_convert_from_kucoin],
+#     coro[async, await],
+#     data.table[as.data.table, rbindlist],
+#     httr[POST, GET, timeout],
+#     jsonlite[toJSON],
+#     rlang[abort, arg_match]
+# )
 
 #' Add Deposit Address (V3) (Implementation)
 #'

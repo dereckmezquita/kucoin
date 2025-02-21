@@ -52,7 +52,7 @@ information and response schemas, refer to the official \href{https://www.kucoin
 \item \strong{get_account_summary_info():} Retrieves a comprehensive summary of the user's account.
 \item \strong{get_apikey_info():} Retrieves detailed information about the API key.
 \item \strong{get_spot_account_type():} Determines whether the spot account is high-frequency or low-frequency.
-\item \strong{get_spot_account_dt(query):} Retrieves a list of all spot accounts with optional filters.
+\item \strong{get_spot_account_list(query):} Retrieves a list of all spot accounts with optional filters.
 \item \strong{get_spot_account_detail(accountId):} Retrieves detailed information for a specific spot account.
 \item \strong{get_cross_margin_account(query):} Retrieves cross margin account information based on specified filters.
 \item \strong{get_isolated_margin_account(query):} Retrieves isolated margin account data for specific trading pairs.
@@ -81,7 +81,7 @@ main_async <- coro::async(function() {
   cat("Spot Account High-Frequency:", is_high_freq, "\n")
 
   # List spot accounts and filter for USDT main accounts
-  spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
+  spot_accounts <- await(account$get_spot_account_list(list(currency = "USDT", type = "main")))
   print("Spot Accounts (USDT Main):")
   print(spot_accounts)
 
@@ -162,7 +162,7 @@ Utilised to create an instance of the class with necessary authentication detail
 \item \href{#method-KucoinAccountAndFunding-get_account_summary_info}{\code{KucoinAccountAndFunding$get_account_summary_info()}}
 \item \href{#method-KucoinAccountAndFunding-get_apikey_info}{\code{KucoinAccountAndFunding$get_apikey_info()}}
 \item \href{#method-KucoinAccountAndFunding-get_spot_account_type}{\code{KucoinAccountAndFunding$get_spot_account_type()}}
-\item \href{#method-KucoinAccountAndFunding-get_spot_account_dt}{\code{KucoinAccountAndFunding$get_spot_account_dt()}}
+\item \href{#method-KucoinAccountAndFunding-get_spot_account_list}{\code{KucoinAccountAndFunding$get_spot_account_list()}}
 \item \href{#method-KucoinAccountAndFunding-get_spot_account_detail}{\code{KucoinAccountAndFunding$get_spot_account_detail()}}
 \item \href{#method-KucoinAccountAndFunding-get_cross_margin_account}{\code{KucoinAccountAndFunding$get_cross_margin_account()}}
 \item \href{#method-KucoinAccountAndFunding-get_isolated_margin_account}{\code{KucoinAccountAndFunding$get_isolated_margin_account()}}
@@ -351,7 +351,7 @@ Retrieve Spot Account List
 }
 \subsection{Description}{
 
-Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a \code{data.table} and calls \code{get_spot_account_dt_impl}.
+Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a \code{data.table} and calls \code{get_spot_account_list_impl}.
 }
 
 \subsection{Workflow Overview}{
@@ -380,11 +380,11 @@ Utilised by users to list all spot accounts, filterable by currency or type, for
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_account_dt"></a>}}
-\if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_account_dt}{}}}
-\subsection{Method \code{get_spot_account_dt()}}{
+\if{html}{\out{<a id="method-KucoinAccountAndFunding-get_spot_account_list"></a>}}
+\if{latex}{\out{\hypertarget{method-KucoinAccountAndFunding-get_spot_account_list}{}}}
+\subsection{Method \code{get_spot_account_list()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_account_dt(query = list())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{KucoinAccountAndFunding$get_spot_account_list(query = list())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -411,7 +411,7 @@ Retrieve Spot Account Details
 }
 \subsection{Description}{
 
-Retrieves detailed financial metrics for a specific spot account identified by its \code{accountId} from the KuCoin API asynchronously. This method calls \code{get_spot_account_detail_impl} and requires an account ID, obtainable via \code{get_spot_account_dt()}.
+Retrieves detailed financial metrics for a specific spot account identified by its \code{accountId} from the KuCoin API asynchronously. This method calls \code{get_spot_account_detail_impl} and requires an account ID, obtainable via \code{get_spot_account_list()}.
 }
 
 \subsection{Workflow Overview}{
@@ -450,7 +450,7 @@ Utilised by users to obtain detailed metrics for a specific spot account, such a
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{accountId}}{Character string; unique account ID (e.g., from \code{get_spot_account_dt()}).}
+\item{\code{accountId}}{Character string; unique account ID (e.g., from \code{get_spot_account_list()}).}
 }
 \if{html}{\out{</div>}}
 }

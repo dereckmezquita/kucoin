@@ -1,13 +1,13 @@
 # File: ./R/KucoinDeposit.R
 
-box::use(
-    ./impl_account_deposit[
-        add_deposit_address_v3_impl,
-        get_deposit_addresses_v3_impl,
-        get_deposit_history_impl
-    ],
-    ./utils[get_api_keys, get_base_url]
-)
+# box::use(
+#     ./impl_account_deposit[
+#         add_deposit_address_v3_impl,
+#         get_deposit_addresses_v3_impl,
+#         get_deposit_history_impl
+#     ],
+#     ./utils[get_api_keys, get_base_url]
+# )
 
 #' KucoinDeposit Class for KuCoin Deposit Endpoints
 #'
