@@ -116,7 +116,7 @@ box::use(
 #'
 #' main_async <- coro::async(function() {
 #'   # Place an OCO order for BTC-USDT
-#'   oco_order <- await(add_order_oco_impl(
+#'   oco_order <- await(add_oco_order_impl(
 #'     symbol = "BTC-USDT",
 #'     side = "buy",
 #'     price = "94000",
@@ -139,7 +139,7 @@ box::use(
 #' @importFrom jsonlite toJSON
 #' @importFrom rlang abort arg_match0
 #' @export
-add_order_oco_impl <- coro::async(function(
+add_oco_order_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     symbol,
@@ -222,7 +222,7 @@ add_order_oco_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(orderId = parsed_response$data$orderId))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in add_order_oco_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in add_oco_order_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -302,7 +302,7 @@ add_order_oco_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Cancel an OCO order by orderId
-#'   canceled_orders <- await(cancel_order_oco_by_order_id_impl(
+#'   canceled_orders <- await(cancel_oco_order_by_order_id_impl(
 #'     orderId = "674c316e688dea0007c7b986"
 #'   ))
 #'   print(canceled_orders)
@@ -317,7 +317,7 @@ add_order_oco_impl <- coro::async(function(
 #' @importFrom httr DELETE timeout
 #' @importFrom rlang abort
 #' @export
-cancel_order_oco_by_order_id_impl <- coro::async(function(
+cancel_oco_order_by_order_id_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     orderId
@@ -351,7 +351,7 @@ cancel_order_oco_by_order_id_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in cancel_order_oco_by_order_id_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in cancel_oco_order_by_order_id_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -431,7 +431,7 @@ cancel_order_oco_by_order_id_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Cancel an OCO order by clientOid
-#'   canceled_orders <- await(cancel_order_oco_by_client_oid_impl(
+#'   canceled_orders <- await(cancel_oco_order_by_client_oid_impl(
 #'     clientOid = "5c52e11203aa67f1e493fb"
 #'   ))
 #'   print(canceled_orders)
@@ -446,7 +446,7 @@ cancel_order_oco_by_order_id_impl <- coro::async(function(
 #' @importFrom httr DELETE timeout
 #' @importFrom rlang abort
 #' @export
-cancel_order_oco_by_client_oid_impl <- coro::async(function(
+cancel_oco_order_by_client_oid_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     clientOid
@@ -480,7 +480,7 @@ cancel_order_oco_by_client_oid_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in cancel_order_oco_by_client_oid_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in cancel_oco_order_by_client_oid_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -569,7 +569,7 @@ cancel_order_oco_by_client_oid_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Retrieve OCO order by orderId
-#'   oco_order <- await(get_order_oco_by_order_id_impl(
+#'   oco_order <- await(get_oco_order_by_order_id_impl(
 #'     orderId = "674c3b6e688dea0007c7bab2"
 #'   ))
 #'   print(oco_order)
@@ -584,7 +584,7 @@ cancel_order_oco_by_client_oid_impl <- coro::async(function(
 #' @importFrom httr GET timeout
 #' @importFrom rlang abort
 #' @export
-get_order_oco_by_order_id_impl <- coro::async(function(
+get_oco_order_by_order_id_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     orderId
@@ -618,7 +618,7 @@ get_order_oco_by_order_id_impl <- coro::async(function(
         # Convert response data to data.table
         return(data.table::rbindlist(list(parsed_response$data), fill = TRUE))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in get_order_oco_by_order_id_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in get_oco_order_by_order_id_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -707,7 +707,7 @@ get_order_oco_by_order_id_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Retrieve OCO order by clientOid
-#'   oco_order <- await(get_order_oco_by_client_oid_impl(
+#'   oco_order <- await(get_oco_order_by_client_oid_impl(
 #'     clientOid = "5c52e1203aa6f3g7f1e493fb"
 #'   ))
 #'   print(oco_order)
@@ -722,7 +722,7 @@ get_order_oco_by_order_id_impl <- coro::async(function(
 #' @importFrom httr GET timeout
 #' @importFrom rlang abort
 #' @export
-get_order_oco_by_client_oid_impl <- coro::async(function(
+get_oco_order_by_client_oid_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     clientOid
@@ -756,7 +756,7 @@ get_order_oco_by_client_oid_impl <- coro::async(function(
         # Convert response data to data.table
         return(data.table::rbindlist(list(parsed_response$data), fill = TRUE))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in get_order_oco_by_client_oid_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in get_oco_order_by_client_oid_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -881,7 +881,7 @@ get_order_oco_by_client_oid_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Retrieve detailed OCO order by orderId
-#'   oco_detail <- await(get_order_oco_detail_by_order_id_impl(
+#'   oco_detail <- await(get_oco_order_detail_by_order_id_impl(
 #'     orderId = "674c3b6e688dea0007c7bab2"
 #'   ))
 #'   print(oco_detail)
@@ -896,7 +896,7 @@ get_order_oco_by_client_oid_impl <- coro::async(function(
 #' @importFrom httr GET timeout
 #' @importFrom rlang abort
 #' @export
-get_order_oco_detail_by_order_id_impl <- coro::async(function(
+get_oco_order_detail_by_order_id_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     orderId
@@ -937,7 +937,7 @@ get_order_oco_detail_by_order_id_impl <- coro::async(function(
             orders = list(parsed_response$data$orders)
         ))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in get_order_oco_detail_by_order_id_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in get_oco_order_detail_by_order_id_impl: %s", conditionMessage(e)))
     })
 })
 
@@ -972,7 +972,6 @@ get_order_oco_detail_by_order_id_impl <- coro::async(function(
 #' - **SDK Service**: Spot
 #' - **SDK Sub-Service**: Order
 #' - **SDK Method Name**: getOcoOrderList
-#' 
 #' - **Official Documentation**: [KuCoin Get OCO Order List](https://www.kucoin.com/docs-new/rest/spot-trading/orders/get-oco-order-list)
 #'
 #' ## Request
@@ -1045,7 +1044,7 @@ get_order_oco_detail_by_order_id_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Retrieve OCO order list with filter
-#'   oco_list <- await(get_order_oco_list_impl(
+#'   oco_list <- await(get_oco_order_list_impl(
 #'     query = list(symbol = "BTC-USDT", pageSize = 10, currentPage = 1)
 #'   ))
 #'   print(oco_list)
@@ -1060,7 +1059,7 @@ get_order_oco_detail_by_order_id_impl <- coro::async(function(
 #' @importFrom httr GET timeout
 #' @importFrom rlang abort
 #' @export
-get_order_oco_list_impl <- coro::async(function(
+get_oco_order_list_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -1114,6 +1113,6 @@ get_order_oco_list_impl <- coro::async(function(
             return(data.table::rbindlist(parsed_response$data$items, fill = TRUE))
         }
     }, error = function(e) {
-        rlang::abort(sprintf("Error in get_order_oco_list_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in get_oco_order_list_impl: %s", conditionMessage(e)))
     })
 })
