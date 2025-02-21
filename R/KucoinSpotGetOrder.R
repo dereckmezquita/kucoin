@@ -283,7 +283,7 @@ KucoinSpotGetOrder <- R6::R6Class(
                 type = type,
                 lastId = lastId, 
                 limit = limit,
-                startAt = startAt
+                startAt = startAt,
                 endAt = endAt
             ))
         },
