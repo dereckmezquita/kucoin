@@ -6,9 +6,10 @@
 SERVER_TIME=$(curl -s 'https://api.kucoin.com/api/v1/timestamp' | grep -o '"data":[0-9]*' | cut -d':' -f2)
 
 # Your API credentials
-API_KEY="67a6f25bc0a1b1000136ff0d"
-API_SECRET="9b8307ce-01d9-44f6-8223-93d4c021de32"
-API_PASSPHRASE="RTradeBot2"
+source .env
+API_KEY="${KC_API_KEY}"
+API_SECRET="${KC_API_SECRET}"
+API_PASSPHRASE="${KC_API_PASSPHRASE}"
 API_VERSION="2"
 
 # Use server time

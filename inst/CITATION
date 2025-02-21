@@ -1,12 +1,12 @@
 bibentry(
   bibtype  = "Manual",
-  title    = "kucoin: Async API wrapper to KuCoin Cryptocurrency Exchange",
+  title    = "kucoin: Async API Wrapper to KuCoin Cryptocurrency Exchange",
   author   = "Dereck Mezquita",
   year     = "2025", 
-  note     = "R package version 2.0.0",
+  note     = "R package version 1.9.0",
   textVersion = paste(
     "Mezquita, D. (2025).",
-    "kucoin: Async API wrapper to KuCoin Cryptocurrency Exchange.",
-    "R package version 2.0.0."
+    "kucoin: Async API Wrapper to KuCoin Cryptocurrency Exchange.",
+    "R package version 1.9.0."
   )
 )

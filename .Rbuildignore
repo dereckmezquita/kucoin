@@ -24,6 +24,8 @@ research/
 \.env$
 api-responses/
 
+deprecated/
+
 merged_files.txt
 tests-manual/
 tests-temp/

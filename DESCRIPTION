@@ -1,7 +1,7 @@
 Package: kucoin
 Type: Package
 Title: Async API Wrapper to KuCoin Cryptocurrency Exchange
-Version: 2.0.0
+Version: 1.9.0
 URL: https://dereckmezquita.github.io/kucoin/
 BugReports: https://github.com/dereckmezquita/kucoin/issues
 Authors@R: 
@@ -11,7 +11,7 @@ Authors@R:
            email = "dereck@mezquita.io",
            comment = c(ORCID = "0000-0002-9307-6762"))
 Maintainer: Dereck Mezquita <dereck@mezquita.io>
-Description: Provides an async API wrapper to the KuCoin cryptocurrency exchange for high frequency trading and non-blocking operations.
+Description: Asynchronous R API wrapper to the KuCoin cryptocurrency exchange for high frequency trading and non-blocking operations.
 License: MIT + file LICENSE
 Encoding: UTF-8
 VignetteBuilder: knitr

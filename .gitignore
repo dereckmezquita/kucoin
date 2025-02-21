@@ -1,13 +1,14 @@
 # dev
 api-responses/
 
+deprecated/
 temp*
 *.ignore.*
 *html
 *.sqlite
 merged_files.txt
 testthat-problems.rds
-dev/keys/
+keys/
 
 *.log
 log.txt
