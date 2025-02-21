@@ -1,4 +1,4 @@
-# File: ./R/impl_spottrading_orders_add_order_stop.R
+# File: ./R/impl_spottrading_orders_add_stop_order.R
 
 box::use(
     ./helpers_api[process_kucoin_response, build_headers],
@@ -128,7 +128,7 @@ box::use(
 #'
 #' main_async <- coro::async(function() {
 #'   # Place a limit stop order
-#'   result <- await(add_order_stop_impl(
+#'   result <- await(add_stop_order_impl(
 #'     type = "limit",
 #'     symbol = "BTC-USDT",
 #'     side = "buy",
@@ -141,7 +141,7 @@ box::use(
 #'   print(result)
 #'
 #'   # Place a market stop order with size
-#'   result <- await(add_order_stop_impl(
+#'   result <- await(add_stop_order_impl(
 #'     type = "market",
 #'     symbol = "BTC-USDT",
 #'     side = "buy",
@@ -152,7 +152,7 @@ box::use(
 #'   print(result)
 #'
 #'   # Place a market stop order with funds
-#'   result <- await(add_order_stop_impl(
+#'   result <- await(add_stop_order_impl(
 #'     type = "market",
 #'     symbol = "BTC-USDT",
 #'     side = "buy",
@@ -173,7 +173,7 @@ box::use(
 #' @importFrom jsonlite toJSON
 #' @importFrom rlang abort arg_match0
 #' @export
-add_order_stop_impl <- coro::async(function(
+add_stop_order_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     type,
@@ -309,6 +309,6 @@ add_order_stop_impl <- coro::async(function(
         )
         return(result_dt)
     }, error = function(e) {
-        rlang::abort(sprintf("Error in add_order_stop_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in add_stop_order_impl: %s", conditionMessage(e)))
     })
 })
