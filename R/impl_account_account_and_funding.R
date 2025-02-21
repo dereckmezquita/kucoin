@@ -267,7 +267,7 @@ get_spot_account_type_impl <- coro::async(function(
 #' base_url <- "https://api.kucoin.com"
 #' query <- list(currency = "USDT", type = "main")
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_spot_account_dt_impl(keys = keys, base_url = base_url, query = query))
+#'   dt <- await(get_spot_account_list_impl(keys = keys, base_url = base_url, query = query))
 #'   print(dt)
 #' })
 #' main_async()
@@ -278,7 +278,7 @@ get_spot_account_type_impl <- coro::async(function(
 #' @importFrom data.table data.table as.data.table rbindlist
 #' @importFrom rlang abort
 #' @export
-get_spot_account_dt_impl <- coro::async(function(
+get_spot_account_list_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -293,10 +293,10 @@ get_spot_account_dt_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_dt_impl.ignore.Rds")
+        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_list_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_dt_impl.Rds")
+        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_list_impl.Rds")
         account_dt <- data.table::rbindlist(parsed_response$data)
 
         if (nrow(account_dt) == 0) {
@@ -321,7 +321,7 @@ get_spot_account_dt_impl <- coro::async(function(
 
         return(account_dt)
     }, error = function(e) {
-        rlang::abort(paste("Error in get_spot_account_dt_impl:", conditionMessage(e)))
+        rlang::abort(paste("Error in get_spot_account_list_impl:", conditionMessage(e)))
     })
 })
 
@@ -351,7 +351,7 @@ get_spot_account_dt_impl <- coro::async(function(
 #'   - `key_version`: Character string; API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param accountId Character string; unique account ID (e.g., from `get_spot_account_dt()`).
+#' @param accountId Character string; unique account ID (e.g., from `get_spot_account_detail_impl()`).
 #' @return Promise resolving to a `data.table` containing:
 #'   - `currency` (character): Currency of the account.
 #'   - `balance` (numeric): Total funds.

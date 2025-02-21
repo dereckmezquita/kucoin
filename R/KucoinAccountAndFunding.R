@@ -40,7 +40,7 @@
 #' - **get_account_summary_info():** Retrieves a comprehensive summary of the user's account.
 #' - **get_apikey_info():** Retrieves detailed information about the API key.
 #' - **get_spot_account_type():** Determines whether the spot account is high-frequency or low-frequency.
-#' - **get_spot_account_dt(query):** Retrieves a list of all spot accounts with optional filters.
+#' - **get_spot_account_list(query):** Retrieves a list of all spot accounts with optional filters.
 #' - **get_spot_account_detail(accountId):** Retrieves detailed information for a specific spot account.
 #' - **get_cross_margin_account(query):** Retrieves cross margin account information based on specified filters.
 #' - **get_isolated_margin_account(query):** Retrieves isolated margin account data for specific trading pairs.
@@ -69,7 +69,7 @@
 #'   cat("Spot Account High-Frequency:", is_high_freq, "\n")
 #'
 #'   # List spot accounts and filter for USDT main accounts
-#'   spot_accounts <- await(account$get_spot_account_dt(list(currency = "USDT", type = "main")))
+#'   spot_accounts <- await(account$get_spot_account_list(list(currency = "USDT", type = "main")))
 #'   print("Spot Accounts (USDT Main):")
 #'   print(spot_accounts)
 #'
@@ -251,7 +251,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' Retrieve Spot Account List
         #'
         #' ### Description
-        #' Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a `data.table` and calls `get_spot_account_dt_impl`.
+        #' Retrieves a list of all spot accounts associated with the KuCoin account asynchronously, with optional filters for currency and account type. This method returns financial metrics in a `data.table` and calls `get_spot_account_list_impl`.
         #'
         #' ### Workflow Overview
         #' 1. **URL Construction**: Combines the base URL with `/api/v1/accounts` and a query string from `build_query()`.
@@ -279,14 +279,14 @@ KucoinAccountAndFunding <- R6::R6Class(
         #'   - `balance` (numeric): Total funds.
         #'   - `available` (numeric): Available funds.
         #'   - `holds` (numeric): Funds on hold.
-        get_spot_account_dt = function(query = list()) {
-            return(get_spot_account_dt_impl(self$keys, self$base_url, query))
+        get_spot_account_list = function(query = list()) {
+            return(get_spot_account_list_impl(self$keys, self$base_url, query))
         },
 
         #' Retrieve Spot Account Details
         #'
         #' ### Description
-        #' Retrieves detailed financial metrics for a specific spot account identified by its `accountId` from the KuCoin API asynchronously. This method calls `get_spot_account_detail_impl` and requires an account ID, obtainable via `get_spot_account_dt()`.
+        #' Retrieves detailed financial metrics for a specific spot account identified by its `accountId` from the KuCoin API asynchronously. This method calls `get_spot_account_detail_impl` and requires an account ID, obtainable via `get_spot_account_list()`.
         #'
         #' ### Workflow Overview
         #' 1. **URL Construction**: Embeds `accountId` into `/api/v1/accounts/{accountId}` and combines with the base URL.
@@ -303,7 +303,7 @@ KucoinAccountAndFunding <- R6::R6Class(
         #' ### Official Documentation
         #' [KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
         #'
-        #' @param accountId Character string; unique account ID (e.g., from `get_spot_account_dt()`).
+        #' @param accountId Character string; unique account ID (e.g., from `get_spot_account_list()`).
         #'
         #' @return Promise resolving to a `data.table` containing:
         #'   - `currency` (character): Currency of the account.
