@@ -1450,7 +1450,7 @@ get_stop_order_by_client_oid_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Batch cancel stop orders for ETH-BTC
-#'   canceled_orders <- await(batch_cancel_stop_orders_impl(
+#'   canceled_orders <- await(cancel_stop_orders_batch_impl(
 #'     query = list(
 #'       symbol = "ETH-BTC",
 #'       tradeType = "TRADE",
@@ -1469,7 +1469,7 @@ get_stop_order_by_client_oid_impl <- coro::async(function(
 #' @importFrom httr DELETE timeout
 #' @importFrom rlang abort arg_match0
 #' @export
-batch_cancel_stop_orders_impl <- coro::async(function(
+cancel_stop_orders_batch_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -1517,6 +1517,6 @@ batch_cancel_stop_orders_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in batch_cancel_stop_orders_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in cancel_stop_orders_batch_impl: %s", conditionMessage(e)))
     })
 })
