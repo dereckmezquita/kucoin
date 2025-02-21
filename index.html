@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>R API to KuCoin Crytocurrency Exchange Market • kucoin</title>
+<title>Async API Wrapper to KuCoin Cryptocurrency Exchange • kucoin</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="R API to KuCoin Crytocurrency Exchange Market">
-<meta name="description" content="An R API to KuCoin crytocurrency exchange market.">
-<meta property="og:description" content="An R API to KuCoin crytocurrency exchange market.">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Async API Wrapper to KuCoin Cryptocurrency Exchange">
+<meta name="description" content="Asynchronous R API wrapper to the KuCoin cryptocurrency exchange for high frequency trading and non-blocking operations.">
+<meta property="og:description" content="Asynchronous R API wrapper to the KuCoin cryptocurrency exchange for high frequency trading and non-blocking operations.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">kucoin</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,12 +32,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/getting-started-kucoin.html">Getting started with kucoin</a></li>
-  </ul>
-</li>
+<li class="nav-item"><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
 <li class="nav-item"><a class="nav-link" href="articles/donate.html">Donate</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -56,7 +51,7 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="kucoin">kucoin<a class="anchor" aria-label="anchor" href="#kucoin"></a>
+<div class="page-header"><h1 id="kucoin-">kucoin <img src="reference/figures/logo-small.png" align="right" height="139"><a class="anchor" aria-label="anchor" href="#kucoin-"></a>
 </h1></div>
 <!-- badges: start -->
 
@@ -71,147 +66,20 @@
 <div class="section level2">
 <h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p>For more details and tutorials see the documentation at <a href="TUTORIALS.html">TUTORIALS</a>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># import library</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/dereckmezquita/kucoin" class="external-link">"kucoin"</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="api-authorisation">API Authorisation<a class="anchor" aria-label="anchor" href="#api-authorisation"></a>
 </h3>
 <p>Some functions in this package require permissioned access and need a proper API key, secret, and passphrase. If you don’t have a key, or need more information, visit the <a href="https://docs.kucoin.com/#generating-an-api-key" target='"_blank' class="external-link">Generating an API Key</a>.</p>
-<p>Current functions that need API authorisation are:</p>
-<ul>
-<li><code><a href="reference/cancel_all_orders.html">kucoin::cancel_all_orders</a></code></li>
-<li><code><a href="reference/cancel_order.html">kucoin::cancel_order</a></code></li>
-<li><code><a href="reference/get_orders_all.html">kucoin::get_orders_all</a></code></li>
-<li><code><a href="reference/get_account_balances.html">kucoin::get_account_balances</a></code></li>
-<li><code><a href="reference/get_deposit_address.html">kucoin::get_deposit_address</a></code></li>
-<li><code><a href="reference/get_orders_by_id.html">kucoin::get_orders_by_id</a></code></li>
-<li><code><a href="reference/submit_limit_order.html">kucoin::submit_limit_order</a></code></li>
-<li><code><a href="reference/submit_market_order.html">kucoin::submit_market_order</a></code></li>
-</ul>
 <div class="section level4">
 <h4 id="setting-up-api-key">Setting-up API Key<a class="anchor" aria-label="anchor" href="#setting-up-api-key"></a>
 </h4>
 <p>Use an <code>.Renviron</code> file to set your API key. In the <code>.Renviron</code> file, insert your API key details as follow:</p>
-<pre class="shell"><code># sandbox has been deprecated see kucoin documentation for more information
-KC-API-ENDPOINT = https://openapi-sandbox.kucoin.com
-
-KC-API-KEY = XXXXXXXXXX
-KC-API-SECRET = XXXXXXXXXX
-KC-API-PASSPHRASE = XXXXXXXXXX</code></pre>
-<p>The <code>KC-API-ENDPOINT</code> variable is optional. This is used to allow the user access KuCoin’s sandbox API for paper trading. If not set then the real API is used by default:</p>
-<ol style="list-style-type: decimal">
-<li><a href="https://openapi-sandbox.kucoin.com" class="external-link uri">https://openapi-sandbox.kucoin.com</a></li>
-<li><a href="https://api.kucoin.com/" class="external-link uri">https://api.kucoin.com/</a></li>
-</ol>
-</div>
-</div>
-<div class="section level3">
-<h3 id="market-data">Market Data<a class="anchor" aria-label="anchor" href="#market-data"></a>
-</h3>
-<p><strong>All market data is publicly accessible, and could be accessed without API authorisation.</strong></p>
-<p>For getting historical data, you can use <code><a href="reference/get_market_data.html">kucoin::get_market_data()</a></code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># get one pair of symbol prices</span></span>
-<span><span class="va">prices</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/get_market_data.html">get_market_data</a></span><span class="op">(</span></span>
-<span>    symbols <span class="op">=</span> <span class="st">"KCS/USDT"</span>,</span>
-<span>    from <span class="op">=</span> <span class="st">"2022-10-05 00:00:00"</span>,</span>
-<span>    to <span class="op">=</span> <span class="st">"2022-11-06 00:00:00"</span>,</span>
-<span>    frequency <span class="op">=</span> <span class="st">"1 hour"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">prices</span></span>
-<span><span class="co">#&gt;        symbol            datetime   open   high    low  close   volume</span></span>
-<span><span class="co">#&gt;        &lt;char&gt;              &lt;POSc&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt;   1: KCS/USDT 2022-10-05 00:00:00  9.208  9.214  9.155  9.162 3753.287</span></span>
-<span><span class="co">#&gt;   2: KCS/USDT 2022-10-05 01:00:00  9.162  9.174  9.156  9.164 1946.244</span></span>
-<span><span class="co">#&gt;   3: KCS/USDT 2022-10-05 02:00:00  9.164  9.173  9.152  9.156 1885.309</span></span>
-<span><span class="co">#&gt;  ---                                                                  </span></span>
-<span><span class="co">#&gt; 766: KCS/USDT 2022-11-05 21:00:00 10.221 10.221 10.190 10.200 1628.069</span></span>
-<span><span class="co">#&gt; 767: KCS/USDT 2022-11-05 22:00:00 10.201 10.256 10.201 10.212 2743.678</span></span>
-<span><span class="co">#&gt; 768: KCS/USDT 2022-11-05 23:00:00 10.212 10.231 10.173 10.221 7536.361</span></span>
-<span><span class="co">#&gt; 1 variable(s) not shown: [turnover &lt;num&gt;]</span></span></code></pre></div>
-<p>The <code><a href="reference/get_market_data.html">kucoin::get_market_data()</a></code> function also supports for querying multiple symbols:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># get one pair of symbol prices</span></span>
-<span><span class="va">prices</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/get_market_data.html">get_market_data</a></span><span class="op">(</span></span>
-<span>    symbols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"KCS/USDT"</span>, <span class="st">"BTC/USDT"</span>, <span class="st">"KCS/BTC"</span><span class="op">)</span>,</span>
-<span>    from <span class="op">=</span> <span class="st">"2022-10-05 00:00:00"</span>,</span>
-<span>    to <span class="op">=</span> <span class="st">"2022-11-06 00:00:00"</span>,</span>
-<span>    frequency <span class="op">=</span> <span class="st">"1 hour"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">prices</span></span>
-<span><span class="co">#&gt;         symbol            datetime      open      high       low     close</span></span>
-<span><span class="co">#&gt;         &lt;char&gt;              &lt;POSc&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt;    1: KCS/USDT 2022-10-05 00:00:00 9.2080000 9.2140000 9.1550000 9.1620000</span></span>
-<span><span class="co">#&gt;    2: KCS/USDT 2022-10-05 01:00:00 9.1620000 9.1740000 9.1560000 9.1640000</span></span>
-<span><span class="co">#&gt;    3: KCS/USDT 2022-10-05 02:00:00 9.1640000 9.1730000 9.1520000 9.1560000</span></span>
-<span><span class="co">#&gt;   ---                                                                     </span></span>
-<span><span class="co">#&gt; 2302:  KCS/BTC 2022-11-05 21:00:00 0.0004785 0.0004790 0.0004781 0.0004782</span></span>
-<span><span class="co">#&gt; 2303:  KCS/BTC 2022-11-05 22:00:00 0.0004782 0.0004803 0.0004782 0.0004795</span></span>
-<span><span class="co">#&gt; 2304:  KCS/BTC 2022-11-05 23:00:00 0.0004795 0.0004802 0.0004783 0.0004800</span></span>
-<span><span class="co">#&gt; 2 variable(s) not shown: [volume &lt;num&gt;, turnover &lt;num&gt;]</span></span></code></pre></div>
-<p>You can also get the most recent metadata for all symbols using <code><a href="reference/get_market_metadata.html">kucoin::get_market_metadata()</a></code>:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># get all symbols' most recent metadata</span></span>
-<span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/get_market_metadata.html">get_market_metadata</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">metadata</span></span>
-<span><span class="co">#&gt;           symbol       name base_currency quote_currency fee_currency market</span></span>
-<span><span class="co">#&gt;           &lt;char&gt;     &lt;char&gt;        &lt;char&gt;         &lt;char&gt;       &lt;char&gt; &lt;char&gt;</span></span>
-<span><span class="co">#&gt;    1:  1CAT/USDT  1CAT/USDT          1CAT           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt;    2: 1INCH/USDT 1INCH/USDT         1INCH           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt;    3:    AA/USDT    AA/USDT            AA           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt;   ---                                                                       </span></span>
-<span><span class="co">#&gt; 1263:   ZRO/USDT   ZRO/USDT           ZRO           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt; 1264:    ZRX/BTC    ZRX/BTC           ZRX            BTC          BTC   DeFi</span></span>
-<span><span class="co">#&gt; 1265:   ZRX/USDT   ZRX/USDT           ZRX           USDT         USDT   USDS</span></span>
-<span><span class="co">#&gt; 11 variable(s) not shown: [base_min_size &lt;num&gt;, quote_min_size &lt;num&gt;, base_max_size &lt;num&gt;, quote_max_size &lt;num&gt;, base_increment &lt;num&gt;, quote_increment &lt;num&gt;, price_increment &lt;num&gt;, price_limit_rate &lt;num&gt;, min_funds &lt;num&gt;, is_margin_enabled &lt;lgcl&gt;, ...]</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="get-user-information">Get User Information<a class="anchor" aria-label="anchor" href="#get-user-information"></a>
-</h3>
-<p><strong>All user information data is private, and needs API authorisation.</strong></p>
-<p>To get balance information you can use <code><a href="reference/get_account_balances.html">kucoin::get_account_balances()</a></code>:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># get user's balance details</span></span>
-<span><span class="va">balances</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/get_account_balances.html">get_account_balances</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">balances</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="post-an-order">Post an Order<a class="anchor" aria-label="anchor" href="#post-an-order"></a>
-</h3>
-<p><strong>All order posting functions are private, and need API authorisation.</strong></p>
-<div class="section level4">
-<h4 id="market-order">Market Order<a class="anchor" aria-label="anchor" href="#market-order"></a>
-</h4>
-<p>Here is an example of posting a market order:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># post a market order: buy 1 KCS</span></span>
-<span><span class="va">order_id</span> <span class="op">&lt;-</span> <span class="fu">kucoin</span><span class="fu">::</span><span class="fu"><a href="reference/submit_market_order.html">submit_market_order</a></span><span class="op">(</span></span>
-<span>    symbol <span class="op">=</span> <span class="st">"KCS/BTC"</span>,</span>
-<span>    side <span class="op">=</span> <span class="st">"buy"</span>,</span>
-<span>    base_size <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">order_id</span></span></code></pre></div>
-</div>
-<div class="section level4">
-<h4 id="limit-order">Limit Order<a class="anchor" aria-label="anchor" href="#limit-order"></a>
-</h4>
-<p>Here is an example of posting a limit order:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># post a limit order: buy 1 KCS</span></span>
-<span><span class="va">order_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/submit_limit_order.html">submit_limit_order</a></span><span class="op">(</span></span>
-<span>    symbol <span class="op">=</span> <span class="st">"KCS/BTC"</span>,</span>
-<span>    side <span class="op">=</span> <span class="st">"buy"</span>,</span>
-<span>    base_size <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">order_id</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># sandbox has been deprecated see kucoin documentation for more information</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">KC-API-ENDPOINT</span> = <span class="st">"https://api.kucoin.com"</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="ex">KC-API-KEY</span> = XXXXXXXXXX</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="ex">KC-API-SECRET</span> = XXXXXXXXXX</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="ex">KC-API-PASSPHRASE</span> = XXXXXXXXXX</span></code></pre></div>
 </div>
 </div>
 </div>
@@ -220,6 +88,7 @@ KC-API-PASSPHRASE = XXXXXXXXXX</code></pre>
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/dereckmezquita/kucoin/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/dereckmezquita/kucoin/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -232,6 +101,12 @@ KC-API-PASSPHRASE = XXXXXXXXXX</code></pre>
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
@@ -265,7 +140,7 @@ KC-API-PASSPHRASE = XXXXXXXXXX</code></pre>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
