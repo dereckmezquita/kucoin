@@ -1,4 +1,4 @@
-# File: ./R/impl_spottrading_orders_get_order.R
+# File: ./R/impl_spottrading_orders_get_x.R
 
 box::use(
     ./helpers_api[process_kucoin_response, build_headers],
