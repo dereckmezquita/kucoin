@@ -23,3 +23,4 @@ options("datatable.print.topn" = 3, "datatable.print.nrows" = 50, "datatable.pri
 [![Travis build status](https://travis-ci.org/dereckmezquita/kucoin.svg?branch=master)](https://travis-ci.org/dereckmezquita/kucoin)
 <!-- badges: end -->
 
+TODO: write readme.

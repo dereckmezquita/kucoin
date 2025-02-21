@@ -2,135 +2,86 @@
 % Please edit documentation in R/KucoinSpotMarketData.R
 \name{KucoinSpotMarketData}
 \alias{KucoinSpotMarketData}
-\title{KucoinSpotMarketData Class for KuCoin Spot Market Data Endpoints}
-\value{
-Not applicable (class definition; see individual methods for return values).
-}
+\title{KucoinSpotMarketData Class for KuCoin Spot Market Data Retrieval}
 \description{
-The \code{KucoinSpotMarketData} class provides an asynchronous interface for interacting with KuCoin's spot market data
-API endpoints. It leverages the \code{coro} package for non-blocking HTTP requests, returning promises that typically
-resolve to \code{data.table} objects or character vectors. This class supports retrieving market announcements, historical
-klines data, currency details, trading symbols, ticker information, trade history, orderbook data, 24-hour statistics,
+The \code{KucoinSpotMarketData} class provides an asynchronous interface for retrieving spot market data from KuCoin.
+It leverages the \code{coro} package for non-blocking HTTP requests, returning promises that resolve to \code{data.table} objects
+(or character vectors for simple lists). This class supports a comprehensive set of market data endpoints, including
+announcements, historical klines, currency details, trading symbols, tickers, trade history, orderbooks, 24-hour stats,
 and market lists.
 }
 \details{
-\subsection{Workflow Overview}{
+\subsection{Purpose and Scope}{
 
-Not applicable (class definition overview).
+This class is designed to facilitate market analysis and monitoring in the KuCoin Spot trading ecosystem, covering:
+\itemize{
+\item \strong{Market News}: Announcements for updates and events.
+\item \strong{Historical Data}: Klines for technical analysis.
+\item \strong{Asset Metadata}: Currency and symbol details for configuration.
+\item \strong{Real-Time Data}: Tickers, trade history, and orderbooks for live market insights.
+\item \strong{Market Overview}: 24-hour stats and market lists for broad monitoring.
 }
-
-\subsection{API Endpoint}{
-
-Not applicable (class-level documentation; see individual methods).
 }
 
 \subsection{Usage}{
 
-Utilised by users to access KuCoin spot market data programmatically. The class is initialised with API credentials,
-automatically loaded via \code{get_api_keys()} if not provided, and a base URL from \code{get_base_url()}. Most methods use
-public endpoints, except \code{get_full_orderbook()} which requires authentication. For detailed endpoint information and
-response schemas, refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}.
+Utilised by traders and developers to programmatically access KuCoin Spot market data. The class is initialized with API
+credentials (required only for \code{get_full_orderbook}), automatically loaded via \code{get_api_keys()} if not provided, and a
+base URL from \code{get_base_url()}. Most endpoints are public, except \code{get_full_orderbook}, which requires authentication.
+For detailed endpoint information, parameters, and response schemas, refer to the official \href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}.
 }
 
 \subsection{Official Documentation}{
 
-\href{https://www.kucoin.com/docs-new}{KuCoin API Documentation}
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/introduction}{KuCoin API Documentation - Spot Market Data}
 }
 }
 \section{Methods}{
 
 \itemize{
-\item \strong{initialize(keys, base_url):} Initialises the object with API credentials and the base URL.
+\item \strong{initialize(keys, base_url):} Initialises the object with API credentials and base URL.
 \item \strong{get_announcements(query, page_size, max_pages):} Retrieves paginated market announcements.
-\item \strong{get_klines(symbol, freq, from, to, concurrent, delay_ms, retries):} Retrieves historical klines data with segmentation.
+\item \strong{get_klines(symbol, freq, from, to, concurrent, delay_ms, retries):} Fetches historical klines data with segmentation.
 \item \strong{get_currency(currency, chain):} Retrieves details for a specific currency.
 \item \strong{get_all_currencies():} Retrieves details for all available currencies.
 \item \strong{get_symbol(symbol):} Retrieves details for a specific trading symbol.
-\item \strong{get_all_symbols(market):} Retrieves details for all trading symbols, optionally filtered by market.
-\item \strong{get_ticker(symbol):} Retrieves Level 1 ticker data for a trading symbol.
+\item \strong{get_all_symbols(market):} Retrieves all trading symbols, optionally filtered by market.
+\item \strong{get_ticker(symbol):} Retrieves Level 1 ticker data for a symbol.
 \item \strong{get_all_tickers():} Retrieves ticker data for all trading pairs.
-\item \strong{get_trade_history(symbol):} Retrieves recent trade history for a trading symbol.
+\item \strong{get_trade_history(symbol):} Retrieves recent trade history for a symbol.
 \item \strong{get_part_orderbook(symbol, size):} Retrieves partial orderbook data (20 or 100 levels).
 \item \strong{get_full_orderbook(symbol):} Retrieves full orderbook data (authenticated).
-\item \strong{get_24hr_stats(symbol):} Retrieves 24-hour market statistics for a trading symbol.
-\item \strong{get_market_list():} Retrieves a list of all available trading markets.
+\item \strong{get_24hr_stats(symbol):} Retrieves 24-hour market statistics for a symbol.
+\item \strong{get_market_list():} Retrieves a list of all trading markets.
 }
 }
 
 \examples{
 \dontrun{
-# Comprehensive example demonstrating all methods
+# Comprehensive example demonstrating key methods
 main_async <- coro::async(function() {
   # Initialise the class
   market <- KucoinSpotMarketData$new()
 
-  # Get announcements
-  announcements <- await(market$get_announcements(list(annType = "new-listings")))
-  print("Announcements:")
-  print(announcements)
+  # Get new listings announcements
+  announcements <- await(market$get_announcements(list(annType = "new-listings"), page_size = 10, max_pages = 2))
+  print("New Listings Announcements:"); print(announcements)
 
-  # Get klines data
-  klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - 48 * 3600, lubridate::now()))
-  print("Klines:")
-  print(klines)
+  # Get 48 hours of hourly klines
+  klines <- await(market$get_klines("BTC-USDT", "1hour", lubridate::now() - lubridate::dhours(48), lubridate::now()))
+  print("BTC-USDT Klines:"); print(klines)
 
-  # Get currency details
-  btc <- await(market$get_currency("BTC", "ERC20"))
-  print("BTC (ERC20):")
-  print(btc)
-
-  # Get all currencies
-  currencies <- await(market$get_all_currencies())
-  print("All Currencies:")
-  print(currencies)
-
-  # Get symbol details
-  symbol <- await(market$get_symbol("BTC-USDT"))
-  print("BTC-USDT Symbol:")
-  print(symbol)
-
-  # Get all symbols for a market
-  markets <- await(market$get_market_list())
-  if (length(markets) > 0) {
-    alts_symbols <- await(market$get_all_symbols(markets[1]))
-    print(paste("Symbols for", markets[1], ":"))
-    print(alts_symbols)
-  }
-
-  # Get ticker
+  # Get ticker data
   ticker <- await(market$get_ticker("BTC-USDT"))
-  print("BTC-USDT Ticker:")
-  print(ticker)
-
-  # Get all tickers
-  all_tickers <- await(market$get_all_tickers())
-  print("All Tickers:")
-  print(all_tickers)
-
-  # Get trade history
-  trades <- await(market$get_trade_history("BTC-USDT"))
-  print("BTC-USDT Trade History:")
-  print(trades)
-
-  # Get partial orderbook
-  part_orderbook <- await(market$get_part_orderbook("BTC-USDT", 20))
-  print("Partial Orderbook (20 levels):")
-  print(part_orderbook)
+  print("BTC-USDT Ticker:"); print(ticker)
 
   # Get full orderbook (authenticated)
-  full_orderbook <- await(market$get_full_orderbook("BTC-USDT"))
-  print("Full Orderbook:")
-  print(full_orderbook)
+  orderbook <- await(market$get_full_orderbook("BTC-USDT"))
+  print("BTC-USDT Full Orderbook:"); print(orderbook)
 
   # Get 24-hour stats
   stats <- await(market$get_24hr_stats("BTC-USDT"))
-  print("BTC-USDT 24hr Stats:")
-  print(stats)
-
-  # Get market list
-  market_list <- await(market$get_market_list())
-  print("Market List:")
-  print(market_list)
+  print("BTC-USDT 24hr Stats:"); print(stats)
 })
 main_async()
 while (!later::loop_empty()) later::run_now()
@@ -140,21 +91,20 @@ while (!later::loop_empty()) later::run_now()
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{keys}}{Named list containing API keys for KuCoin (\code{api_key}, \code{api_secret}, \code{api_passphrase}, \code{key_version}).}
+\item{\code{keys}}{List containing KuCoin API keys (\code{api_key}, \code{api_secret}, \code{api_passphrase}, \code{key_version}).}
 
-\item{\code{base_url}}{Character string representing the base URL for the KuCoin API.
+\item{\code{base_url}}{Character string representing the base URL for KuCoin API endpoints.
 Initialise a New KucoinSpotMarketData Object
 \subsection{Description}{
 
-Initialises a \code{KucoinSpotMarketData} object with API credentials and a base URL for accessing KuCoin spot market data
-endpoints asynchronously. If not provided, credentials are sourced from \code{get_api_keys()} and the base URL from
-\code{get_base_url()}.
+Initialises a \code{KucoinSpotMarketData} object with API credentials and a base URL for retrieving Spot market data
+asynchronously. Credentials are only required for authenticated endpoints (e.g., \code{get_full_orderbook}).
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Credential Assignment}: Sets \code{self$keys} to the provided or default API keys.
-\item \strong{URL Assignment}: Sets \code{self$base_url} to the provided or default base URL.
+\item \strong{Credential Assignment}: Sets \code{self$keys} to the provided or default API keys from \code{get_api_keys()}.
+\item \strong{URL Assignment}: Sets \code{self$base_url} to the provided or default base URL from \code{get_base_url()}.
 }
 }
 
@@ -165,12 +115,20 @@ Not applicable (initialisation method).
 
 \subsection{Usage}{
 
-Utilised to create an instance of the class with authentication details for market data retrieval.
+Creates an instance for accessing KuCoin Spot market data, with most methods being public except where authentication is noted.
 }
 
 \subsection{Official Documentation}{
 
-\href{https://www.kucoin.com/docs-new/rest/introduction}{KuCoin API Authentication}
+\href{https://www.kucoin.com/docs-new/rest/introduction#authentication}{KuCoin API Authentication}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Data Foundation}: Use as the primary market data source in your trading bot, feeding real-time and historical data into strategy engines.
+\item \strong{Secure Setup}: Provide explicit \code{keys} for authenticated methods or rely on \code{get_api_keys()} for portability across environments.
+\item \strong{Lifecycle}: Instantiate once and reuse across trading cycles, pairing with order management classes for a complete system.
+}
 }}
 }
 \if{html}{\out{</div>}}
@@ -206,7 +164,7 @@ Utilised to create an instance of the class with authentication details for mark
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{keys}}{Named list containing API configuration parameters from \code{get_api_keys()}, including:
+\item{\code{keys}}{List containing API configuration parameters from \code{get_api_keys()}, including:
 \itemize{
 \item \code{api_key}: Character string; your KuCoin API key.
 \item \code{api_secret}: Character string; your KuCoin API secret.
@@ -221,20 +179,18 @@ Defaults to \code{get_api_keys()}.
 }
 \subsection{Returns}{
 A new instance of the \code{KucoinSpotMarketData} class.
-Retrieve Announcements
+Get Announcements
 \subsection{Description}{
 
-Retrieves paginated market announcements from the KuCoin API asynchronously, aggregating results into a \code{data.table}.
-This includes updates, promotions, and other news. This method calls \code{get_announcements_impl}.
+Retrieves paginated market announcements asynchronously via a GET request to \verb{/api/v3/announcements}.
+Calls \code{get_announcements_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Merges defaults (\code{currentPage = 1}, \code{pageSize = 50}, \code{annType = "latest-announcements"}, \code{lang = "en_US"}) with \code{query}.
-\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/announcements} and the query string.
-\item \strong{Page Fetching}: Uses an async helper to send GET requests with a 10-second timeout.
-\item \strong{Pagination}: Fetches all pages up to \code{max_pages} using \code{auto_paginate}, extracting \code{"items"}.
-\item \strong{Aggregation}: Combines results into a \code{data.table} with \code{data.table::rbindlist()}.
+\item \strong{Query Setup}: Merges defaults with user \code{query} (e.g., \code{annType = "latest-announcements"}).
+\item \strong{Pagination}: Fetches pages up to \code{max_pages} with \code{page_size} results each.
+\item \strong{Response}: Aggregates into a \code{data.table} of announcement details.
 }
 }
 
@@ -245,12 +201,20 @@ This includes updates, promotions, and other news. This method calls \code{get_a
 
 \subsection{Usage}{
 
-Utilised by users to monitor market news and developments, correlating with other market data like tickers or stats.
+Utilised to monitor KuCoin news, such as new listings or maintenance updates.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements}{KuCoin Get Announcements}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Event Detection}: Filter for \code{annType = "new-listings"} to detect new trading pairs, triggering symbol queries or strategy adjustments.
+\item \strong{Scheduled Polling}: Run hourly with \code{max_pages = 1} to capture recent updates, logging critical announcements (e.g., delistings) for risk management.
+\item \strong{Alerting}: Parse \code{annDesc} for keywords (e.g., "maintenance") to pause trading or notify users via your system’s alerting mechanism.
+}
 }
 }
 }
@@ -269,52 +233,51 @@ Utilised by users to monitor market news and developments, correlating with othe
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{query}}{Named list; additional query parameters to filter announcements:
+\item{\code{query}}{Named list; filters for announcements:
 \itemize{
-\item \code{currentPage} (integer, optional): Page number to retrieve.
-\item \code{pageSize} (integer, optional): Number of announcements per page.
-\item \code{annType} (string, optional): Type (e.g., \code{"latest-announcements"}, \code{"activities"}, \code{"new-listings"}).
-\item \code{lang} (string, optional): Language (e.g., \code{"en_US"}, \code{"zh_HK"}).
-\item \code{startTime} (integer, optional): Start time in milliseconds.
-\item \code{endTime} (integer, optional): End time in milliseconds.
+\item \code{annType} (character): Type (e.g., \code{"new-listings"}, \code{"maintenance-updates"}). Optional.
+\item \code{lang} (character): Language (e.g., \code{"en_US"}). Optional.
+\item \code{startTime} (integer): Start time (ms). Optional.
+\item \code{endTime} (integer): End time (ms). Optional.
 }}
 
 \item{\code{page_size}}{Integer; results per page (default 50).}
 
-\item{\code{max_pages}}{Numeric; maximum pages to fetch (default \code{Inf} for all pages).}
+\item{\code{max_pages}}{Numeric; max pages to fetch (default \code{Inf}).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{annId} (integer): Unique announcement ID.
-\item \code{annTitle} (character): Announcement title.
-\item \code{annType} (list): List of announcement types.
-\item \code{annDesc} (character): Announcement description.
-\item \code{cTime} (integer): Release time in milliseconds.
-\item \code{language} (character): Language of the announcement.
-\item \code{annUrl} (character): URL to the full announcement.
-\item \code{currentPage} (integer): Current page number.
-\item \code{pageSize} (integer): Records per page.
-\item \code{totalNum} (integer): Total announcements.
-\item \code{totalPage} (integer): Total pages.
-Retrieve Historical Klines Data
+\item \code{annId} (integer): Announcement ID.
+\item \code{annTitle} (character): Title.
+\item \code{annType} (list): Types.
+\item \code{annDesc} (character): Description.
+\item \code{cTime} (integer): Release time (ms).
+\item \code{language} (character): Language.
+\item \code{annUrl} (character): Full URL.
+\item Pagination fields: \code{currentPage}, \code{pageSize}, \code{totalNum}, \code{totalPage}.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"items": [\{"annId": 123, "annTitle": "New Listing", "annType": ["new-listings"], "annDesc": "BTC-USDT listed", "cTime": 1733049198863, "language": "en_US", "annUrl": "https://kucoin.com/news/123"\}]\}\}
+}\if{html}{\out{</div>}}
+
+Get Klines
+}
+
 \subsection{Description}{
 
-Retrieves historical candlestick (klines) data for a trading pair from the KuCoin API asynchronously, segmenting
-requests to handle the 1500-candle limit per request. This method calls \code{get_klines_impl}.
+Retrieves historical klines (candlestick) data asynchronously via a GET request to \verb{/api/v1/market/candes},
+segmenting requests to handle the 1500-candle limit. Calls \code{get_klines_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Input Validation}: Converts \code{from} and \code{to} to POSIXct, ensures \code{from} < \code{to}.
-\item \strong{Frequency Conversion}: Translates \code{freq} to seconds using \code{frequency_to_seconds()}.
-\item \strong{Segmentation}: Splits the time range into segments with \code{split_time_range_by_candles()}.
-\item \strong{Segment Fetching}: Creates promises for each segment via \code{fetch_klines_segment()}.
-\item \strong{Execution Mode}: Fetches concurrently with \code{promises::promise_all()} if \code{concurrent = TRUE}, or sequentially.
-\item \strong{Aggregation}: Combines results, removes duplicates by \code{timestamp}, orders by \code{datetime}.
+\item \strong{Segmentation}: Splits time range into segments based on \code{freq} and 1500-candle limit.
+\item \strong{Fetching}: Retrieves segments concurrently or sequentially based on \code{concurrent}.
+\item \strong{Aggregation}: Combines results, removes duplicates, and orders by time.
 }
 }
 
@@ -325,12 +288,20 @@ requests to handle the 1500-candle limit per request. This method calls \code{ge
 
 \subsection{Usage}{
 
-Utilised by users to fetch historical price and volume data for analysis, with options for concurrent or sequential retrieval.
+Utilised for historical price and volume analysis, supporting various intervals.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines}{KuCoin Get Klines}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Technical Analysis}: Fetch daily klines (\code{freq = "1day"}) for moving averages or RSI, feeding into strategy signals.
+\item \strong{Backtesting}: Use with large time ranges (e.g., 1 year) and \code{concurrent = FALSE} to build datasets, ensuring rate limit compliance.
+\item \strong{Real-Time Feed}: Set \code{from} to recent past (e.g., 1 hour ago) and poll frequently, caching results to reduce API load.
+}
 }
 }
 }
@@ -342,7 +313,7 @@ Utilised by users to fetch historical price and volume data for analysis, with o
 \if{html}{\out{<div class="r">}}\preformatted{KucoinSpotMarketData$get_klines(
   symbol,
   freq = "15min",
-  from = lubridate::now() - 24 * 3600,
+  from = lubridate::now() - lubridate::dhours(24),
   to = lubridate::now(),
   concurrent = TRUE,
   delay_ms = 0,
@@ -353,48 +324,53 @@ Utilised by users to fetch historical price and volume data for analysis, with o
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading pair (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading pair (e.g., "BTC-USDT"). Required.}
 
-\item{\code{freq}}{Character string; candlestick interval (e.g., \code{"15min"}). Allowed values: \code{"1min"}, \code{"3min"}, \code{"5min"}, \code{"15min"}, \code{"30min"}, \code{"1hour"}, \code{"2hour"}, \code{"4hour"}, \code{"6hour"}, \code{"8hour"}, \code{"12hour"}, \code{"1day"}, \code{"1week"}, \code{"1month"}. Default \code{"15min"}.}
+\item{\code{freq}}{Character string; interval (e.g., "15min"). Options: "1min", "3min", "5min", "15min", "30min", "1hour", "2hour", "4hour", "6hour", "8hour", "12hour", "1day", "1week", "1month". Default "15min".}
 
-\item{\code{from}}{POSIXct object; start time (default 24 hours ago).}
+\item{\code{from}}{POSIXct; start time (default 24 hours ago).}
 
-\item{\code{to}}{POSIXct object; end time (default now).}
+\item{\code{to}}{POSIXct; end time (default now).}
 
-\item{\code{concurrent}}{Logical; fetch segments concurrently (default \code{TRUE}). Caution: May trigger rate limits.}
+\item{\code{concurrent}}{Logical; fetch segments concurrently (default TRUE). Caution: May hit rate limits.}
 
-\item{\code{delay_ms}}{Numeric; delay in milliseconds before each request (default 0).}
+\item{\code{delay_ms}}{Numeric; delay between requests (ms, default 0).}
 
 \item{\code{retries}}{Integer; retry attempts per segment (default 3).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{datetime} (POSIXct): Converted timestamp.
-\item \code{timestamp} (numeric): Raw timestamp in seconds.
+\item \code{datetime} (POSIXct): Timestamp.
+\item \code{timestamp} (numeric): Time (seconds).
 \item \code{open} (numeric): Opening price.
 \item \code{close} (numeric): Closing price.
-\item \code{high} (numeric): Highest price.
-\item \code{low} (numeric): Lowest price.
-\item \code{volume} (numeric): Trading volume.
-\item \code{turnover} (numeric): Trading turnover.
-Retrieve Currency Details
+\item \code{high} (numeric): High price.
+\item \code{low} (numeric): Low price.
+\item \code{volume} (numeric): Volume.
+\item \code{turnover} (numeric): Turnover.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": [["1698777600", "30000", "30500", "31000", "29500", "10", "300000"]]\}
+}\if{html}{\out{</div>}}
+
+Get Currency
+}
+
 \subsection{Description}{
 
-Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific
-details for multi-chain currencies. This method calls \code{get_currency_impl}.
+Retrieves details for a specific currency asynchronously via a GET request to \verb{/api/v3/currencies/\{currency\}}.
+Calls \code{get_currency_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Builds a query string with optional \code{chain} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/currencies/}, \code{currency}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Splits \code{"data"} into summary and \code{chains} data, combines into a \code{data.table}.
+\item \strong{Query}: Includes optional \code{chain} parameter.
+\item \strong{Request}: Fetches currency data.
+\item \strong{Response}: Combines summary and chain-specific details into a \code{data.table}.
 }
 }
 
@@ -405,12 +381,20 @@ details for multi-chain currencies. This method calls \code{get_currency_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to obtain currency metadata (e.g., precision, chain support) for trading or configuration purposes.
+Utilised to fetch currency metadata, such as precision and chain support.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency}{KuCoin Get Currency}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Configuration}: Use \code{precision} to format order sizes correctly in your bot, avoiding rejection.
+\item \strong{Chain Selection}: Specify \code{chain} (e.g., "ERC20") to verify deposit/withdrawal support for multi-chain assets.
+\item \strong{Validation}: Check \code{isMarginEnabled} to enable/disable margin strategies per currency dynamically.
+}
 }
 }
 }
@@ -425,39 +409,40 @@ Utilised by users to obtain currency metadata (e.g., precision, chain support) f
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{currency}}{Character string; currency code (e.g., \code{"BTC"}, \code{"USDT"}).}
+\item{\code{currency}}{Character string; currency code (e.g., "BTC"). Required.}
 
-\item{\code{chain}}{Character string (optional); specific chain (e.g., \code{"ERC20"}, \code{"TRC20"}).}
+\item{\code{chain}}{Character string; specific chain (e.g., "ERC20"). Optional.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{currency} (character): Unique currency code.
+\item \code{currency} (character): Code.
 \item \code{name} (character): Short name.
 \item \code{fullName} (character): Full name.
-\item \code{precision} (integer): Decimal places.
-\item \code{confirms} (integer or NULL): Block confirmations.
-\item \code{contractAddress} (character or NULL): Primary contract address.
-\item \code{isMarginEnabled} (logical): Margin trading status.
-\item \code{isDebitEnabled} (logical): Debit status.
-\item Chain-specific fields (e.g., \code{chainName}, \code{withdrawalMinSize}).
-Retrieve All Currencies
+\item \code{precision} (integer): Decimals.
+\item \code{chainName} (character): Blockchain name (if chain-specific).
+\item Full schema in implementation docs.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"currency": "BTC", "name": "BTC", "fullName": "Bitcoin", "precision": 8, "chains": [\{"chainName": "BTC"\}]\}\}
+}\if{html}{\out{</div>}}
+
+Get All Currencies
+}
+
 \subsection{Description}{
 
-Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details
-into a \code{data.table}. This method calls \code{get_all_currencies_impl}.
+Retrieves details for all available currencies asynchronously via a GET request to \verb{/api/v3/currencies}.
+Calls \code{get_all_currencies_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v3/currencies}.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Iteration}: Loops through currencies, extracting summary and chain data.
-\item \strong{Result Assembly}: Combines into a \code{data.table}, adding dummy chain columns if none exist.
+\item \strong{Request}: Fetches all currency data.
+\item \strong{Response}: Combines summary and chain details into a \code{data.table}.
 }
 }
 
@@ -468,12 +453,20 @@ into a \code{data.table}. This method calls \code{get_all_currencies_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to fetch comprehensive currency details for market analysis or configuration.
+Utilised to obtain a comprehensive currency list for market configuration.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies}{KuCoin Get All Currencies}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Asset Discovery}: Fetch periodically to update your system’s supported assets, triggering new trading pair setups.
+\item \strong{Fee Planning}: Use chain-specific fields (e.g., \code{withdrawFeeRate}) to calculate transaction costs in strategy logic.
+\item \strong{Portfolio Check}: Filter by \code{isMarginEnabled} to identify margin-eligible assets for leverage strategies.
+}
 }
 }
 }
@@ -486,39 +479,33 @@ Utilised by users to fetch comprehensive currency details for market analysis or
 }
 
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \strong{Summary Fields}:
-\itemize{
-\item \code{currency} (character): Unique currency code.
+\item \code{currency} (character): Code.
 \item \code{name} (character): Short name.
 \item \code{fullName} (character): Full name.
-\item \code{precision} (integer): Decimal places.
-\item \code{confirms} (integer or NA): Block confirmations.
-\item \code{contractAddress} (character or NA): Primary contract address.
-\item \code{isMarginEnabled} (logical): Margin trading status.
-\item \code{isDebitEnabled} (logical): Debit status.
+\item \code{precision} (integer): Decimals.
+\item \code{chainName} (character): Blockchain name.
+\item Full schema in implementation docs.
 }
-\item \strong{Chain-Specific Fields}:
-\itemize{
-\item \code{chainName} (character or NA): Blockchain name.
-\item \code{withdrawalMinSize} (character or NA): Minimum withdrawal amount.
-\item And more (see implementation docs).
-Retrieve Symbol Details
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": [\{"currency": "BTC", "name": "BTC", "fullName": "Bitcoin", "precision": 8, "chains": [\{"chainName": "BTC"\}]\}]\}
+}\if{html}{\out{</div>}}
+
+Get Symbol
 }
-}
+
 \subsection{Description}{
 
-Retrieves detailed information for a specified trading symbol from the KuCoin API asynchronously. This method calls
-\code{get_symbol_impl}.
+Retrieves details for a specific trading symbol asynchronously via a GET request to \verb{/api/v2/symbols/\{symbol\}}.
+Calls \code{get_symbol_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v2/symbols/}, and \code{symbol}.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts \code{"data"} into a \code{data.table}.
+\item \strong{Request}: Fetches symbol data.
+\item \strong{Response}: Returns metadata as a \code{data.table}.
 }
 }
 
@@ -529,12 +516,20 @@ Retrieves detailed information for a specified trading symbol from the KuCoin AP
 
 \subsection{Usage}{
 
-Utilised by users to fetch metadata for a specific trading symbol, such as price increments and trading limits.
+Utilised to fetch trading pair metadata, such as increments and limits.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols}{KuCoin Get Symbol}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Order Precision}: Use \code{priceIncrement} and \code{baseIncrement} to format orders correctly, ensuring API acceptance.
+\item \strong{Trading Status}: Check \code{enableTrading} to confirm pair availability before placing orders.
+\item \strong{Fee Adjustment}: Apply \code{makerFeeCoefficient} and \code{takerFeeCoefficient} to calculate precise trading costs.
+}
 }
 }
 }
@@ -549,36 +544,37 @@ Utilised by users to fetch metadata for a specific trading symbol, such as price
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{symbol} (character): Unique trading symbol code.
-\item \code{name} (character): Name of the trading pair.
+\item \code{symbol} (character): Symbol code.
 \item \code{baseCurrency} (character): Base currency.
 \item \code{quoteCurrency} (character): Quote currency.
-\item \code{feeCurrency} (character): Currency for fees.
-\item \code{market} (character): Trading market.
-\item \code{baseMinSize} (character): Minimum order quantity.
-\item And more (see implementation docs).
-Retrieve All Trading Symbols
+\item \code{priceIncrement} (character): Price step.
+\item Full schema in implementation docs.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"symbol": "BTC-USDT", "baseCurrency": "BTC", "quoteCurrency": "USDT", "priceIncrement": "0.01"\}\}
+}\if{html}{\out{</div>}}
+
+Get All Symbols
+}
+
 \subsection{Description}{
 
-Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
-This method calls \code{get_all_symbols_impl}.
+Retrieves all trading symbols asynchronously via a GET request to \verb{/api/v2/symbols}, optionally filtered by market.
+Calls \code{get_all_symbols_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Builds a query string with optional \code{market} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v2/symbols}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts \code{"data"} into a \code{data.table}.
+\item \strong{Request}: Fetches symbol list with optional \code{market} filter.
+\item \strong{Response}: Returns a \code{data.table} of all symbols.
 }
 }
 
@@ -589,12 +585,20 @@ This method calls \code{get_all_symbols_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to obtain a comprehensive list of trading symbols for market exploration or filtering.
+Utilised to explore available trading pairs or filter by market.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols}{KuCoin Get All Symbols}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Market Scanning}: Filter by \code{market} (e.g., "USDS") to identify pairs for specific strategies, updating trading lists dynamically.
+\item \strong{Pair Validation}: Use \code{baseMinSize} and \code{quoteMaxSize} to enforce order size limits in your bot.
+\item \strong{Periodic Sync}: Run daily to refresh symbol availability, logging new or disabled pairs (\code{enableTrading}).
+}
 }
 }
 }
@@ -609,36 +613,37 @@ Utilised by users to obtain a comprehensive list of trading symbols for market e
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{market}}{Character string (optional); trading market filter (e.g., \code{"ALTS"}, \code{"USDS"}, \code{"ETF"}).}
+\item{\code{market}}{Character string; trading market (e.g., "ALTS"). Optional.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{symbol} (character): Unique trading symbol code.
-\item \code{name} (character): Name of the trading pair.
+\item \code{symbol} (character): Symbol code.
 \item \code{baseCurrency} (character): Base currency.
 \item \code{quoteCurrency} (character): Quote currency.
-\item \code{feeCurrency} (character): Currency for fees.
-\item \code{market} (character): Trading market.
-\item \code{baseMinSize} (character): Minimum order quantity.
-\item And more (see implementation docs).
-Retrieve Ticker Information
+\item \code{market} (character): Market identifier.
+\item Full schema in implementation docs.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": [\{"symbol": "BTC-USDT", "baseCurrency": "BTC", "quoteCurrency": "USDT", "market": "USDS"\}]\}
+}\if{html}{\out{</div>}}
+
+Get Ticker
+}
+
 \subsection{Description}{
 
-Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
-This method calls \code{get_ticker_impl}.
+Retrieves Level 1 ticker data asynchronously via a GET request to \verb{/api/v1/market/orderbook/level1}.
+Calls \code{get_ticker_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level1}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts to a \code{data.table}, adds \code{symbol}, renames \code{time} to \code{time_ms}, adds \code{timestamp}.
+\item \strong{Request}: Fetches real-time ticker data for a symbol.
+\item \strong{Response}: Returns a \code{data.table} with bid/ask and last price.
 }
 }
 
@@ -649,12 +654,20 @@ This method calls \code{get_ticker_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
+Utilised for real-time price and liquidity monitoring.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker}{KuCoin Get Ticker}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Price Feed}: Poll every few seconds to update live price (\code{price}) and spread (\code{bestAsk - bestBid}) for entry/exit decisions.
+\item \strong{Liquidity Check}: Use \code{bestBidSize} and \code{bestAskSize} to assess market depth before placing large orders.
+\item \strong{Latency Monitoring}: Track \code{timestamp} latency to ensure data freshness, alerting if delays exceed thresholds.
+}
 }
 }
 }
@@ -669,37 +682,38 @@ Utilised by users to obtain real-time ticker data (e.g., best bid/ask, last pric
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{symbol} (character): Trading symbol.
-\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
-\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
-\item \code{sequence} (character): Update sequence identifier.
-\item \code{price} (character): Last traded price.
-\item \code{size} (character): Last traded size.
-\item \code{bestBid} (character): Best bid price.
-\item \code{bestBidSize} (character): Best bid size.
-\item \code{bestAsk} (character): Best ask price.
-\item \code{bestAskSize} (character): Best ask size.
-Retrieve All Tickers
+\item \code{symbol} (character): Symbol.
+\item \code{timestamp} (POSIXct): Snapshot time.
+\item \code{time_ms} (integer): Time (ms).
+\item \code{price} (character): Last price.
+\item \code{bestBid} (character): Best bid.
+\item \code{bestAsk} (character): Best ask.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"time": 1733049198863, "price": "30000", "bestBid": "29990", "bestAsk": "30010"\}\}
+}\if{html}{\out{</div>}}
+
+Get All Tickers
+}
+
 \subsection{Description}{
 
-Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
-This method calls \code{get_all_tickers_impl}.
+Retrieves ticker data for all trading pairs asynchronously via a GET request to \verb{/api/v1/market/allTickers}.
+Calls \code{get_all_tickers_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/market/allTickers}.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts \code{"ticker"} array to a \code{data.table}, adds \code{globalTime_ms} and \code{globalTime_datetime}.
+\item \strong{Request}: Fetches a snapshot of all tickers.
+\item \strong{Response}: Returns a \code{data.table} with market-wide data.
 }
 }
 
@@ -710,12 +724,20 @@ This method calls \code{get_all_tickers_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to fetch a snapshot of market data across all trading pairs for monitoring or analysis.
+Utilised for a broad market overview, including 24-hour metrics.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers}{KuCoin Get All Tickers}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Market Screening}: Filter by \code{changeRate} to identify trending pairs for momentum strategies, updating every minute.
+\item \strong{Volume Analysis}: Use \code{volValue} to prioritize high-liquidity pairs, avoiding low-volume markets.
+\item \strong{Snapshot Sync}: Cache results and compare \code{globalTime_datetime} to detect API delays or outages.
+}
 }
 }
 }
@@ -728,31 +750,33 @@ Utilised by users to fetch a snapshot of market data across all trading pairs fo
 }
 
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{symbol} (character): Trading symbol.
-\item \code{symbolName} (character): Symbol name.
-\item \code{buy} (character): Best bid price.
-\item \code{bestBidSize} (character): Best bid size.
-\item \code{sell} (character): Best ask price.
-\item \code{bestAskSize} (character): Best ask size.
-\item \code{changeRate} (character): 24-hour change rate.
-\item And more (see implementation docs).
-Retrieve Trade History
+\item \code{symbol} (character): Symbol.
+\item \code{buy} (character): Best bid.
+\item \code{sell} (character): Best ask.
+\item \code{vol} (character): 24-hour volume.
+\item \code{globalTime_datetime} (POSIXct): Snapshot time.
+\item Full schema in implementation docs.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"time": 1733049198863, "ticker": [\{"symbol": "BTC-USDT", "buy": "29990", "sell": "30010"\}]\}\}
+}\if{html}{\out{</div>}}
+
+Get Trade History
+}
+
 \subsection{Description}{
 
-Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
-This method calls \code{get_trade_history_impl}.
+Retrieves the most recent 100 trades for a symbol asynchronously via a GET request to \verb{/api/v1/market/histories}.
+Calls \code{get_trade_history_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/histories}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts to a \code{data.table}, adds \code{timestamp} via \code{time_convert_from_kucoin()}.
+\item \strong{Request}: Fetches recent trade records.
+\item \strong{Response}: Returns a \code{data.table} with trade details.
 }
 }
 
@@ -763,12 +787,20 @@ This method calls \code{get_trade_history_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to fetch recent trade history for tracking market activity.
+Utilised to track recent market trades for a symbol.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history}{KuCoin Get Trade History}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Momentum Tracking}: Analyze \code{side} and \code{price} trends to detect buying/selling pressure, triggering scalping trades.
+\item \strong{Execution Timing}: Use \code{timestamp} to measure trade frequency, adjusting order timing in high-frequency strategies.
+\item \strong{Volume Spike}: Sum \code{size} over recent trades to spot volume spikes, signaling potential breakouts.
+}
 }
 }
 }
@@ -783,34 +815,37 @@ Utilised by users to fetch recent trade history for tracking market activity.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{sequence} (character): Trade sequence number.
-\item \code{price} (character): Filled price.
-\item \code{size} (character): Filled amount.
-\item \code{side} (character): Trade side (\code{"buy"} or \code{"sell"}).
-\item \code{time} (integer): Trade timestamp in nanoseconds.
-\item \code{timestamp} (POSIXct): Converted timestamp in UTC.
-Retrieve Partial Orderbook
+\item \code{sequence} (character): Trade sequence.
+\item \code{price} (character): Price.
+\item \code{size} (character): Amount.
+\item \code{side} (character): "buy" or "sell".
+\item \code{timestamp} (POSIXct): Trade time.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": [\{"sequence": "123", "price": "30000", "size": "0.1", "side": "buy", "time": 1733049198863000000\}]\}
+}\if{html}{\out{</div>}}
+
+Get Partial Orderbook
+}
+
 \subsection{Description}{
 
-Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API
-asynchronously. This method calls \code{get_part_orderbook_impl}.
+Retrieves partial orderbook data (20 or 100 levels) asynchronously via a GET request to \verb{/api/v1/market/orderbook/level2_\{size\}}.
+Calls \code{get_part_orderbook_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Input Validation}: Ensures \code{size} is 20 or 100, aborts if invalid.
-\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/orderbook/level2_\{size\}}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}, converts bids/asks.
+\item \strong{Request}: Fetches orderbook snapshot with specified depth.
+\item \strong{Response}: Returns a \code{data.table} of bids and asks.
 }
 }
 
@@ -821,12 +856,20 @@ asynchronously. This method calls \code{get_part_orderbook_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to obtain a snapshot of the orderbook, showing aggregated bid and ask levels.
+Utilised for a quick orderbook snapshot without authentication.
 }
 
 \subsection{Official Documentation}{
 
-\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook}{KuCoin Get Part OrderBook}
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook}{KuCoin Get Part Orderbook}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Liquidity Assessment}: Use \code{size} at \code{price} levels to gauge depth for slippage estimation, opting for \code{size = 100} in volatile markets.
+\item \strong{Spread Trading}: Calculate bid-ask spread (\code{max(bid) - min(ask)}) to identify arbitrage opportunities, polling frequently.
+\item \strong{Order Placement}: Adjust limit order prices based on top \code{price} levels to compete effectively in the book.
+}
 }
 }
 }
@@ -841,36 +884,39 @@ Utilised by users to obtain a snapshot of the orderbook, showing aggregated bid 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 
-\item{\code{size}}{Integer; orderbook depth (20 or 100, default 20).}
+\item{\code{size}}{Integer; depth (20 or 100, default 20).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
-\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
-\item \code{sequence} (character): Orderbook update sequence.
-\item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
-\item \code{price} (character): Aggregated price level.
-\item \code{size} (character): Aggregated size.
-Retrieve Full Orderbook (Authenticated)
+\item \code{timestamp} (POSIXct): Snapshot time.
+\item \code{sequence} (character): Sequence number.
+\item \code{side} (character): "bid" or "ask".
+\item \code{price} (character): Price level.
+\item \code{size} (character): Size at price.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"time": 1733049198863, "bids": [["29990", "0.5"]], "asks": [["30010", "0.3"]]\}\}
+}\if{html}{\out{</div>}}
+
+Get Full Orderbook
+}
+
 \subsection{Description}{
 
-Retrieves full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring
-authentication. This method calls \code{get_full_orderbook_impl}.
+Retrieves full orderbook data asynchronously via a GET request to \verb{/api/v3/market/orderbook/level2}, requiring authentication.
+Calls \code{get_full_orderbook_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Header Preparation}: Constructs authentication headers with \code{build_headers()} using \code{keys}.
-\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v3/market/orderbook/level2}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with headers and a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}, converts bids/asks.
+\item \strong{Request}: Fetches complete orderbook with authentication.
+\item \strong{Response}: Returns a \code{data.table} of all bids and asks.
 }
 }
 
@@ -881,12 +927,20 @@ authentication. This method calls \code{get_full_orderbook_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to fetch the complete orderbook, requiring API authentication for detailed depth data.
+Utilised for detailed orderbook analysis with authenticated access.
 }
 
 \subsection{Official Documentation}{
 
-\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook}{KuCoin Get Full OrderBook}
+\href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook}{KuCoin Get Full Orderbook}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Depth Analysis}: Aggregate \code{size} by \code{price} to assess total liquidity, optimizing large order placement.
+\item \strong{HFT Strategies}: Poll frequently (e.g., every second) with \code{sequence} tracking to detect book changes, enabling rapid arbitrage.
+\item \strong{Risk Management}: Monitor deep levels to anticipate price walls, adjusting stop-loss triggers accordingly.
+}
 }
 }
 }
@@ -901,34 +955,37 @@ Utilised by users to fetch the complete orderbook, requiring API authentication 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
-\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
-\item \code{sequence} (character): Orderbook update sequence.
-\item \code{side} (character): Order side (\code{"bid"} or \code{"ask"}).
-\item \code{price} (character): Aggregated price level.
-\item \code{size} (character): Aggregated size.
-Retrieve 24-Hour Market Statistics
+\item \code{timestamp} (POSIXct): Snapshot time.
+\item \code{sequence} (character): Sequence number.
+\item \code{side} (character): "bid" or "ask".
+\item \code{price} (character): Price level.
+\item \code{size} (character): Size at price.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"time": 1733049198863, "bids": [["29990", "0.5"]], "asks": [["30010", "0.3"]]\}\}
+}\if{html}{\out{</div>}}
+
+Get 24-Hour Stats
+}
+
 \subsection{Description}{
 
-Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously. This method
-calls \code{get_24hr_stats_impl}.
+Retrieves 24-hour market statistics asynchronously via a GET request to \verb{/api/v1/market/stats}.
+Calls \code{get_24hr_stats_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{Query Construction}: Builds a query string with \code{symbol} using \code{build_query()}.
-\item \strong{URL Assembly}: Combines \code{base_url}, \verb{/api/v1/market/stats}, and query string.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
-\item \strong{Data Conversion}: Converts to a \code{data.table}, renames \code{time} to \code{time_ms}, adds \code{timestamp}.
+\item \strong{Request}: Fetches 24-hour stats for a symbol.
+\item \strong{Response}: Returns a \code{data.table} with volume and price metrics.
 }
 }
 
@@ -939,12 +996,20 @@ calls \code{get_24hr_stats_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to fetch a 24-hour snapshot of market statistics, including volume and price changes.
+Utilised for a 24-hour market performance snapshot.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats}{KuCoin Get 24hr Stats}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Volatility Check}: Use \code{changeRate} to identify volatile pairs for breakout strategies, polling hourly.
+\item \strong{Volume Filter}: Filter pairs with \code{volValue} above a threshold for liquidity-focused trading.
+\item \strong{Trend Confirmation}: Compare \code{last} with \code{averagePrice} to confirm short-term trends, adjusting positions.
+}
 }
 }
 }
@@ -959,33 +1024,38 @@ Utilised by users to fetch a 24-hour snapshot of market statistics, including vo
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{symbol}}{Character string; trading symbol (e.g., \code{"BTC-USDT"}).}
+\item{\code{symbol}}{Character string; trading symbol (e.g., "BTC-USDT"). Required.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Promise resolving to a \code{data.table} containing:
+Promise resolving to a \code{data.table} with:
 \itemize{
-\item \code{timestamp} (POSIXct): Snapshot timestamp in UTC.
-\item \code{time_ms} (integer): Snapshot timestamp in milliseconds.
-\item \code{symbol} (character): Trading symbol.
-\item \code{buy} (character): Best bid price.
-\item \code{sell} (character): Best ask price.
-\item \code{changeRate} (character): 24-hour change rate.
-\item And more (see implementation docs).
-Retrieve Market List
+\item \code{timestamp} (POSIXct): Snapshot time.
+\item \code{symbol} (character): Symbol.
+\item \code{buy} (character): Best bid.
+\item \code{sell} (character): Best ask.
+\item \code{vol} (character): 24-hour volume.
+\item Full schema in implementation docs.
 }
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": \{"time": 1733049198863, "symbol": "BTC-USDT", "vol": "100", "last": "30000"\}\}
+}\if{html}{\out{</div>}}
+
+Get Market List
+}
+
 \subsection{Description}{
 
-Retrieves a list of all available trading markets from the KuCoin API asynchronously as a character vector.
-This method calls \code{get_market_list_impl}.
+Retrieves a list of trading markets asynchronously via a GET request to \verb{/api/v1/markets}.
+Calls \code{get_market_list_impl}.
 }
 
 \subsection{Workflow Overview}{
 \enumerate{
-\item \strong{URL Assembly}: Combines \code{base_url} with \verb{/api/v1/markets}.
-\item \strong{HTTP Request}: Sends a GET request with a 10-second timeout via \code{httr::GET()}.
-\item \strong{Response Processing}: Validates with \code{process_kucoin_response()}, extracts \code{"data"}.
+\item \strong{Request}: Fetches all market identifiers.
+\item \strong{Response}: Returns a character vector of markets.
 }
 }
 
@@ -996,12 +1066,20 @@ This method calls \code{get_market_list_impl}.
 
 \subsection{Usage}{
 
-Utilised by users to identify available trading markets for filtering or querying market-specific data.
+Utilised to identify available markets for filtering symbols.
 }
 
 \subsection{Official Documentation}{
 
 \href{https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list}{KuCoin Get Market List}
+}
+
+\subsection{Automated Trading Usage}{
+\itemize{
+\item \strong{Market Selection}: Use as a filter for \code{get_all_symbols} to focus strategies on specific markets (e.g., "USDS").
+\item \strong{Portfolio Diversification}: Iterate over markets to ensure coverage across asset classes, automating pair selection.
+\item \strong{Static Cache}: Fetch once daily and cache, as market lists change infrequently, reducing API calls.
+}
 }
 }
 }
@@ -1014,7 +1092,12 @@ Utilised by users to identify available trading markets for filtering or queryin
 }
 
 \subsection{Returns}{
-Promise resolving to a character vector of market identifiers (e.g., \code{"USDS"}, \code{"TON"}).
+Promise resolving to a character vector of market IDs (e.g., "USDS", "TON").
+\subsection{JSON Response Example}{
+
+\if{html}{\out{<div class="sourceCode json">}}\preformatted{\{"code": "200000", "data": ["USDS", "TON"]\}
+}\if{html}{\out{</div>}}
+}
 }
 }
 \if{html}{\out{<hr>}}

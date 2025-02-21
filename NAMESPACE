@@ -2,7 +2,12 @@
 
 export(KucoinAccountAndFunding)
 export(KucoinDeposit)
+export(KucoinSpotAddOrder)
+export(KucoinSpotCancelOrder)
+export(KucoinSpotGetOrder)
 export(KucoinSpotMarketData)
+export(KucoinSpotOco)
+export(KucoinSpotStop)
 export(KucoinSubAccount)
 export(add_deposit_address_v3_impl)
 export(add_oco_order_impl)
