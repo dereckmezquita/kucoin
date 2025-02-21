@@ -1,5 +1,5 @@
 
-# kucoin
+# kucoin <img src="man/figures/logo-small.png" align="right" height="139" />
 
 <!-- badges: start -->
 
