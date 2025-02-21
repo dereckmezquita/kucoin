@@ -18,7 +18,6 @@ box::use(
 #'
 #' @param order List; a list containing order parameters such as `symbol`, `type`, `side`, etc.
 #' @return List; the validated order with defaults applied.
-#' @keywords internal
 validate_order <- function(order) {
     if (!is.list(order)) {
         rlang::abort("Each order must be a list.")
@@ -236,7 +235,7 @@ validate_order <- function(order) {
 #'     size = "0.01"
 #'   )
 #'   # Place batch orders
-#'   result <- await(add_order_batch_impl(order_list = list(order1, order2)))
+#'   result <- await(add_batch_order_impl(order_list = list(order1, order2)))
 #'   print(result)
 #' })
 #' main_async()
@@ -248,7 +247,7 @@ validate_order <- function(order) {
 #' @importFrom jsonlite toJSON
 #' @importFrom rlang abort arg_match0
 #' @export
-add_order_batch_impl <- coro::async(function(
+add_batch_order_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     order_list
@@ -294,6 +293,6 @@ add_order_batch_impl <- coro::async(function(
 
         return(result_dt)
     }, error = function(e) {
-        rlang::abort(sprintf("Error in add_order_batch_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in add_batch_order_impl: %s", conditionMessage(e)))
     })
 })
