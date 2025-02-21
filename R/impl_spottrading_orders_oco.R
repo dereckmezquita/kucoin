@@ -484,6 +484,149 @@ cancel_oco_order_by_client_oid_impl <- coro::async(function(
     })
 })
 
+#' Batch Cancel OCO Orders (Implementation)
+#'
+#' Cancels a batch of OCO (One-Cancels-the-Other) orders on the KuCoin Spot trading system asynchronously by sending a DELETE request to the `/api/v3/oco/orders` endpoint.
+#' Returns a `data.table` with the IDs of the canceled limit and stop-limit orders associated with the OCO orders.
+#'
+#' ## What is an OCO Order and Batch Cancellation?
+#' An OCO (One-Cancels-the-Other) order pairs a limit order (e.g., to secure profits) with a stop-limit order (e.g., to cap losses), canceling one when the other executes. Batch cancellation of OCO orders is useful for:
+#' - **Portfolio Cleanup**: Remove all OCO orders for a symbol (e.g., "BTC-USDT") or specific IDs if market conditions no longer favor your strategy.
+#' - **Risk Adjustment**: Cancel multiple OCOs during unexpected volatility to avoid unintended triggers (e.g., canceling BTC-USDT OCOs during a flash crash).
+#' - **Strategy Overhaul**: Reset all OCO orders across trading pairs to implement a new trading plan without manual intervention.
+#' For example, if you have OCO orders on BTC-USDT to sell at $55,000 (profit) or $48,000 (stop-loss) but anticipate a breakout, batch canceling them prevents premature execution.
+#'
+#' ## Description
+#' This function cancels multiple OCO orders using optional filters (`orderIds`, `symbol`) via a DELETE request. If no parameters are provided, all OCO orders are canceled by default. The response includes the IDs of the canceled limit and stop-limit orders.
+#'
+#' ## Workflow
+#' 1. **Parameter Validation**: Ensures `query` is a named list and validates `symbol` and `orderIds` if provided.
+#' 2. **Request Construction**: Builds the endpoint URL with query parameters (`orderIds`, `symbol`) using `build_query`.
+#' 3. **Authentication**: Generates private API headers using `build_headers()` with the DELETE method and endpoint.
+#' 4. **API Request**: Sends a DELETE request to the KuCoin API with a 3-second timeout via `httr::DELETE`.
+#' 5. **Response Processing**: Parses the response with `process_kucoin_response`, confirms success ("200000"), and converts the `cancelledOrderIds` array to a `data.table` column as a list.
+#'
+#' ## API Details
+#' - **Endpoint**: `DELETE https://api.kucoin.com/api/v3/oco/orders`
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: Spot
+#' - **Rate Limit Pool**: Spot
+#' - **Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Order
+#' - **SDK Method Name**: batchCancelOcoOrders
+#' - **Official Documentation**: [KuCoin Batch Cancel OCO Order](https://www.kucoin.com/docs-new/rest/spot-trading/orders/batch-cancel-oco-order)
+#'
+#' ## Request
+#' ### Query Parameters
+#' - `orderIds`: String (optional) - Comma-separated list of OCO order IDs (e.g., "674c388172cf2800072ee746,674c38bdfd8300000795167e"). If omitted, all OCO orders are canceled.
+#' - `symbol`: String (optional) - Trading pair symbol (e.g., "BTC-USDT"). If omitted, OCO orders for all symbols are canceled.
+#'
+#' ### Example Request
+#' ```bash
+#' curl --location --request DELETE 'https://api.kucoin.com/api/v3/oco/orders?orderIds=674c388172cf2800072ee746,674c38bdfd8300000795167e&symbol=BTC-USDT'
+#' ```
+#'
+#' ## Response
+#' ### HTTP Code: 200
+#' - **Content Type**: `application/json`
+#'
+#' ### Data Schema
+#' - `code`: String (required) - Response code ("200000" indicates success).
+#' - `data`: Object (required) - Contains:
+#'   - `cancelledOrderIds`: Array[String] (required) - List of canceled order IDs (typically two per OCO order: limit and stop-limit components).
+#'
+#' ### JSON Response Example
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "cancelledOrderIds": [
+#'       "vs93gpqc750mkk57003gok6i",
+#'       "vs93gpqc750mkk57003gok6j",
+#'       "vs93gpqc75c39p83003tnriu",
+#'       "vs93gpqc75c39p83003tnriv"
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' @param keys List; API configuration parameters from `get_api_keys()`. Defaults to `get_api_keys()`.
+#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
+#' @param query Named list; optional query parameters for filtering (e.g., `list(orderIds = "674c388172cf2800072ee746,674c38bdfd8300000795167e", symbol = "BTC-USDT")`).
+#' @return Promise resolving to a `data.table` with one row containing:
+#'   - `cancelledOrderIds` (list): A list of character strings representing the IDs of the canceled limit and stop-limit orders associated with the OCO orders.
+#' @examples
+#' \dontrun{
+#' library(coro)
+#' library(data.table)
+#'
+#' main_async <- coro::async(function() {
+#'   # Batch cancel specific OCO orders for BTC-USDT
+#'   canceled_orders <- await(batch_cancel_oco_orders_impl(
+#'     query = list(
+#'       orderIds = "674c388172cf2800072ee746,674c38bdfd8300000795167e",
+#'       symbol = "BTC-USDT"
+#'     )
+#'   ))
+#'   print(canceled_orders)
+#' })
+#'
+#' # Run the async function
+#' main_async()
+#' while (!later::loop_empty()) later::run_now()
+#' }
+#' @importFrom coro async await
+#' @importFrom data.table data.table
+#' @importFrom httr DELETE timeout
+#' @importFrom rlang abort
+#' @export
+batch_cancel_oco_orders_impl <- coro::async(function(
+    keys = get_api_keys(),
+    base_url = get_base_url(),
+    query = list()
+) {
+    tryCatch({
+        # Validate parameters
+        if (!is.list(query)) {
+            rlang::abort("Parameter 'query' must be a named list.")
+        }
+        if ("symbol" %in% names(query) && !is.null(query$symbol) && !verify_symbol(query$symbol)) {
+            rlang::abort("Parameter 'query$symbol', if provided, must be a valid trading pair (e.g., 'BTC-USDT').")
+        }
+        if ("orderIds" %in% names(query) && (!is.character(query$orderIds) || nchar(query$orderIds) == 0)) {
+            rlang::abort("Parameter 'query$orderIds', if provided, must be a non-empty comma-separated string.")
+        }
+
+        # Construct endpoint and query string
+        endpoint <- "/api/v3/oco/orders"
+        query_string <- build_query(query)
+        full_url <- paste0(base_url, endpoint, query_string)
+
+        # Generate authentication headers
+        headers <- await(build_headers("DELETE", paste0(endpoint, query_string), NULL, keys))
+
+        # Send DELETE request
+        response <- httr::DELETE(
+            url = full_url,
+            headers,
+            httr::timeout(3)
+        )
+
+        # Process response
+        parsed_response <- process_kucoin_response(response, full_url)
+        if (parsed_response$code != "200000") {
+            rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
+        }
+
+        # Return as data.table
+        return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
+    }, error = function(e) {
+        rlang::abort(sprintf("Error in batch_cancel_oco_orders_impl: %s", conditionMessage(e)))
+    })
+})
+
 #' Get OCO Order By OrderId (Implementation)
 #'
 #' Retrieves basic information about an OCO order using its system-generated order ID (`orderId`) from the KuCoin Spot trading system asynchronously by sending a GET request to the `/api/v3/oco/order/{orderId}` endpoint.
