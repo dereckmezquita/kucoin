@@ -1,7 +1,9 @@
 Package: kucoin
-Title: R API to KuCoin Crytocurrency Exchange Market
-Version: 0.1.0
-URL: https://github.com/dereckmezquita/kucoin
+Type: Package
+Title: Async API Wrapper to KuCoin Cryptocurrency Exchange
+Version: 1.9.0
+URL: https://dereckmezquita.github.io/kucoin/
+BugReports: https://github.com/dereckmezquita/kucoin/issues
 Authors@R: 
     person(given = "Dereck",
            family = "Mezquita",
@@ -9,21 +11,31 @@ Authors@R:
            email = "dereck@mezquita.io",
            comment = c(ORCID = "0000-0002-9307-6762"))
 Maintainer: Dereck Mezquita <dereck@mezquita.io>
+Description: Asynchronous R API wrapper to the KuCoin cryptocurrency exchange for high frequency trading and non-blocking operations.
 License: MIT + file LICENSE
-Description: An R API to KuCoin crytocurrency exchange market.
 Encoding: UTF-8
-LazyData: true
+VignetteBuilder: knitr
 RoxygenNote: 7.3.2
-Depends:
-    R (>= 3.5.0)
+Roxygen: list(markdown = TRUE)
+Depends: R (>= 4.1.0)
 Imports:
-    curl,
-    data.table,
-    digest,
-    httr,
-    jsonlite,
-    lubridate,
+    R6,
     rlang,
-    stringr
+    jsonlite,
+    data.table,
+    coro,
+    promises,
+    httr,
+    base64enc,
+    digest,
+    lubridate
 Suggests:
-    testthat (>= 2.1.0)
+    later,
+    testthat (>= 3.0.0),
+    diffviewer,
+    knitr,
+    rmarkdown,
+    box
+Config/testthat/edition: 3
+Remotes: 
+    dereckmezquita/coro

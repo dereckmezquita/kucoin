@@ -1,0 +1,215 @@
+Errors Code
+
+HTTP Errors Code
+
+Code	Meaning
+400	Bad Request -- Invalid request format.
+401	Unauthorized -- Invalid API Key.
+403	Forbidden or Too Many Requests -- The request is forbidden or Access limit breached.
+404	Not Found -- The specified resource could not be found.
+405	Method Not Allowed -- You tried to access the resource with an invalid method.
+415	Unsupported Media Type. You need to use: application/json.
+500	Internal Server Error -- We had a problem with our server. Try again later.
+503	Service Unavailable -- We're temporarily offline for maintenance. Please try again later.
+
+Spot Errors Code
+
+Code	Meaning
+200001	Order creation for this pair suspended
+200002	Order cancel for this pair suspended
+200003	Number of orders breached the limit
+200009	Please complete the KYC verification before you trade XX
+200004	Balance insufficient
+260210	withdraw.disabled -- Currency/Chain withdraw is closed, or user is frozen to withdraw
+400001	Any of KC-API-KEY, KC-API-SIGN, KC-API-TIMESTAMP, KC-API-PASSPHRASE is missing in your request header
+400002	KC-API-TIMESTAMP Invalid
+400003	KC-API-KEY not exists
+400004	KC-API-PASSPHRASE error
+400005	Signature error
+400006	The requested ip address is not in the api whitelist
+400007	Access Denied
+404000	Url Not Found
+400100	Parameter Error
+400100	account.available.amount -- Insufficient balance
+400200	Forbidden to place an order
+400500	Your located country/region is currently not supported for the trading of this token
+400600	validation.createOrder.symbolNotAvailable -- The trading pair has not yet started trading
+400700	Transaction restricted, there's a risk problem in your account
+400800	Leverage order failed
+411100	User are frozen
+415000	Unsupported Media Type -- The Content-Type of the request header needs to be set to application/json
+500000	Internal Server Error
+600203	Symbol XXX-XXX cant be traded -- The symbol is not enabled for trading, such as downtime for upgrades, etc.
+900001	symbol not exists
+230005	The system is busy, please try again later
+If the returned HTTP status code is not 200, the error code will be included in the returned results. If the interface call is successful, the system will return the code and data fields. If not, the system will return the code and msg fields. You can check the error code for details.
+
+Margin Errors Code
+
+This table is the error code common to margin low frequency and margin high frequency.
+
+Code	Meaning
+130101	The currency does not support subscription.
+130101	Interest rate increment error.
+130101	Interest rate exceeds limit.
+130101	The subscription amount exceeds the limit for a single subscription.
+130101	Subscription amount increment error.
+130101	Redemption amount increment error
+130101	Interest rate exceeds limit.
+130102	Maximum subscription amount has been exceeded.
+130103	Subscription order does not exist.
+130104	Maximum number of subscription orders has been exceeded.
+130105	Insufficient balance.
+130106	The currency does not support redemption.
+130107	Redemption amount exceeds subscription amount.
+130108	Redemption order does not exist.
+130201	Please open margin trade before proceeding
+130201	Your account has restricted access to certain features. Please contact customer service for further assistance
+130201	The lending function is currently disabled
+130202	The system is renewing the loan automatically. Please try again later
+130202	The system is processing liquidation. Please try again later
+130202	Please pay off all debts before proceeding
+130202	A borrowing is in progress. Please try again later
+130202	A timeout has occurred. The system is currently processing
+130202	The system is renewing the loan automatically. Please try again later
+130202	The system is confirming position liquidation. Please try again later
+130202	The system is processing. Please try again later
+130202	There are outstanding borrowing orders that need to be settled. Please try again later
+130203	Insufficient account balance
+130203	The maximum borrowing amount has been exceeded. Your remaining available borrowing: {1}{0}
+130204	As the total lending amount for platform leverage {0} reaches the platform's maximum position limit, the system suspends the borrowing function of leverage {1}
+130204	As the total position of platform leverage {0} reaches the platform's maximum leverage loan limit, the system suspends leverage the borrowing function of leverage {1}
+130204	According to the platform's maximum borrowing limit, the maximum amount you can borrow is {0}{1}
+130301	Insufficient account balance
+130302	Your relevant permission rights have been restricted, you can contact customer service for processing
+130303	The current trading pair does not support isolated positions
+130304	The trading function of the current trading pair is not enabled
+130305	The current trading pair does not support cross position
+130306	The account has not opened leveraged trading
+130307	Please reopen the leverage agreement
+130308	Position renewal freeze
+130309	Position forced liquidation freeze
+130310	Abnormal leverage account status
+130311	Failed to place an order, triggering buy limit
+130312	Trigger global position limit, suspend buying
+130313	Trigger global position limit, suspend selling
+130314	Trigger the global position limit and prompt the remaining quantity available for purchase
+130315	This feature has been suspended due to country restrictions
+This table is the error codes unique to margin high frequency
+
+Code	Meaning
+126000	Abnormal margin trading
+126001	Users currently do not support high frequency
+126002	There is a risk problem in your account and transactions are temporarily not allowed!
+126003	The commission amount is less than the minimum transaction amount for a single commission
+126004	Trading pair does not exist or is prohibited
+126005	This trading pair requires advanced KYC certification before trading
+126006	Trading pair is not available
+126007	Trading pair suspended
+126009	Trading pair is suspended from creating orders
+126010	Trading pair suspended order cancellation
+126011	There are too many orders in the order
+126013	Insufficient account balance
+126015	It is prohibited to place orders on this trading pair
+126021	This digital asset does not support user participation in your region, thank you for your understanding!
+126022	The final transaction price of your order will trigger the price protection strategy. To protect the price from deviating too much, please place an order again.
+126027	Only limit orders are supported
+126028	Only limit orders are supported before the specified time
+126029	The maximum order price is: xxx
+126030	The minimum order price is: xxx
+126033	Duplicate order
+126034	Failed to create take profit and stop loss order
+126036	Failed to create margin order
+126037	Due to country and region restrictions, this function has been suspended!
+126038	Third-party service call failed (internal exception)
+126039	Third-party service call failed, reason: xxx
+126041	clientTimestamp parameter error
+126042	Exceeded maximum position limit
+126043	Order does not exist
+126044	clientOid duplicate
+126045	This digital asset does not support user participation in your region, thank you for your understanding!
+126046	This digital asset does not support your IP region, thank you for your understanding!
+126047	Please complete identity verification
+126048	Please complete authentication for the master account
+135005	Margin order query business abnormality
+135018	Margin order query service abnormality
+400400	Parameter error/service exception
+400401	User is not logged in
+408000	Network timeout, please try again later
+500000	Service exception
+If the returned HTTP status code is not 200, the error code will be included in the returned results. If the interface call is successful, the system will return the code and data fields. If not, the system will return the code and msg fields. You can check the error code for details.
+
+Futures Errors Code
+
+Code	Meaning
+1015	cloudflare frequency limit according to IP, block 30s
+40010	Unavailable to place orders. Your identity information/IP/phone number shows you're at a country/region that is restricted from this service.
+100001	There are invalid parameters
+100002	systemConfigError
+100003	Contract parameter invalid
+100004	Order is in not cancelable state
+100005	contractRiskLimitNotExist
+200001	The query scope for Level 2 cannot exceed xxx
+200002	Too many requests in a short period of time, please retry later--kucoin business layer request frequency limit, block 10s
+200002	The query scope for Level 3 cannot exceed xxx
+200003	The symbol parameter is invalid.
+200005	Insufficient balance.(Insufficient balance when modifying risk limit)
+300000	request parameter illegal
+300001	Active order quantity limit exceeded (limit: xxx, current: xxx)
+300002	Order placement/cancellation suspended, please try again later.
+300003	Balance not enough, please first deposit at least 2 USDT before you start the battle
+300004	Stop order quantity limit exceeded (limit: xxx, current: xxx)
+300005	xxx risk limit exceeded
+300006	The close price shall be greater than the bankruptcy price. Current bankruptcy price: xxx.
+300007	priceWorseThanLiquidationPrice
+300008	Unavailable to place the order, there's no contra order in the market.
+300009	Current position size: 0, unable to close the position.
+300010	Failed to close the position
+300011	Order price cannot be higher than xxx
+300012	Order price cannot be lower than xxx
+300013	Unable to proceed the operation, there's no contra order in order book.
+300014	The position is being liquidated, unable to place/cancel the order. Please try again later.
+300015	The order placing/cancellation is currently not available. The Contract/Funding is under the settlement process. When the process is completed, the function will be restored automatically. Please wait patiently and try again later.
+300016	The leverage cannot be greater than xxx.
+300017	Unavailable to proceed the operation, this position is for Futures Brawl
+300018	clientOid parameter repeated
+400001	Any of KC-API-KEY, KC-API-SIGN, KC-API-TIMESTAMP, KC-API-PASSPHRASE is missing in your request header.
+400002	KC-API-TIMESTAMP Invalid -- Time differs from server time by more than 5 seconds
+400003	KC-API-KEY not exists
+400004	KC-API-PASSPHRASE error
+400005	Signature error -- Please check your signature
+400006	The IP address is not in the API whitelist
+400007	Access Denied -- Your API key does not have sufficient permissions to access the URI
+400100	Parameter Error -- You tried to access the resource with invalid parameters
+400100	account.available.amount -- Insufficient balance
+404000	URL Not Found -- The requested resource could not be found
+411100	User is frozen -- Please contact us via support center
+415000	Unsupported Media Type -- The Content-Type of the request header needs to be set to application/json
+429000	Too Many Requests -- Trigger the total traffic limit of this interface of KuCoin server, you can retry the request
+500000	Internal Server Error -- We had a problem with our server. Try again later.
+If the returned HTTP status code is not 200, the error code will be included in the returned results. If the interface call is successful, the system will return the code and data fields. If not, the system will return the code and msg fields. You can check the error code for details.
+
+Earn Errors Code
+
+Code	Meaning
+151404	Position does not exist
+151001	Product does not exist
+151002	Subscription not started
+151003	Subscription ended
+151004	Subscription amount is less than the user's minimum subscription quota
+151005	Subscription amount exceeds the user's maximum subscription quota
+151006	Product is fully subscribed
+151007	Only new users can participate in the subscription
+151008	You currently do not meet the conditions to purchase this product
+151009	Insufficient balance
+151010	Quantity precision is incorrect
+151011	Sorry, the current activity is too popular, please try again later
+151016	Cannot redeem before the product expires
+151018	Redemption amount exceeds the redeemable amount
+151019	Remaining holding quantity is too small to generate income, please redeem all
+151020	Redeemable quantity is less than the quantity required for penalty interest
+151021	ETH Staking: This currency is not supported at the moment
+151022	ETH Staking: Less than the minimum subscription quantity
+151023	ETH Staking: The product is temporarily sold out, please wait for quota replenishment
+151024	When redeeming early, the parameter confirmPunishRedeem must be passed in
+

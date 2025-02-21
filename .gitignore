@@ -1,15 +1,20 @@
+# dev
+api-responses/
 
-*html
-.DS_Store
 deprecated/
-
-*.ignore
+temp*
 *.ignore.*
+*html
+*.sqlite
+merged_files.txt
+testthat-problems.rds
+keys/
 
-.Rprofile
+*.log
+log.txt
 
-# sensitive files and tokens
-*.sensitive.*
+# dev files
+.env
 
 # History files
 .Rhistory
@@ -17,6 +22,7 @@ deprecated/
 
 # Session Data files
 .RData
+.RDataTmp
 
 # User-specific files
 .Ruserdata
@@ -50,3 +56,15 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~
+
+# RStudio Connect folder
+rsconnect/
+
+# machine
+.DS_Store
