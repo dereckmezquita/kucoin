@@ -1,4 +1,4 @@
-# File: ./R/impl_spottrading_orders_add_stop_order.R
+# File: ./R/impl_spottrading_orders_stop.R
 
 box::use(
     ./helpers_api[process_kucoin_response, build_headers],
