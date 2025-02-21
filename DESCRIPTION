@@ -2,6 +2,8 @@ Package: kucoin
 Type: Package
 Title: Async API Wrapper to KuCoin Cryptocurrency Exchange
 Version: 2.0.0
+URL: https://dereckmezquita.github.io/kucoin/
+BugReports: https://github.com/dereckmezquita/kucoin/issues
 Authors@R: 
     person(given = "Dereck",
            family = "Mezquita",
