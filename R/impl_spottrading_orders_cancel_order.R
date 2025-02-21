@@ -1,4 +1,4 @@
-# File: ./R/impl_spottrading_orders_cancel.R
+# File: ./R/impl_spottrading_orders_cancel_order.R
 
 box::use(
     ./helpers_api[process_kucoin_response, build_headers],
