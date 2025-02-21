@@ -564,7 +564,7 @@ cancel_oco_order_by_client_oid_impl <- coro::async(function(
 #'
 #' main_async <- coro::async(function() {
 #'   # Batch cancel specific OCO orders for BTC-USDT
-#'   canceled_orders <- await(batch_cancel_oco_orders_impl(
+#'   canceled_orders <- await(cancel_oco_orders_batch_impl(
 #'     query = list(
 #'       orderIds = "674c388172cf2800072ee746,674c38bdfd8300000795167e",
 #'       symbol = "BTC-USDT"
@@ -582,7 +582,7 @@ cancel_oco_order_by_client_oid_impl <- coro::async(function(
 #' @importFrom httr DELETE timeout
 #' @importFrom rlang abort
 #' @export
-batch_cancel_oco_orders_impl <- coro::async(function(
+cancel_oco_orders_batch_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     query = list()
@@ -623,7 +623,7 @@ batch_cancel_oco_orders_impl <- coro::async(function(
         # Return as data.table
         return(data.table::data.table(cancelledOrderIds = list(parsed_response$data$cancelledOrderIds)))
     }, error = function(e) {
-        rlang::abort(sprintf("Error in batch_cancel_oco_orders_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in cancel_oco_orders_batch_impl: %s", conditionMessage(e)))
     })
 })
 
