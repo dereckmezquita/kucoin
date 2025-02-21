@@ -49,8 +49,8 @@ that all functions are asynchronous and return promises. One can use
 `kucoin` in two ways, either by using the `coro::async` function or by
 using the `then` and `catch` methods of the promises.
 
-For a run down on `asynchronous` in see my blog post here: [Async
-programming in R for JS
+For a run down on `asynchronous` programming see my blog post here:
+[Async programming in R for JS
 devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
 
 ``` r
@@ -85,9 +85,9 @@ while (!loop_empty()) {
 
     #>              timestamp      time_ms   symbol     buy    sell changeRate
     #>                 <POSc>        <num>   <char>  <char>  <char>     <char>
-    #> 1: 2025-02-21 19:40:26 1.740167e+12 BTC-USDT 95659.2 95659.3    -0.0263
+    #> 1: 2025-02-21 19:42:02 1.740167e+12 BTC-USDT 95454.7 95454.8    -0.0286
     #> 11 variable(s) not shown: [changePrice <char>, high <char>, low <char>, vol <char>, volValue <char>, last <char>, averagePrice <char>, takerFeeRate <char>, makerFeeRate <char>, takerCoefficient <char>, ...]
     #>              timestamp      time_ms   symbol     buy    sell changeRate
     #>                 <POSc>        <num>   <char>  <char>  <char>     <char>
-    #> 1: 2025-02-21 19:40:26 1.740167e+12 BTC-USDT 95659.2 95659.3    -0.0263
+    #> 1: 2025-02-21 19:42:02 1.740167e+12 BTC-USDT 95454.7 95454.8    -0.0286
     #> 11 variable(s) not shown: [changePrice <char>, high <char>, low <char>, vol <char>, volValue <char>, last <char>, averagePrice <char>, takerFeeRate <char>, makerFeeRate <char>, takerCoefficient <char>, ...]

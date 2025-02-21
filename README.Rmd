@@ -56,7 +56,7 @@ KC-API-PASSPHRASE = XXXXXXXXXX
 
 `kucoin` is built on top of `coro::async` and `promises`. This means that all functions are asynchronous and return promises. One can use `kucoin` in two ways, either by using the `coro::async` function or by using the `then` and `catch` methods of the promises.
 
-For a run down on `asynchronous` in see my blog post here: [Async programming in R for JS devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
+For a run down on `asynchronous` programming see my blog post here: [Async programming in R for JS devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
 
 ```{r get-market-data}
 box::use(
