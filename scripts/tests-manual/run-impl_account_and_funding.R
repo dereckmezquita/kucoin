@@ -1,15 +1,15 @@
 box::use(
-    ../R/impl_account_account_and_funding[
+    ../../R/impl_account_account_and_funding[
         get_account_summary_info_impl,
         get_apikey_info_impl,
         get_spot_account_type_impl,
-        get_spot_account_dt_impl,
+        get_spot_account_list_impl,
         get_spot_account_detail_impl,
         get_cross_margin_account_impl,
         get_isolated_margin_account_impl,
         get_spot_ledger_impl
     ],
-    ../R/utils[get_api_keys, get_base_url],
+    ../../R/utils[get_api_keys, get_base_url],
     coro[async, await],
     later[loop_empty, run_now]
 )
@@ -36,7 +36,7 @@ main_async <- async(function() {
     print(spot_account_type)
 
     # 4. Retrieve list of spot accounts
-    spot_accounts <- await(get_spot_account_dt_impl(keys = keys, base_url = base_url))
+    spot_accounts <- await(get_spot_account_list_impl(keys = keys, base_url = base_url))
     print("Spot Accounts:")
     print(spot_accounts)
 
