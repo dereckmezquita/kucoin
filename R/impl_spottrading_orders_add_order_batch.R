@@ -1,4 +1,4 @@
-# File: ./R/impl_spottrading_orders_add_batch_order.R
+# File: ./R/impl_spottrading_orders_add_order_batch.R
 
 box::use(
     ./helpers_api[process_kucoin_response, build_headers],
@@ -163,7 +163,7 @@ validate_order <- function(order) {
     return(validated_order)
 }
 
-#' Batch Add Orders (Implementation)
+#' Add Orders Batch (Implementation)
 #'
 #' Places multiple new orders (up to 20) to the KuCoin Spot trading system asynchronously.
 #' This function validates a list of orders, constructs a batch request, and returns the placement results for each order.
@@ -235,7 +235,7 @@ validate_order <- function(order) {
 #'     size = "0.01"
 #'   )
 #'   # Place batch orders
-#'   result <- await(add_batch_order_impl(order_list = list(order1, order2)))
+#'   result <- await(add_order_batch_impl(order_list = list(order1, order2)))
 #'   print(result)
 #' })
 #' main_async()
@@ -247,7 +247,7 @@ validate_order <- function(order) {
 #' @importFrom jsonlite toJSON
 #' @importFrom rlang abort arg_match0
 #' @export
-add_batch_order_impl <- coro::async(function(
+add_order_batch_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url(),
     order_list
@@ -293,6 +293,6 @@ add_batch_order_impl <- coro::async(function(
 
         return(result_dt)
     }, error = function(e) {
-        rlang::abort(sprintf("Error in add_batch_order_impl: %s", conditionMessage(e)))
+        rlang::abort(sprintf("Error in add_order_batch_impl: %s", conditionMessage(e)))
     })
 })
