@@ -306,10 +306,10 @@ get_spot_account_type_impl <- coro::async(function(
 #' [KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param query Named list of query parameters, e.g., `list(currency = "USDT", type = "main")`. Supported:
@@ -324,11 +324,8 @@ get_spot_account_type_impl <- coro::async(function(
 #'   - `holds` (numeric): Funds on hold.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
-#' query <- list(currency = "USDT", type = "main")
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_spot_account_list_impl(keys = keys, base_url = base_url, query = query))
+#'   dt <- await(get_spot_account_list_impl(query = list(currency = "USDT", type = "main")))
 #'   print(dt)
 #' })
 #' main_async()
