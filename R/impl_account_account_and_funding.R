@@ -458,6 +458,35 @@ get_spot_account_detail_impl <- coro::async(function(
 #'     - `maxBorrowSize` (character): Maximum borrowable amount.
 #'     - `borrowEnabled` (logical): Borrowing enabled.
 #'     - `transferInEnabled` (logical): Transfer-in enabled.
+#' @details
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.  
+#' - `data` (object)
+#' 
+#' Example JSON response:  
+#' ```
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "totalAssetOfQuoteCurrency": "0.02",
+#'         "totalLiabilityOfQuoteCurrency": "0",
+#'         "debtRatio": "0",
+#'         "status": "EFFECTIVE",
+#'         "accounts": [
+#'             {
+#'                 "currency": "USDT",
+#'                 "total": "0.02",
+#'                 "available": "0.02",
+#'                 "hold": "0",
+#'                 "liability": "0",
+#'                 "maxBorrowSize": "0",
+#'                 "borrowEnabled": true,
+#'                 "transferInEnabled": true
+#'             }
+#'         ]
+#'     }
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' keys <- get_api_keys()
@@ -491,17 +520,62 @@ get_cross_margin_account_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_cross_margin_account_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_cross_margin_account_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
-        summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status")
-        summary_dt <- data.table::as.data.table(data_obj[summary_fields])
-        accounts_dt <- data.table::as.data.table(data_obj$accounts)
+        if (is.null(data_obj) || length(data_obj$accounts) < 1) {
+            return(data.table::data.table(
+                totalAssetOfQuoteCurrency = character(0),
+                totalLiabilityOfQuoteCurrency = character(0),
+                debtRatio = character(0),
+                status = character(0),
+                # ----
+                currency = character(0),
+                total = numeric(0),
+                available = numeric(0),
+                hold = numeric(0),
+                liability = numeric(0),
+                maxBorrowSize = numeric(0),
+                borrowEnabled = logical(0),
+                transferInEnabled = logical(0)
+            ))
+        }
 
-        return(list(summary = summary_dt, accounts = accounts_dt))
+        # summary fields
+        totalAssetOfQuoteCurrency <- as.numeric(data_obj$totalAssetOfQuoteCurrency)
+        totalLiabilityOfQuoteCurrency <- as.numeric(data_obj$totalLiabilityOfQuoteCurrency)
+        debtRatio <- as.numeric(data_obj$debtRatio)
+        status <- as.character(data_obj$status)
+
+        # accounts to be reformated into a data.table
+        accounts_dt <- data.table::rbindlist(data_obj$accounts)
+
+
+        accounts_dt[, `:=`(
+            totalAssetOfQuoteCurrency = as.numeric(totalAssetOfQuoteCurrency),
+            totalLiabilityOfQuoteCurrency = as.numeric(totalLiabilityOfQuoteCurrency),
+            debtRatio = as.numeric(debtRatio),
+            status = as.character(status),
+            # ----
+            currency = as.character(currency),
+            total = as.numeric(total),
+            available = as.numeric(available),
+            hold = as.numeric(hold),
+            liability = as.numeric(liability),
+            maxBorrowSize = as.numeric(maxBorrowSize),
+            borrowEnabled = as.logical(borrowEnabled),
+            transferInEnabled = as.logical(transferInEnabled)
+        )]
+
+        data.table::setcolorder(accounts_dt, c(
+            "totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status",
+            "currency", "total", "available", "hold", "liability", "maxBorrowSize", "borrowEnabled", "transferInEnabled"
+        ))
+
+        return(accounts_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
     })

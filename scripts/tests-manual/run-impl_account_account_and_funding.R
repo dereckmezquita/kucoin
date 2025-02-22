@@ -14,7 +14,6 @@ box::use(
     later[loop_empty, run_now]
 )
 
-# Define the asynchronous main function
 main_async <- async(function() {
     # Obtain API keys and base URL
     keys <- get_api_keys()
