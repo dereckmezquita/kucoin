@@ -385,7 +385,7 @@ get_spot_account_list_impl <- coro::async(function(
 
 #' Retrieve Spot Account Details
 #'
-#' Fetches detailed financial metrics for a specific spot account from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, using the account ID.
+#' Fetches detailed financial metrics for a specific spot account from the KuCoin API asynchronously.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v1/accounts/{accountId}`, embedding `accountId`.
@@ -403,10 +403,10 @@ get_spot_account_list_impl <- coro::async(function(
 #' [KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param accountId Character string; unique account ID (e.g., from `get_spot_account_detail_impl()`).
@@ -417,11 +417,8 @@ get_spot_account_list_impl <- coro::async(function(
 #'   - `holds` (numeric): Funds on hold.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
-#' accountId <- "123456789"
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_spot_account_detail_impl(keys = keys, base_url = base_url, accountId = accountId))
+#'   dt <- await(get_spot_account_detail_impl(accountId = "123456789"))
 #'   print(dt)
 #' })
 #' main_async()
@@ -492,10 +489,10 @@ get_spot_account_detail_impl <- coro::async(function(
 #' [KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param query Named list of query parameters:
