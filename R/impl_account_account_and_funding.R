@@ -511,7 +511,8 @@ get_spot_account_detail_impl <- coro::async(function(
 #'   - `maxBorrowSize` (numeric): Maximum borrowable amount for the account.
 #'   - `borrowEnabled` (logical): Whether borrowing is enabled for the account.
 #'   - `transferInEnabled` (logical): Whether transfer-in is enabled for the account.
-#'   If no data is present (e.g., no accounts or failed request), returns an empty `data.table` with the same columns.
+#'   If no data is present (e.g., no accounts), returns an empty `data.table` with the same columns.
+#'   The function combines summary metrics (e.g., `totalAssetOfQuoteCurrency`) with individual account details into a single table, repeating summary values across each account row if multiple accounts are present.
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
@@ -541,15 +542,11 @@ get_spot_account_detail_impl <- coro::async(function(
 #'     }
 #' }
 #' ```
-#' The function combines summary metrics (e.g., `totalAssetOfQuoteCurrency`) with individual account details into a single table, repeating summary values across each account row if multiple accounts are present.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
-#' query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
 #' main_async <- coro::async(function() {
-#'   result <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url, query = query))
-#'   print(result)  # Prints the combined data.table
+#'   result <- await(get_cross_margin_account_impl(query = list(quoteCurrency = "USDT", queryType = "MARGIN")))
+#'   print(result)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -605,10 +602,10 @@ get_cross_margin_account_impl <- coro::async(function(
         status <- as.character(data_obj$status)
 
         # accounts to be reformated into a data.table
-        accounts_dt <- data.table::rbindlist(data_obj$accounts)
+        result_dt <- data.table::rbindlist(data_obj$accounts)
 
 
-        accounts_dt[, `:=`(
+        result_dt[, `:=`(
             totalAssetOfQuoteCurrency = as.numeric(totalAssetOfQuoteCurrency),
             totalLiabilityOfQuoteCurrency = as.numeric(totalLiabilityOfQuoteCurrency),
             debtRatio = as.numeric(debtRatio),
@@ -624,12 +621,12 @@ get_cross_margin_account_impl <- coro::async(function(
             transferInEnabled = as.logical(transferInEnabled)
         )]
 
-        data.table::setcolorder(accounts_dt, c(
+        data.table::setcolorder(result_dt, c(
             "totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status",
             "currency", "total", "available", "hold", "liability", "maxBorrowSize", "borrowEnabled", "transferInEnabled"
         ))
 
-        return(accounts_dt[])
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_cross_margin_account_impl:", conditionMessage(e)))
     })
