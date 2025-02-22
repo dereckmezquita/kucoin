@@ -78,7 +78,7 @@ box::use(
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
-#'   data <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
+#'   data <- await(get_account_summary_info_impl())
 #'   print(data)
 #' })
 #' main_async()
@@ -137,7 +137,7 @@ get_account_summary_info_impl <- coro::async(function(
 
 #' Retrieve API Key Information (Implementation)
 #'
-#' Fetches detailed API key metadata from the KuCoin API asynchronously. This internal function is intended for use within an R6 class and is not meant for direct end-user consumption, providing details such as permissions and creation time.
+#' Fetches detailed API key metadata from the KuCoin API asynchronously, providing details such as permissions and creation time.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v1/user/api-key`.
@@ -149,34 +149,32 @@ get_account_summary_info_impl <- coro::async(function(
 #' `GET https://api.kucoin.com/api/v1/user/api-key`
 #'
 #' ### Usage
-#' Utilised internally by the `KucoinAccountAndFunding` class to expose API key details.
+#' Utilised internally by the `KucoinAccountAndFunding` class to get API key details.
 #'
 #' ### Official Documentation
 #' [KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a `data.table` containing:
-#'   - `uid` (integer): Account UID.
+#'   - `uid` (numeric): Account UID.
 #'   - `subName` (character, optional): Sub-account name (if applicable).
 #'   - `remark` (character): API key remarks.
 #'   - `apiKey` (character): API key string.
-#'   - `apiVersion` (integer): API version.
+#'   - `apiVersion` (numeric): API version.
 #'   - `permission` (character): Comma-separated permissions list (e.g., "General, Spot").
 #'   - `ipWhitelist` (character, optional): IP whitelist.
 #'   - `isMaster` (logical): Master account indicator.
-#'   - `createdAt` (integer): Creation time in milliseconds.
+#'   - `createdAt` (numeric): Creation time in milliseconds.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_apikey_info_impl(keys = keys, base_url = base_url))
+#'   dt <- await(get_apikey_info_impl())
 #'   print(dt)
 #' })
 #' main_async()
@@ -203,7 +201,23 @@ get_apikey_info_impl <- coro::async(function(
 
         parsed_response <- process_kucoin_response(response, url)
         # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_apikey_info_impl.Rds")
-        return(data.table::as.data.table(parsed_response$data))
+
+        data_obj <- parsed_response$data
+        # TODO: review and validate
+        if (is.null(data_obj)) {
+            return(data.table::data.table(
+                uid = numeric(0),
+                subName = character(0),
+                remark = character(0),
+                apiKey = character(0),
+                apiVersion = character(0),
+                permission = character(0),
+                ipWhiteList = character(0),
+                isMaster = logical(0),
+                createdAt = numeric(0)
+            ))
+        }
+        return(data.table::as.data.table(data_obj))
     }, error = function(e) {
         rlang::abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
     })
