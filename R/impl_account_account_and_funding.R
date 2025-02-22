@@ -49,6 +49,33 @@ box::use(
 #'   - `maxMarginSubQuantity` (integer): Maximum additional margin sub-accounts.
 #'   - `maxFuturesSubQuantity` (integer): Maximum additional futures sub-accounts.
 #'   - `maxOptionSubQuantity` (integer): Maximum additional option sub-accounts.
+#' 
+#' @details
+#' **Raw Response Schema**:
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object)
+#' 
+#' Example JSON response:
+#' ```
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "level": 0,
+#'         "subQuantity": 3,
+#'         "spotSubQuantity": 3,
+#'         "marginSubQuantity": 2,
+#'         "futuresSubQuantity": 2,
+#'         "optionSubQuantity": 0,
+#'         "maxSubQuantity": 5,
+#'         "maxDefaultSubQuantity": 5,
+#'         "maxSpotSubQuantity": 0,
+#'         "maxMarginSubQuantity": 0,
+#'         "maxFuturesSubQuantity": 0,
+#'         "maxOptionSubQuantity": 0
+#'     }
+#' }
+#' ```
+#' 
 #' @examples
 #' \dontrun{
 #' keys <- get_api_keys()
@@ -77,11 +104,41 @@ get_account_summary_info_impl <- coro::async(function(
 
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_account_summary_info_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_account_summary_info_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_account_summary_info_impl.Rds")
-        return(data.table::as.data.table(parsed_response$data))
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_account_summary_info_impl.Rds")
+
+        data_obj <- parsed_response$data
+
+        if (parsed_response$code != "200000") {
+            parsed_response_json <- httr::content(response, as = "text")
+            # NOTE: if error a msg is returned - https://www.kucoin.com/docs/basic-info/connection-method/request/error-response
+            rlang::abort(paste("Error in get account_summary_info_impl:", data_obj$msg, "\nReceived JSON:\n", parsed_response_json))
+        }
+
+        if (is.null(data_obj) || length(data_obj) == 0) {
+            return(data.table::data.table(
+                level = numeric(0),
+                subQuantity = numeric(0),
+                spotSubQuantity = numeric(0),
+                marginSubQuantity = numeric(0),
+                futuresSubQuantity = numeric(0),
+                optionSubQuantity = numeric(0),
+                maxSubQuantity = numeric(0),
+                maxDefaultSubQuantity = numeric(0),
+                maxSpotSubQuantity = numeric(0),
+                maxMarginSubQuantity = numeric(0),
+                maxFuturesSubQuantity = numeric(0),
+                maxOptionSubQuantity = numeric(0)
+            ))
+        }
+
+        result_dt <- data.table::as.data.table(parsed_response$data)
+
+        # convert all cols to numeric
+        result_dt[, names(result_dt) := lapply(.SD, as.numeric)]
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_account_summary_info_impl:", conditionMessage(e)))
     })
