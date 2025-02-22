@@ -634,7 +634,7 @@ get_cross_margin_account_impl <- coro::async(function(
 
 #' Retrieve Isolated Margin Account Information
 #'
-#' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, segregating collateral by pair.
+#' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/isolated/accounts` and a query string from `build_query()`.
@@ -652,23 +652,23 @@ get_cross_margin_account_impl <- coro::async(function(
 #' [KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param query Named list of query parameters:
 #'   - `symbol` (character, optional): Trading pair (e.g., `"BTC-USDT"`).
 #'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
 #'   - `queryType` (character, optional): Type (`"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`; default `"ISOLATED"`).
-#' @return Promise resolving to a named list containing:
-#'   - `summary`: `data.table` with:
+#' @return Promise resolving to a data.table with summary values (repeated) and the asset values:
+#'   - summary values (repeated):
 #'     - `totalAssetOfQuoteCurrency` (character): Total assets.
 #'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
-#'     - `timestamp` (integer): Timestamp in milliseconds.
-#'     - `datetime` (POSIXct): Converted datetime.
-#'   - `assets`: `data.table` with:
+#'     - `timestamp` (numeric): Timestamp in milliseconds.
+#'     - `timestamp_datetime` (POSIXct): Converted datetime.
+#'   - assets values:
 #'     - `symbol` (character): Trading pair.
 #'     - `status` (character): Position status.
 #'     - `debtRatio` (character): Debt ratio.
@@ -690,11 +690,8 @@ get_cross_margin_account_impl <- coro::async(function(
 #'     - `quote_maxBorrowSize` (character): Quote max borrowable.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
-#' query <- list(symbol = "BTC-USDT", quoteCurrency = "USDT")
 #' main_async <- coro::async(function() {
-#'   result <- await(get_isolated_margin_account_impl(keys = keys, base_url = base_url, query = query))
+#'   result <- await(get_isolated_margin_account_impl(query = list(symbol = "BTC-USDT", quoteCurrency = "USDT")))
 #'   print(result$summary)
 #'   print(result$assets)
 #' })
@@ -727,9 +724,43 @@ get_isolated_margin_account_impl <- coro::async(function(
         # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
-        summary_fields <- c("totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "timestamp")
-        summary_dt <- data.table::as.data.table(data_obj[summary_fields])
-        summary_dt[, datetime := time_convert_from_kucoin(timestamp, "ms")]
+        #'   - summary values (repeated):
+        #'     - `totalAssetOfQuoteCurrency` (character): Total assets.
+        #'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
+        #'     - `timestamp` (numeric): Timestamp in milliseconds.
+        #'     - `timestamp_datetime` (POSIXct): Converted datetime.
+        #'   - assets values:
+
+
+        # TODO: verify end point and default return
+        if (is.null(data_obj)) {
+            return(data.table::data.table(
+                totalAssetOfQuoteCurrency = character(0),
+                totalLiabilityOfQuoteCurrency = character(0),
+                timestamp = numeric(0),
+                timestamp_datetime = lubridate::as_datetime(0),
+                symbol = character(0),
+                status = character(0),
+                debtRatio = character(0),
+                base_currency = character(0),
+                base_borrowEnabled = logical(0),
+                base_transferInEnabled = logical(0),
+                base_liability = character(0),
+                base_total = character(0),
+                base_available = character(0),
+                base_hold = character(0),
+                base_maxBorrowSize = character(0),
+                quote_currency = character(0),
+                quote_borrowEnabled = logical(0),
+                quote_transferInEnabled = logical(0),
+                quote_liability = character(0),
+                quote_total = character(0),
+                quote_available = character(0),
+                quote_hold = character(0),
+                quote_maxBorrowSize = character(0)
+            ))
+        }
+
 
         assets_list <- lapply(data_obj$assets, function(asset) {
             top <- asset
@@ -745,7 +776,41 @@ get_isolated_margin_account_impl <- coro::async(function(
 
             cbind(dt_row, base, quote)
         })
-        assets_dt <- data.table::rbindlist(assets_list)
+
+        result_dt <- data.table::rbindlist(assets_list)
+
+        taoqc <- as.character(data_obj$totalAssetOfQuoteCurrency)
+        tloqc <- as.character(data_obj$totalLiabilityOfQuoteCurrency)
+        timestamp <- as.numeric(data_obj$timestamp)
+        timestamp_datetime <- lubridate::as_datetime(time_convert_from_kucoin(data_obj$timestamp, "ms"))
+
+        result_dt[, `:=`(
+            # summary values
+            totalAssetOfQuoteCurrency = taoqc,
+            totalLiabilityOfQuoteCurrency = tloqc,
+            timestamp = timestamp,
+            timestamp_datetime = timestamp_datetime,
+            # assets
+            as.character(symbol),
+            as.character(status),
+            as.character(debtRatio),
+            as.character(base_currency),
+            as.logical(base_borrowEnabled),
+            as.logical(base_transferInEnabled),
+            as.character(base_liability),
+            as.character(base_total),
+            as.character(base_available),
+            as.character(base_hold),
+            as.character(base_maxBorrowSize),
+            as.character(quote_currency),
+            as.logical(quote_borrowEnabled),
+            as.logical(quote_transferInEnabled),
+            as.character(quote_liability),
+            as.character(quote_total),
+            as.character(quote_available),
+            as.character(quote_hold),
+            as.character(quote_maxBorrowSize)
+        )]
 
         return(list(summary = summary_dt, assets = assets_dt))
     }, error = function(e) {
