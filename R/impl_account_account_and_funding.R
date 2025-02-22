@@ -525,7 +525,7 @@ get_cross_margin_account_impl <- coro::async(function(
         # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
-        if (is.null(data_obj) || length(data_obj$accounts) < 1) {
+        if (parsed_response$code != "200000" || is.null(data_obj) || length(data_obj$accounts) < 1) {
             return(data.table::data.table(
                 totalAssetOfQuoteCurrency = numeric(0),
                 totalLiabilityOfQuoteCurrency = numeric(0),
