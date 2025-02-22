@@ -727,10 +727,12 @@ get_isolated_margin_account_impl <- coro::async(function(
         # TODO: verify end point and default return
         if (is.null(data_obj)) {
             return(data.table::data.table(
+                # summary
                 totalAssetOfQuoteCurrency = character(0),
                 totalLiabilityOfQuoteCurrency = character(0),
                 timestamp = numeric(0),
                 timestamp_datetime = lubridate::as_datetime(0),
+                # assets
                 symbol = character(0),
                 status = character(0),
                 debtRatio = character(0),
