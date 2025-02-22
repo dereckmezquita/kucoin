@@ -416,13 +416,13 @@ get_spot_account_detail_impl <- coro::async(function(
 
 #' Retrieve Cross Margin Account Information (Implementation)
 #'
-#' Fetches cross margin account details from the KuCoin API asynchronously, including overall metrics and individual accounts. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
+#' Fetches cross margin account details from the KuCoin API asynchronously, combining overall metrics and individual account details into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/margin/accounts` and a query string from `build_query()`.
 #' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
 #' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
-#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, splitting the `"data"` field into `summary` and `accounts` `data.table` objects.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, transforming the `"data"` field into a single `data.table` with both summary metrics and account details.
 #'
 #' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v3/margin/accounts`
@@ -443,21 +443,20 @@ get_spot_account_detail_impl <- coro::async(function(
 #' @param query Named list of query parameters:
 #'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
 #'   - `queryType` (character, optional): Account type (`"MARGIN"`, `"MARGIN_V2"`, `"ALL"`; default `"MARGIN"`).
-#' @return Promise resolving to a named list containing:
-#'   - `summary`: `data.table` with:
-#'     - `totalAssetOfQuoteCurrency` (character): Total assets.
-#'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
-#'     - `debtRatio` (character): Debt ratio.
-#'     - `status` (character): Position status (e.g., `"EFFECTIVE"`).
-#'   - `accounts`: `data.table` with:
-#'     - `currency` (character): Currency code.
-#'     - `total` (character): Total funds.
-#'     - `available` (character): Available funds.
-#'     - `hold` (character): Funds on hold.
-#'     - `liability` (character): Liabilities.
-#'     - `maxBorrowSize` (character): Maximum borrowable amount.
-#'     - `borrowEnabled` (logical): Borrowing enabled.
-#'     - `transferInEnabled` (logical): Transfer-in enabled.
+#' @return Promise resolving to a `data.table` containing the following columns:
+#'   - `totalAssetOfQuoteCurrency` (numeric): Total assets in the quote currency across all accounts.
+#'   - `totalLiabilityOfQuoteCurrency` (numeric): Total liabilities in the quote currency across all accounts.
+#'   - `debtRatio` (numeric): Debt ratio for the cross margin account.
+#'   - `status` (character): Position status (e.g., `"EFFECTIVE"`).
+#'   - `currency` (character): Currency code of the individual account.
+#'   - `total` (numeric): Total funds in the account.
+#'   - `available` (numeric): Available funds in the account.
+#'   - `hold` (numeric): Funds on hold in the account.
+#'   - `liability` (numeric): Liabilities in the account.
+#'   - `maxBorrowSize` (numeric): Maximum borrowable amount for the account.
+#'   - `borrowEnabled` (logical): Whether borrowing is enabled for the account.
+#'   - `transferInEnabled` (logical): Whether transfer-in is enabled for the account.
+#'   If no data is present (e.g., no accounts or failed request), returns an empty `data.table` with the same columns.
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
@@ -487,6 +486,7 @@ get_spot_account_detail_impl <- coro::async(function(
 #'     }
 #' }
 #' ```
+#' The function combines summary metrics (e.g., `totalAssetOfQuoteCurrency`) with individual account details into a single table, repeating summary values across each account row if multiple accounts are present.
 #' @examples
 #' \dontrun{
 #' keys <- get_api_keys()
@@ -494,8 +494,7 @@ get_spot_account_detail_impl <- coro::async(function(
 #' query <- list(quoteCurrency = "USDT", queryType = "MARGIN")
 #' main_async <- coro::async(function() {
 #'   result <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url, query = query))
-#'   print(result$summary)
-#'   print(result$accounts)
+#'   print(result)  # Prints the combined data.table
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -528,9 +527,9 @@ get_cross_margin_account_impl <- coro::async(function(
 
         if (is.null(data_obj) || length(data_obj$accounts) < 1) {
             return(data.table::data.table(
-                totalAssetOfQuoteCurrency = character(0),
-                totalLiabilityOfQuoteCurrency = character(0),
-                debtRatio = character(0),
+                totalAssetOfQuoteCurrency = numeric(0),
+                totalLiabilityOfQuoteCurrency = numeric(0),
+                debtRatio = numeric(0),
                 status = character(0),
                 # ----
                 currency = character(0),
