@@ -10,7 +10,7 @@ box::use(
     rlang[abort]
 )
 
-#' Retrieve Account Summary Information (Implementation)
+#' Retrieve Account Summary Information
 #'
 #' Retrieves account summary information from the KuCoin API asynchronously.
 #'
@@ -135,7 +135,7 @@ get_account_summary_info_impl <- coro::async(function(
     })
 })
 
-#' Retrieve API Key Information (Implementation)
+#' Retrieve API Key Information
 #'
 #' Fetches detailed API key metadata from the KuCoin API asynchronously, providing details such as permissions and creation time.
 #'
@@ -223,7 +223,7 @@ get_apikey_info_impl <- coro::async(function(
     })
 })
 
-#' Determine Spot Account Type (Implementation)
+#' Determine Spot Account Type
 #'
 #' Determines whether the spot account is high-frequency or low-frequency from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, impacting asset transfer endpoints.
 #'
@@ -287,7 +287,7 @@ get_spot_account_type_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Spot Account List (Implementation)
+#' Retrieve Spot Account List
 #'
 #' Fetches a list of spot accounts from the KuCoin API asynchronously with optional filters. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, returning financial metrics in a `data.table`.
 #'
@@ -387,7 +387,7 @@ get_spot_account_list_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Spot Account Details (Implementation)
+#' Retrieve Spot Account Details
 #'
 #' Fetches detailed financial metrics for a specific spot account from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, using the account ID.
 #'
@@ -476,7 +476,7 @@ get_spot_account_detail_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Cross Margin Account Information (Implementation)
+#' Retrieve Cross Margin Account Information
 #'
 #' Fetches cross margin account details from the KuCoin API asynchronously, combining overall metrics and individual account details into a single `data.table`
 #'
@@ -642,7 +642,7 @@ get_cross_margin_account_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Isolated Margin Account Information (Implementation)
+#' Retrieve Isolated Margin Account Information
 #'
 #' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, segregating collateral by pair.
 #'
@@ -763,7 +763,7 @@ get_isolated_margin_account_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Spot Ledger Records (Implementation)
+#' Retrieve Spot Ledger Records
 #'
 #' Fetches detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, aggregating transaction histories into a `data.table`.
 #'
