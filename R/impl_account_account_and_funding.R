@@ -225,7 +225,7 @@ get_apikey_info_impl <- coro::async(function(
 
 #' Determine Spot Account Type
 #'
-#' Determines whether the spot account is high-frequency or low-frequency from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, impacting asset transfer endpoints.
+#' Determines whether the spot account is high-frequency or low-frequency from the KuCoin API asynchronously.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v1/hf/accounts/opened`.
@@ -243,19 +243,17 @@ get_apikey_info_impl <- coro::async(function(
 #' [KuCoin Get Account Type Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a logical value: `TRUE` for high-frequency, `FALSE` for low-frequency.
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
-#'   is_high_freq <- await(get_spot_account_type_impl(keys = keys, base_url = base_url))
+#'   is_high_freq <- await(get_spot_account_type_impl())
 #'   print(is_high_freq)
 #' })
 #' main_async()
@@ -281,7 +279,8 @@ get_spot_account_type_impl <- coro::async(function(
 
         parsed_response <- process_kucoin_response(response, url)
         # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_type_impl.Rds")
-        return(parsed_response$data)
+
+        return(as.logical(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_type_impl:", conditionMessage(e)))
     })
