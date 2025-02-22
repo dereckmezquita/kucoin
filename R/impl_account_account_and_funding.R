@@ -111,12 +111,6 @@ get_account_summary_info_impl <- coro::async(function(
 
         data_obj <- parsed_response$data
 
-        if (parsed_response$code != "200000") {
-            parsed_response_json <- httr::content(response, as = "text")
-            # NOTE: if error a msg is returned - https://www.kucoin.com/docs/basic-info/connection-method/request/error-response
-            rlang::abort(paste("Error in get account_summary_info_impl:", data_obj$msg, "\nReceived JSON:\n", parsed_response_json))
-        }
-
         if (is.null(data_obj) || length(data_obj) == 0) {
             return(data.table::data.table(
                 level = numeric(0),
@@ -582,8 +576,7 @@ get_cross_margin_account_impl <- coro::async(function(
         # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
-        # TODO: reconsider this and instead maybe always return a list(code, data) so users can handle
-        if (parsed_response$code != "200000" || is.null(data_obj) || length(data_obj$accounts) < 1) {
+        if (is.null(data_obj) || length(data_obj$accounts) < 1) {
             return(data.table::data.table(
                 totalAssetOfQuoteCurrency = numeric(0),
                 totalLiabilityOfQuoteCurrency = numeric(0),

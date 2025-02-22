@@ -232,7 +232,11 @@ process_kucoin_response <- function(response, url = "") {
         if ("msg" %in% names(parsed_response)) {
             error_msg <- parsed_response$msg
         }
-        rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
+        rlang::abort(paste0(
+            "KuCoin API returned an error status code: ", parsed_response$code, " - ", error_msg,
+            "\nURL :", url,
+            "\nReceived JSON:\n", response_text
+        ))
     }
 
     return(parsed_response)
