@@ -22,22 +22,22 @@ main_async <- async(function() {
 
     # 1. Retrieve account summary information
     account_summary <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
-    print("Account Summary:")
+    cat("Account Summary:\n")
     print(account_summary)
 
     # 2. Retrieve API key information
     apikey_info <- await(get_apikey_info_impl(keys = keys, base_url = base_url))
-    print("API Key Info:")
+    cat("API Key Info:\n")
     print(apikey_info)
 
     # 3. Determine spot account type (high-frequency or low-frequency)
     spot_account_type <- await(get_spot_account_type_impl(keys = keys, base_url = base_url))
-    print("Spot Account Type (High-Frequency):")
+    cat("Spot Account Type (High-Frequency):\n")
     print(spot_account_type)
 
     # 4. Retrieve list of spot accounts
     spot_accounts <- await(get_spot_account_list_impl(keys = keys, base_url = base_url))
-    print("Spot Accounts:")
+    cat("Spot Accounts:\n")
     print(spot_accounts)
 
     # 5. Retrieve details for the first spot account (if available)
@@ -48,15 +48,15 @@ main_async <- async(function() {
             base_url = base_url,
             accountId = accountId
         ))
-        print("Spot Account Detail for first account:")
+        cat("Spot Account Detail for first account:\n")
         print(spot_account_detail)
     }
 
     # 6. Retrieve cross margin account information
     cross_margin <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url))
-    print("Cross Margin Account Summary:")
+    cat("Cross Margin Account Summary:\n")
     print(cross_margin$summary)
-    print("Cross Margin Accounts:")
+    cat("Cross Margin Accounts:\n")
     print(cross_margin$accounts)
 
     # 7. Retrieve isolated margin account information for BTC-USDT
@@ -64,9 +64,9 @@ main_async <- async(function() {
         keys = keys,
         base_url = base_url
     ))
-    print("Isolated Margin Account Summary:")
+    cat("Isolated Margin Account Summary:\n")
     print(isolated_margin$summary)
-    print("Isolated Margin Assets:")
+    cat("Isolated Margin Assets:\n")
     print(isolated_margin$assets)
 
     # 8. Retrieve spot ledger records (first page only for simplicity)
@@ -74,7 +74,7 @@ main_async <- async(function() {
         keys = keys,
         base_url = base_url
     ))
-    print("Spot Ledger Records (first page):")
+    cat("Spot Ledger Records (first page):\n")
     print(spot_ledger)
 })
 

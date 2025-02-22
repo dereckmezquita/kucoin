@@ -1,15 +1,15 @@
 # File: ./R/helpers_api.R
 
-# box::use(
-#   ./utils[get_base_url],
-#   httr[GET, timeout, content, status_code, add_headers],
-#   jsonlite[fromJSON],
-#   rlang[error_cnd, abort],
-#   promises[promise],
-#   digest[hmac],
-#   base64enc[base64encode],
-#   coro[async, await]
-# )
+box::use(
+    ./utils[get_base_url],
+    httr[GET, timeout, content, status_code, add_headers],
+    jsonlite[fromJSON],
+    rlang[error_cnd, abort],
+    promises[promise],
+    digest[hmac],
+    base64enc[base64encode],
+    coro[async, await]
+)
 
 #' Retrieve Server Time from KuCoin Futures API
 #'
