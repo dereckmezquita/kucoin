@@ -724,14 +724,6 @@ get_isolated_margin_account_impl <- coro::async(function(
         # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
         data_obj <- parsed_response$data
 
-        #'   - summary values (repeated):
-        #'     - `totalAssetOfQuoteCurrency` (character): Total assets.
-        #'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
-        #'     - `timestamp` (numeric): Timestamp in milliseconds.
-        #'     - `timestamp_datetime` (POSIXct): Converted datetime.
-        #'   - assets values:
-
-
         # TODO: verify end point and default return
         if (is.null(data_obj)) {
             return(data.table::data.table(
@@ -760,7 +752,6 @@ get_isolated_margin_account_impl <- coro::async(function(
                 quote_maxBorrowSize = character(0)
             ))
         }
-
 
         assets_list <- lapply(data_obj$assets, function(asset) {
             top <- asset
