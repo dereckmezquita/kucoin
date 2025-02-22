@@ -12,11 +12,11 @@ box::use(
 
 #' Retrieve Account Summary Information (Implementation)
 #'
-#' Retrieves account summary information from the KuCoin API asynchronously. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It fetches details such as VIP level, sub-account counts, and limits.
+#' Retrieves account summary information from the KuCoin API asynchronously.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with the endpoint `/api/v2/user-info`.
-#' 2. **Header Preparation**: Constructs authentication headers using `build_headers()` with the HTTP method, endpoint, and an empty request body.
+#' 2. **Header Preparation**: Constructs timestamped authentication headers using `build_headers()` with the HTTP method, endpoint, and an empty request body.
 #' 3. **API Request**: Sends a GET request to the KuCoin API with a 3-second timeout via `httr::GET()`.
 #' 4. **Response Processing**: Processes the response with `process_kucoin_response()` and converts the `"data"` field into a `data.table`.
 #'
@@ -30,33 +30,32 @@ box::use(
 #' [KuCoin Get Account Summary Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): your KuCoin API key.
+#'   - `api_secret` (character): your KuCoin API secret.
+#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' 
 #' @return Promise resolving to a `data.table` containing:
-#'   - `level` (integer): User's VIP level.
-#'   - `subQuantity` (integer): Total number of sub-accounts.
-#'   - `spotSubQuantity` (integer): Number of spot trading sub-accounts.
-#'   - `marginSubQuantity` (integer): Number of margin trading sub-accounts.
-#'   - `futuresSubQuantity` (integer): Number of futures trading sub-accounts.
-#'   - `optionSubQuantity` (integer): Number of option trading sub-accounts.
-#'   - `maxSubQuantity` (integer): Maximum allowed sub-accounts (sum of `maxDefaultSubQuantity` and `maxSpotSubQuantity`).
-#'   - `maxDefaultSubQuantity` (integer): Maximum default sub-accounts based on VIP level.
-#'   - `maxSpotSubQuantity` (integer): Maximum additional spot sub-accounts.
-#'   - `maxMarginSubQuantity` (integer): Maximum additional margin sub-accounts.
-#'   - `maxFuturesSubQuantity` (integer): Maximum additional futures sub-accounts.
-#'   - `maxOptionSubQuantity` (integer): Maximum additional option sub-accounts.
+#'   - `level` (numeric): User's VIP level.
+#'   - `subQuantity` (numeric): Total number of sub-accounts.
+#'   - `spotSubQuantity` (numeric): Number of spot trading sub-accounts.
+#'   - `marginSubQuantity` (numeric): Number of margin trading sub-accounts.
+#'   - `futuresSubQuantity` (numeric): Number of futures trading sub-accounts.
+#'   - `optionSubQuantity` (numeric): Number of option trading sub-accounts.
+#'   - `maxSubQuantity` (numeric): Maximum allowed sub-accounts (sum of `maxDefaultSubQuantity` and `maxSpotSubQuantity`).
+#'   - `maxDefaultSubQuantity` (numeric): Maximum default sub-accounts based on VIP level.
+#'   - `maxSpotSubQuantity` (numeric): Maximum additional spot sub-accounts.
+#'   - `maxMarginSubQuantity` (numeric): Maximum additional margin sub-accounts.
+#'   - `maxFuturesSubQuantity` (numeric): Maximum additional futures sub-accounts.
+#'   - `maxOptionSubQuantity` (numeric): Maximum additional option sub-accounts.
 #' 
 #' @details
 #' **Raw Response Schema**:
 #' - `code` (string): Status code, where `"200000"` indicates success.
-#' - `data` (object)
-#' 
-#' Example JSON response:
-#' ```
+#' - `data` (object): see below:
+#' ```json
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -78,11 +77,9 @@ box::use(
 #' 
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
-#'   print(dt)
+#'   data <- await(get_account_summary_info_impl(keys = keys, base_url = base_url))
+#'   print(data)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -467,7 +464,7 @@ get_spot_account_detail_impl <- coro::async(function(
 
 #' Retrieve Cross Margin Account Information (Implementation)
 #'
-#' Fetches cross margin account details from the KuCoin API asynchronously, combining overall metrics and individual account details into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
+#' Fetches cross margin account details from the KuCoin API asynchronously, combining overall metrics and individual account details into a single `data.table`
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/margin/accounts` and a query string from `build_query()`.
