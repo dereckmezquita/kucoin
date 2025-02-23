@@ -52,7 +52,6 @@ main_async <- async(function() {
     }
 
     # 6. Retrieve cross margin account information
-
     cross_margin <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url))
     cat("\nCross Margin Account Summary:\n")
     print(cross_margin$summary)
@@ -83,5 +82,5 @@ main_async()
 
 # Run the event loop until all tasks are completed
 while (!later::loop_empty()) {
-  later::run_now()
+    later::run_now(timeoutSecs = Inf, all = TRUE)
 }
