@@ -270,7 +270,9 @@ process_kucoin_response <- function(response, url = "") {
 #'   Defaults to `list(currentPage = "currentPage", totalPage = "totalPage")`.
 #' @param aggregate_fn Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.
 #' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
-#' @return Promise resolving to the aggregated result as defined by `aggregate_fn`.
+#' @return Promise resolving to a list containing:
+#'   - `aggregate`: The aggregated result as defined by `aggregate_fn`.
+#'   - `next_query`: A list of query parameters for the next page, if available; otherwise, `NULL`.
 #' @details
 #' **Raw Response Schema**:
 #' Example JSON response:
@@ -298,7 +300,8 @@ process_kucoin_response <- function(response, url = "") {
 #'     max_pages = 3,
 #'     aggregate_fn = aggregate
 #'   ))
-#'   print(result)
+#'   print(result$aggregate)
+#'   print(result$pagination)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -337,7 +340,16 @@ auto_paginate <- coro::async(function(
             # Prepare query for next page.
             query$currentPage <- currentPage + 1
         }
-        aggregate_fn(accumulator)
+
+        return(list(
+            aggregate = aggregate_fn(accumulator),
+            pagination = list(
+                currentPage = currentPage,
+                pageSize = response$pageSize,
+                totalNum = response$totalNum,
+                totalPage = response$totalPage
+            )
+        ))
     }, error = function(e) {
         stop("Error in auto_paginate: ", conditionMessage(e))
     })
