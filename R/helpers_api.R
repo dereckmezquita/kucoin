@@ -259,7 +259,7 @@ process_kucoin_response <- function(response, url = "") {
 #' Utilised to simplify retrieval of multi-page data from KuCoin API responses, aggregating results into a user-defined format.
 #'
 #' ### Official Documentation
-#' Not directly tied to a specific endpoint; see KuCoin API pagination guidelines.
+#' [KuCoin Pagination](https://www.kucoin.com/docs/basic-info/connection-method/pager/pagination)
 #'
 #' @param fetch_page Function fetching a page of results, returning a promise resolving to the response.
 #' @param query Named list of query parameters for the first page. Defaults to `list(currentPage = 1, pageSize = 50)`.
@@ -271,6 +271,18 @@ process_kucoin_response <- function(response, url = "") {
 #' @param aggregate_fn Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.
 #' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
 #' @return Promise resolving to the aggregated result as defined by `aggregate_fn`.
+#' @details
+#' **Raw Response Schema**:
+#' Example JSON response:
+#' ```
+#' {
+#'     "currentPage": 1,
+#'     "pageSize": 50,
+#'     "totalNum": 6,
+#'     "totalPage": 1,
+#'     "data": ...
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' fetch_page <- coro::async(function(query) {
