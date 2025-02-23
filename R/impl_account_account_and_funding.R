@@ -775,7 +775,7 @@ get_isolated_margin_account_impl <- coro::async(function(
         taoqc <- as.character(data_obj$totalAssetOfQuoteCurrency)
         tloqc <- as.character(data_obj$totalLiabilityOfQuoteCurrency)
         timestamp <- as.numeric(data_obj$timestamp)
-        timestamp_datetime <- lubridate::as_datetime(time_convert_from_kucoin(data_obj$timestamp, "ms"))
+        timestamp_datetime <- lubridate::as_datetime(time_convert_from_kucoin(timestamp, "ms"))
 
         result_dt[, `:=`(
             # summary values
