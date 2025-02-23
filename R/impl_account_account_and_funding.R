@@ -731,7 +731,7 @@ get_isolated_margin_account_impl <- coro::async(function(
                 totalAssetOfQuoteCurrency = character(0),
                 totalLiabilityOfQuoteCurrency = character(0),
                 timestamp = numeric(0),
-                timestamp_datetime = lubridate::as_datetime(0),
+                timestamp_datetime = lubridate::as_datetime(character(0)),
                 # assets
                 symbol = character(0),
                 status = character(0),
