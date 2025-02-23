@@ -93,6 +93,7 @@ get_account_summary_info_impl <- coro::async(function(
     keys = get_api_keys(),
     base_url = get_base_url()
 ) {
+    # VERIFIED: saved RDS 2025-02-23 15h30
     tryCatch({
         endpoint <- "/api/v2/user-info"
         method <- "GET"
