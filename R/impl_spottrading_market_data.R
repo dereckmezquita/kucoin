@@ -93,7 +93,7 @@ get_announcements_impl <- coro::async(function(
             return(parsed_response$data)
         })
         
-        # Use the auto_paginate helper to fetch and aggregate all pages.
+        # TOOD: updated return signature
         aggregated <- await(auto_paginate(
             fetch_page = fetch_page,
             query = query,

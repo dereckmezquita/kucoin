@@ -917,6 +917,7 @@ get_spot_ledger_impl <- coro::async(function(
             return(parsed_response$data)
         })
 
+        # TOOD: updated return signature
         result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,

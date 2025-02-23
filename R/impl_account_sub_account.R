@@ -259,7 +259,7 @@ get_subaccount_list_summary_impl <- coro::async(function(
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # Automatically paginate through all pages using the auto_paginate helper.
+        # TOOD: updated return signature
         subaccount_summary_dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
@@ -671,7 +671,7 @@ get_subaccount_spot_v2_impl <- coro::async(function(
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # Automatically paginate through all pages using the auto_paginate helper.
+        # TOOD: updated return signature
         spot_subaccount_list_dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,

@@ -359,7 +359,7 @@ get_deposit_history_impl <- coro::async(function(
             initial_query$endAt <- as.integer(endAt)
         }
 
-        # Fetch and aggregate deposit history using auto_paginate
+        # TOOD: updated return signature
         deposit_history_dt <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
