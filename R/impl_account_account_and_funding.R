@@ -29,6 +29,9 @@ box::use(
 #' ### Official Documentation
 #' [KuCoin Get Account Summary Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info)
 #'
+#' ### Validated Function
+#' - 2025-02-23 15h30
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
 #'   - `api_secret` (character): your KuCoin API secret.
@@ -154,6 +157,9 @@ get_account_summary_info_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get API Key Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-apikey-info)
+#' 
+#' ### Function Validated
+#' - 2025-02-23 18h34
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
@@ -172,6 +178,25 @@ get_account_summary_info_impl <- coro::async(function(
 #'   - `ipWhitelist` (character, optional): IP whitelist.
 #'   - `isMaster` (logical): Master account indicator.
 #'   - `createdAt` (numeric): Creation time in milliseconds.
+#' @details
+#' **Raw Response Schema**:
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): see below:
+#' ```json
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "remark": "account1",
+#'         "apiKey": "6705f5c311545b000157d3eb",
+#'         "apiVersion": 3,
+#'         "permission": "General,Futures,Spot,Earn,InnerTransfer,Transfer,Margin",
+#'         "ipWhitelist": "203.**.154,103.**.34",
+#'         "createdAt": 1728443843000,
+#'         "uid": 165111215,
+#'         "isMaster": true
+#'     }
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
@@ -198,27 +223,53 @@ get_apikey_info_impl <- coro::async(function(
 
         url <- paste0(base_url, endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_apikey_info_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_apikey_info_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_apikey_info_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_apikey_info_impl.Rds")
 
         data_obj <- parsed_response$data
-        # TODO: review and validate
+
+        expected_cols <- c(
+            "uid", "subName", "remark", "apiKey", "apiVersion",
+            "permission", "ipWhitelist", "isMaster", "createdAt"
+        )
+
         if (is.null(data_obj)) {
             return(data.table::data.table(
                 uid = numeric(0),
                 subName = character(0),
                 remark = character(0),
                 apiKey = character(0),
-                apiVersion = character(0),
+                apiVersion = numeric(0),
                 permission = character(0),
-                ipWhiteList = character(0),
+                ipWhitelist = character(0),
                 isMaster = logical(0),
                 createdAt = numeric(0)
             ))
         }
-        return(data.table::as.data.table(data_obj))
+
+        result_dt <- data.table::as.data.table(data_obj)
+
+        missing_cols <- setdiff(expected_cols, names(result_dt))
+        for (col in missing_cols) {
+            result_dt[, (col) := NA_character_]
+        }
+
+        result_dt[, `:=`(
+            uid = as.numeric(uid),
+            subName = as.character(subName),
+            remark = as.character(remark),
+            apiKey = as.character(apiKey),
+            apiVersion = as.numeric(apiVersion),
+            permission = as.character(permission),
+            ipWhitelist = as.character(ipWhitelist),
+            isMaster = as.logical(isMaster),
+            createdAt = as.numeric(createdAt),
+            createdAt_datetime = time_convert_from_kucoin(createdAt, "ms")
+        )]
+        data.table::setcolorder(result_dt, expected_cols)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_apikey_info_impl:", conditionMessage(e)))
     })
