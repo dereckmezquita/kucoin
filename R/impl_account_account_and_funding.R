@@ -367,6 +367,9 @@ get_spot_account_type_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Account List Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-list-spot)
+#' 
+#' ### Function Validated
+#' - 2025-02-23 20h15
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
@@ -385,6 +388,39 @@ get_spot_account_type_impl <- coro::async(function(
 #'   - `balance` (numeric): Total funds.
 #'   - `available` (numeric): Available funds.
 #'   - `holds` (numeric): Funds on hold.
+#' @details
+#' **Raw Response Schema**:
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (array): Array of account objects:
+#'    - `id` (string): Account ID.
+#'    - `currency` (string): Currency code.
+#'    - `type` (string): enum (`"main"`, `"trade"`).
+#'    - `balance` (string): Total funds; float as string.
+#'    - `available` (string): Available funds; float as string.
+#'    - `holds` (string): Funds on hold; float as string.
+#' ```json
+#' {
+#'     "code": "200000",
+#'     "data": [
+#'         {
+#'             "id": "548674591753",
+#'             "currency": "USDT",
+#'             "type": "trade",
+#'             "balance": "26.66759503",
+#'             "available": "26.66759503",
+#'             "holds": "0"
+#'         },
+#'         {
+#'             "id": "63355cd156298d0001b66e61",
+#'             "currency": "USDT",
+#'             "type": "main",
+#'             "balance": "0.01",
+#'             "available": "0.01",
+#'             "holds": "0"
+#'         }
+#'     ]
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
@@ -414,13 +450,16 @@ get_spot_account_list_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_list_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_spot_account_list_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_list_impl.Rds")
-        account_dt <- data.table::rbindlist(parsed_response$data)
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_list_impl.Rds")
 
-        if (nrow(account_dt) == 0) {
+        data_obj <- parsed_response$data
+
+        result_dt <- data.table::rbindlist(data_obj)
+
+        if (nrow(result_dt) == 0) {
             return(data.table::data.table(
                 id        = character(0),
                 currency  = character(0),
@@ -431,7 +470,7 @@ get_spot_account_list_impl <- coro::async(function(
             ))
         }
 
-        account_dt[, `:=`(
+        result_dt[, `:=`(
             id        = as.character(id),
             currency  = as.character(currency),
             type      = as.character(type),
@@ -440,7 +479,7 @@ get_spot_account_list_impl <- coro::async(function(
             holds     = as.numeric(holds)
         )]
 
-        return(account_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_list_impl:", conditionMessage(e)))
     })
