@@ -294,6 +294,9 @@ get_apikey_info_impl <- coro::async(function(
 #' ### Official Documentation
 #' [KuCoin Get Account Type Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-type-spot)
 #'
+#' ### Function Validated
+#' - 2025-02-23 19h45
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
 #'   - `api_secret` (character): your KuCoin API secret.
@@ -302,6 +305,14 @@ get_apikey_info_impl <- coro::async(function(
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a logical value: `TRUE` for high-frequency, `FALSE` for low-frequency.
+#' 
+#' @details
+#' **Raw Response Schema**:
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (boolean): `true` for high-frequency, `false` for low-frequency.
+#' ```json
+#' {"code": "200000", "data": false}
+#' ```
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
