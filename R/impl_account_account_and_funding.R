@@ -29,7 +29,7 @@ box::use(
 #' ### Official Documentation
 #' [KuCoin Get Account Summary Info](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-summary-info)
 #'
-#' ### Validated Function
+#' ### Function Validated
 #' - 2025-02-23 15h30
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
