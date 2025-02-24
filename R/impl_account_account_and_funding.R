@@ -936,10 +936,11 @@ get_isolated_margin_account_impl <- coro::async(function(
 
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_isolated_margin_account_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_isolated_margin_account_impl.ignore.Rds")
 
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_isolated_margin_account_impl.Rds")
+
         data_obj <- parsed_response$data
 
         # TODO: verify end point and default return
@@ -1039,13 +1040,13 @@ get_isolated_margin_account_impl <- coro::async(function(
 
 #' Retrieve Spot Ledger Records
 #'
-#' Fetches detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption, aggregating transaction histories into a `data.table`.
+#' Fetches detailed ledger records for spot and margin accounts from the KuCoin API asynchronously with pagination, combining all records into a single `data.table`.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v1/accounts/ledgers`, merging query parameters with pagination settings.
 #' 2. **Header Preparation**: Constructs authentication headers using `build_headers()` within an inner async function.
-#' 3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function.
-#' 4. **Response Processing**: Aggregates `"items"` from each page into a `data.table` with `data.table::rbindlist()`, adding a `createdAtDatetime` column via `time_convert_from_kucoin()`.
+#' 3. **API Request**: Utilises `auto_paginate` to fetch all pages asynchronously via an inner `fetch_page` function with a 3-second timeout per request.
+#' 4. **Response Processing**: Aggregates `"items"` from each page into a `data.table` with `data.table::rbindlist()`, adding a `createdAt_datetime` column via `time_convert_from_kucoin()`.
 #'
 #' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v1/accounts/ledgers`
@@ -1056,43 +1057,163 @@ get_isolated_margin_account_impl <- coro::async(function(
 #' ### Official Documentation
 #' [KuCoin Get Account Ledgers Spot Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-ledgers-spot-margin)
 #'
+#' ### Function Validated
+#' - NOT VALIDATED: 2025-02-23 22h27
+#' 
+#' API is returning response with no items array.
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param query Named list of query parameters (excluding pagination):
-#'   - `currency` (character, optional): Filter by currency (up to 10).
-#'   - `direction` (character, optional): `"in"` or `"out"`.
-#'   - `bizType` (character, optional): Business type (e.g., `"DEPOSIT"`, `"TRANSFER"`).
-#'   - `startAt` (integer, optional): Start time in milliseconds.
-#'   - `endAt` (integer, optional): End time in milliseconds.
+#'   - `currency` (character vector, optional): Filter by currency. Supports up to 10 currencies (character vector) (e.g., `c("BTC", "ETH", "USDT")`). If not specified, all currencies are queried.
+#'   - `direction` (character, optional): Transaction direction; expected values: `"in"`, `"out"`.
+#'   - `bizType` (character, optional): Business type; expected values include `"DEPOSIT"`, `"WITHDRAW"`, `"TRANSFER"`, `"SUB_TRANSFER"`, `"TRADE_EXCHANGE"`, `"MARGIN_EXCHANGE"`, `"KUCOIN_BONUS"`, `"BROKER_TRANSFER"`, etc. (see **BizType Description** in Details).
+#'   - `startAt` (integer, optional): Start time in milliseconds (e.g., `1728663338000`). The time range (`startAt` to `endAt`) cannot exceed 24 hours.
+#'   - `endAt` (integer, optional): End time in milliseconds (e.g., `1728692138000`). If only one of `startAt` or `endAt` is provided, the other is automatically calculated to cover a 24-hour period.
 #' @param page_size Integer; number of results per page (10–500, default 50).
 #' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages).
-#' @return Promise resolving to a `data.table` containing:
-#'   - `id` (character): Ledger record ID.
-#'   - `currency` (character): Currency.
-#'   - `amount` (character): Transaction amount.
-#'   - `fee` (character): Transaction fee.
-#'   - `balance` (character): Post-transaction balance.
-#'   - `accountType` (character): Account type.
-#'   - `bizType` (character): Business type.
-#'   - `direction` (character): Transaction direction.
-#'   - `createdAt` (integer): Timestamp in milliseconds.
-#'   - `createdAtDatetime` (POSIXct): Converted datetime.
-#'   - `context` (character): Transaction context.
-#'   - `currentPage` (integer): Current page number.
-#'   - `pageSize` (integer): Page size.
-#'   - `totalNum` (integer): Total records.
-#'   - `totalPage` (integer): Total pages.
+#'
+#' @return Promise resolving to an aggregated (across pages) `data.table` containing the following columns:
+#'   - `id` (character): Unique ledger record ID.
+#'   - `currency` (character): Currency code (e.g., `"USDT"`).
+#'   - `amount` (numeric): The total amount of assets (fees included) involved in asset changes such as transactions, withdrawals, and bonus distributions; coerced from string.
+#'   - `fee` (numeric): Fees generated in transaction, withdrawal, etc.; coerced from string.
+#'   - `balance` (numeric): Remaining funds after the transaction; coerced from string.
+#'   - `accountType` (character): Master user account types; expected values: `"MAIN"`, `"TRADE"`, `"MARGIN"`, `"CONTRACT"`.
+#'   - `bizType` (character): Business type leading to changes in funds (e.g., `"SUB_TRANSFER"`); see **BizType Description** in Details.
+#'   - `direction` (character): Side of the transaction; expected values: `"in"`, `"out"`.
+#'   - `createdAt` (numeric): Time of the event in milliseconds.
+#'   - `createdAt_datetime` (POSIXct): Converted datetime from `createdAt`, with origin `"1970-01-01"` and UTC timezone.
+#'   - `context` (character): Business-related information such as order ID, serial no., etc. For `bizType = "TRADE_EXCHANGE"`, this includes trade details like order ID and trade ID.
+#'   - `currentPage` (numeric): Page number of the record.
+#'   - `pageSize` (numeric): Number of records per page.
+#'   - `totalNum` (numeric): Total number of records across all pages.
+#'   - `totalPage` (numeric): Total number of pages.
+#'   
+#'   If no records are returned (e.g., empty `items` array across all pages), returns an empty `data.table` with the same columns and no rows.
+#'
+#' @details
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object):
+#'   - `currentPage` (integer): Current request page.
+#'   - `pageSize` (integer): Number of results per request.
+#'   - `totalNum` (integer): Total number of records.
+#'   - `totalPage` (integer): Total number of pages.
+#'   - `items` (array): Array of ledger record objects:
+#'     - `id` (string): Unique identifier for the ledger record.
+#'     - `currency` (string): Currency.
+#'     - `amount` (string): The total amount of assets (fees included) involved in asset changes.
+#'     - `fee` (string): Fees generated in transaction, withdrawal, etc.
+#'     - `balance` (string): Remaining funds after the transaction.
+#'     - `accountType` (string): Master user account types: `"MAIN"`, `"TRADE"`, `"MARGIN"`, or `"CONTRACT"`.
+#'     - `bizType` (string): Business type leading to changes in funds (see **BizType Description**).
+#'     - `direction` (string): Side of the transaction: `"in"` or `"out"`.
+#'     - `createdAt` (integer <int64>): Time of the event in milliseconds.
+#'     - `context` (string): Business-related information such as order ID, serial no., etc. For `bizType = "TRADE_EXCHANGE"`, this includes additional trade info like order ID, trade ID, and trading pair.
+#'
+#' **BizType Description**:  
+#' The `bizType` field indicates the type of business activity that led to the ledger entry. Below is the complete list of possible `bizType` values and their descriptions:
+#' - `"Assets Transferred in After Upgrading"`: Assets transferred after V1 to V2 upgrading.
+#' - `"Deposit"`: Deposit.
+#' - `"Withdrawal"`: Withdrawal.
+#' - `"Transfer"`: Transfer.
+#' - `"Trade_Exchange"`: Trade.
+#' - `"Vote for Coin"`: Vote for a coin.
+#' - `"KuCoin Bonus"`: KuCoin Bonus.
+#' - `"Referral Bonus"`: Referral Bonus.
+#' - `"Rewards"`: Activities Rewards.
+#' - `"Distribution"`: Distribution, such as getting GAS by holding NEO.
+#' - `"Airdrop/Fork"`: Airdrop or fork.
+#' - `"Other rewards"`: Other rewards, except Vote, Airdrop, Fork.
+#' - `"Fee Rebate"`: Fee Rebate.
+#' - `"Buy Crypto"`: Use credit card to buy crypto.
+#' - `"Sell Crypto"`: Use credit card to sell crypto.
+#' - `"Public Offering Purchase"`: Public Offering Purchase for Spotlight.
+#' - `"Send red envelope"`: Send red envelope.
+#' - `"Open red envelope"`: Open red envelope.
+#' - `"Staking"`: Staking.
+#' - `"LockDrop Vesting"`: LockDrop Vesting.
+#' - `"Staking Profits"`: Staking Profits.
+#' - `"Redemption"`: Redemption.
+#' - `"Refunded Fees"`: Refunded Fees.
+#' - `"KCS Pay Fees"`: KCS Pay Fees.
+#' - `"Margin Trade"`: Margin Trade.
+#' - `"Loans"`: Loans.
+#' - `"Borrowings"`: Borrowings.
+#' - `"Debt Repayment"`: Debt Repayment.
+#' - `"Loans Repaid"`: Loans Repaid.
+#' - `"Lendings"`: Lendings.
+#' - `"Pool transactions"`: Pool-X transactions.
+#' - `"Instant Exchange"`: Instant Exchange.
+#' - `"Sub Account Transfer"`: Sub-account transfer.
+#' - `"Liquidation Fees"`: Liquidation Fees.
+#' - `"Soft Staking Profits"`: Soft Staking Profits.
+#' - `"Voting Earnings"`: Voting Earnings on Pool-X.
+#' - `"Redemption of Voting"`: Redemption of Voting on Pool-X.
+#' - `"Convert to KCS"`: Convert to KCS.
+#' - `"BROKER_TRANSFER"`: Broker transfer record.
+#'
+#' **Example JSON Response**:  
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "currentPage": 1,
+#'     "pageSize": 50,
+#'     "totalNum": 1,
+#'     "totalPage": 1,
+#'     "items": [
+#'       {
+#'         "id": "265329987780896",
+#'         "currency": "USDT",
+#'         "amount": "0.01",
+#'         "fee": "0",
+#'         "balance": "0",
+#'         "accountType": "TRADE",
+#'         "bizType": "SUB_TRANSFER",
+#'         "direction": "out",
+#'         "createdAt": 1728658481484,
+#'         "context": ""
+#'       }
+#'     ]
+#'   }
+#' }
+#' ```
+#' The function processes this response by:
+#' - Aggregating all `items` across pages into a single `data.table`.
+#' - Coercing string values (e.g., `amount`, `fee`, `balance`) to numeric for R compatibility.
+#' - Converting `createdAt` (milliseconds) to a `POSIXct` datetime in `createdAt_datetime`.
+#' - Retaining pagination metadata (`currentPage`, `pageSize`, etc.) for traceability, coerced to numeric.
+#'
+#' **Notes**:
+#' - The API enforces a 24-hour maximum time range between `startAt` and `endAt`. If only one is specified, the other is calculated to cover a 24-hour period. Exceeding 24 hours results in an error.
+#' - Supports up to 1 year of historical data; for longer periods, submit a ticket to KuCoin support.
+#' - For `bizType = "Trade_Exchange"`, the `context` field includes trade-specific details like order ID, trade ID, and trading pair.
+#' - Items are sorted to show the latest first.
+#'
+#' ### Use Cases
+#' - **Accounting and Reconciliation**: Track deposits, withdrawals, and transfers to reconcile account balances over time.
+#' - **Trading Activity Analysis**: Filter on `bizType = "Trade_Exchange"` to analyze trading history, using `context` for trade details like order and trade IDs.
+#' - **Bonus and Reward Tracking**: Monitor entries with `bizType` such as `"KuCoin Bonus"`, `"Referral Bonus"`, or `"Rewards"` to track incentive distributions.
+#' - **Margin and Lending Monitoring**: Use `bizType` values like `"Margin Trade"`, `"Loans"`, or `"Lendings"` to oversee margin and lending activities.
+#'
+#' ### Advice for Automated Trading Systems
+#' - **Pagination Management**: Set `page_size` to balance API call frequency and data volume. For large datasets, consider using a larger `page_size` (up to 500) to reduce the number of requests.
+#' - **Time Range Handling**: Since the API limits queries to 24-hour periods, split longer time ranges into multiple requests, each covering 24 hours or less.
+#' - **Data Volume Control**: Use `max_pages` to limit data retrieval during testing or when only recent data is needed (e.g., `max_pages = 1` for the latest page).
+#' - **Trade Linking**: For trade-related ledger entries (`bizType = "Trade_Exchange"`), parse the `context` field to extract order and trade IDs for linking with order and trade data.
+#' - **Error Handling**: Implement retry logic for requests that may fail due to rate limits or temporary issues, especially when fetching multiple pages.
+#'
 #' @examples
 #' \dontrun{
-#' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
 #' query <- list(
-#'   currency = "BTC",
+#'   currency = c("BTC", "ETH"), # Multiple currencies
 #'   direction = "in",
 #'   bizType = "TRANSFER",
 #'   startAt = 1728663338000L,
@@ -1100,17 +1221,16 @@ get_isolated_margin_account_impl <- coro::async(function(
 #' )
 #' main_async <- coro::async(function() {
 #'   dt <- await(get_spot_ledger_impl(
-#'     keys = keys,
-#'     base_url = base_url,
 #'     query = query,
-#'     page_size = 50L,
-#'     max_pages = 10
+#'     page_size = 100L,  # Larger page size for fewer requests
+#'     max_pages = Inf    # Fetches all pages
 #'   ))
 #'   print(dt)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table data.table as.data.table rbindlist
@@ -1127,6 +1247,10 @@ get_spot_ledger_impl <- coro::async(function(
     tryCatch({
         initial_query <- c(list(currentPage = 1, pageSize = page_size), query)
 
+        if (!is.null(initial_query$currencies)) {
+            initial_query$currencies <- paste0(initial_query$currencies, collapse = ",")
+        }
+
         fetch_page <- coro::async(function(q) {
             endpoint <- "/api/v1/accounts/ledgers"
             method <- "GET"
@@ -1137,9 +1261,9 @@ get_spot_ledger_impl <- coro::async(function(
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
             # file_name <- paste0("get_spot_ledger_impl_", q$current_page)
-            # saveRDS(response, paste0("./api-responses/impl_account_account_and_funding/response-", file_name, ".ignore.Rds"))
+            # saveRDS(response, paste0("../../api-responses/impl_account_account_and_funding/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
-            # saveRDS(parsed_response, paste0("./api-responses/impl_account_account_and_funding/parsed_response-", file_name, ".Rds"))
+            # saveRDS(parsed_response, paste0("../../api-responses/impl_account_account_and_funding/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
 
@@ -1152,26 +1276,39 @@ get_spot_ledger_impl <- coro::async(function(
             aggregate_fn = function(acc) {
                 if (length(acc) == 0 || all(sapply(acc, function(x) length(x) == 0))) {
                     return(data.table::data.table(
-                        id = character(),
-                        currency = character(),
-                        amount = character(),
-                        fee = character(),
-                        balance = character(),
-                        accountType = character(),
-                        bizType = character(),
-                        direction = character(),
-                        createdAt = integer(),
-                        context = character(),
-                        createdAtDatetime = lubridate::as_datetime(character())
+                        id = character(0),
+                        currency = character(0),
+                        amount = character(0),
+                        fee = character(0),
+                        balance = character(0),
+                        accountType = character(0),
+                        bizType = character(0),
+                        direction = character(0),
+                        context = character(0),
+                        createdAt = numeric(0),
+                        createdAt_datetime = lubridate::as_datetime(character(0)) 
                     ))
                 }
+                result_dt <- data.table::rbindlist(acc)
+                result_dt[, `:=`(
+                    id = as.character(id),
+                    currency = as.character(currency),
+                    amount = as.character(amount),
+                    fee = as.character(fee),
+                    balance = as.character(balance),
+                    accountType = as.character(accountType),
+                    bizType = as.character(bizType),
+                    direction = as.character(direction),
+                    context = as.character(context),
+                    createdAt = as.numeric(createdAt),
+                    createdAt_datetime = time_convert_from_kucoin(as.numeric(createdAt), "ms")
+                )]
 
-                data <- data.table::rbindlist(acc, fill = TRUE)
-                data[, createdAtDatetime := time_convert_from_kucoin(createdAt, "ms")]
-                return(data)
+                return(result_dt)
             },
             max_pages = max_pages
         ))
+
         return(result)
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_ledger_impl:", conditionMessage(e)))

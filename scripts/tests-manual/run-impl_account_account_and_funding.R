@@ -53,20 +53,16 @@ main_async <- async(function() {
 
     # 6. Retrieve cross margin account information
     cross_margin <- await(get_cross_margin_account_impl(keys = keys, base_url = base_url))
-    cat("\nCross Margin Account Summary:\n")
-    print(cross_margin$summary)
-    cat("\nCross Margin Accounts:\n")
-    print(cross_margin$accounts)
+    cat("\nCross Margin Account:\n")
+    print(cross_margin)
 
     # 7. Retrieve isolated margin account information for BTC-USDT
     isolated_margin <- await(get_isolated_margin_account_impl(
         keys = keys,
         base_url = base_url
     ))
-    cat("\nIsolated Margin Account Summary:\n")
-    print(isolated_margin$summary)
-    cat("\nIsolated Margin Assets:\n")
-    print(isolated_margin$assets)
+    cat("\nIsolated Margin Account:\n")
+    print(isolated_margin)
 
     # 8. Retrieve spot ledger records (first page only for simplicity)
     spot_ledger <- await(get_spot_ledger_impl(
