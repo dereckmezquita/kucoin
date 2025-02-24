@@ -771,13 +771,13 @@ get_cross_margin_account_impl <- coro::async(function(
 
 #' Retrieve Isolated Margin Account Information
 #'
-#' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs.
+#' Fetches isolated margin account details from the KuCoin API asynchronously for specific trading pairs, combining overall metrics and individual trading pair details into a single `data.table`.
 #'
 #' ### Workflow Overview
 #' 1. **URL Construction**: Combines the base URL (from `get_base_url()` or provided `base_url`) with `/api/v3/isolated/accounts` and a query string from `build_query()`.
 #' 2. **Header Preparation**: Constructs authentication headers using `build_headers()`.
 #' 3. **API Request**: Sends a GET request with a 3-second timeout via `httr::GET()`.
-#' 4. **Response Processing**: Processes the response with `process_kucoin_response()`, converting the `"data"` field into `summary` and flattened `assets` `data.table` objects, adding a `datetime` column.
+#' 4. **Response Processing**: Processes the response with `process_kucoin_response()` and transform the `"data"` field into a single `data.table` with both summary metrics and trading pair details.
 #'
 #' ### API Endpoint
 #' `GET https://api.kucoin.com/api/v3/isolated/accounts`
@@ -788,56 +788,137 @@ get_cross_margin_account_impl <- coro::async(function(
 #' ### Official Documentation
 #' [KuCoin Get Account Isolated Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-isolated-margin)
 #'
+#' ### Function Validated
+#' - 2025-02-23 21h44
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key` (character): your KuCoin API key.
-#'   - `api_secret` (character): your KuCoin API secret.
-#'   - `api_passphrase` (character): your KuCoin API passphrase.
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
 #'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param query Named list of query parameters:
 #'   - `symbol` (character, optional): Trading pair (e.g., `"BTC-USDT"`).
-#'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
-#'   - `queryType` (character, optional): Type (`"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`; default `"ISOLATED"`).
-#' @return Promise resolving to a data.table with summary values (repeated) and the asset values:
-#'   - summary values (repeated):
-#'     - `totalAssetOfQuoteCurrency` (character): Total assets.
-#'     - `totalLiabilityOfQuoteCurrency` (character): Total liabilities.
-#'     - `timestamp` (numeric): Timestamp in milliseconds.
-#'     - `timestamp_datetime` (POSIXct): Converted datetime.
-#'   - assets values:
-#'     - `symbol` (character): Trading pair.
-#'     - `status` (character): Position status.
-#'     - `debtRatio` (character): Debt ratio.
-#'     - `base_currency` (character): Base currency code.
-#'     - `base_borrowEnabled` (logical): Base borrowing enabled.
-#'     - `base_transferInEnabled` (logical): Base transfer-in enabled.
-#'     - `base_liability` (character): Base liability.
-#'     - `base_total` (character): Base total funds.
-#'     - `base_available` (character): Base available funds.
-#'     - `base_hold` (character): Base funds on hold.
-#'     - `base_maxBorrowSize` (character): Base max borrowable.
-#'     - `quote_currency` (character): Quote currency code.
-#'     - `quote_borrowEnabled` (logical): Quote borrowing enabled.
-#'     - `quote_transferInEnabled` (logical): Quote transfer-in enabled.
-#'     - `quote_liability` (character): Quote liability.
-#'     - `quote_total` (character): Quote total funds.
-#'     - `quote_available` (character): Quote available funds.
-#'     - `quote_hold` (character): Quote funds on hold.
-#'     - `quote_maxBorrowSize` (character): Quote max borrowable.
+#'   - `quoteCurrency` (character, optional): Quote currency (enum `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
+#'   - `queryType` (character, optional): Type (enum `"ISOLATED"`, `"ISOLATED_V2"`, `"ALL"`; default `"ISOLATED"`).
+#'
+#' @return Promise resolving to a `data.table` containing the following columns:
+#'   - **Summary Metrics**:
+#'     - `totalAssetOfQuoteCurrency` (numeric): Total assets in the quote currency across all isolated margin accounts; coerced from string.
+#'     - `totalLiabilityOfQuoteCurrency` (numeric): Total liabilities in the quote currency across all isolated margin accounts; coerced from string.
+#'     - `timestamp` (numeric): Timestamp in milliseconds; kept as numeric from integer.
+#'     - `timestamp_datetime` (POSIXct): Converted datetime from `timestamp`, divided by 1000 for seconds, with origin `"1970-01-01"` and UTC timezone.
+#'   - **Trading Pair Details**:
+#'     - `symbol` (character): Trading pair (e.g., `"BTC-USDT"`); remains character.
+#'     - `status` (character): Position status (enum `"EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", "BORROW"`); remains character.
+#'     - `debtRatio` (numeric): Debt ratio for the trading pair; coerced from string.
+#'     - `base_currency` (character): Base currency code; remains character.
+#'     - `base_borrowEnabled` (logical): Whether borrowing is enabled for the base currency; remains logical.
+#'     - `base_transferInEnabled` (logical): Whether transfer-in is enabled for the base currency; remains logical.
+#'     - `base_liability` (numeric): Liabilities in the base currency; coerced from string.
+#'     - `base_total` (numeric): Total funds in the base currency; coerced from string.
+#'     - `base_available` (numeric): Available funds in the base currency; coerced from string.
+#'     - `base_hold` (numeric): Funds on hold in the base currency; coerced from string.
+#'     - `base_maxBorrowSize` (numeric): Maximum borrowable amount for the base currency; coerced from string.
+#'     - `quote_currency` (character): Quote currency code; remains character.
+#'     - `quote_borrowEnabled` (logical): Whether borrowing is enabled for the quote currency; remains logical.
+#'     - `quote_transferInEnabled` (logical): Whether transfer-in is enabled for the quote currency; remains logical.
+#'     - `quote_liability` (numeric): Liabilities in the quote currency; coerced from string.
+#'     - `quote_total` (numeric): Total funds in the quote currency; coerced from string.
+#'     - `quote_available` (numeric): Available funds in the quote currency; coerced from string.
+#'     - `quote_hold` (numeric): Funds on hold in the quote currency; coerced from string.
+#'     - `quote_maxBorrowSize` (numeric): Maximum borrowable amount for the quote currency; coerced from string.
+#' 
+#'   If no data is present (e.g., empty `assets` array), returns an empty `data.table` with the same columns and no rows. The function flattens the API response, repeating summary metrics across each trading pair row if multiple trading pairs are present.
+#'
+#' @details
+#' **Raw Response Schema**:  
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object):
+#'   - `totalAssetOfQuoteCurrency` (string): Total assets in the quote currency across all isolated margin accounts.
+#'   - `totalLiabilityOfQuoteCurrency` (string): Total liabilities in the quote currency across all isolated margin accounts.
+#'   - `timestamp` (integer <int64>): Timestamp in milliseconds.
+#'   - `assets` (array): Array of objects, each representing a trading pair’s isolated margin account:
+#'     - `symbol` (string): Trading pair (e.g., `"BTC-USDT"`).
+#'     - `status` (string): Position status enum (e.g., `"EFFECTIVE"`, `"BANKRUPTCY"`, `"LIQUIDATION"`, `"REPAY"`, `"BORROW"`).
+#'     - `debtRatio` (string): Debt ratio for the trading pair.
+#'     - `baseAsset` (object): Details for the base currency:
+#'       - `currency` (string): Base currency code.
+#'       - `borrowEnabled` (boolean): Whether borrowing is enabled.
+#'       - `transferInEnabled` (boolean): Whether transfer-in is enabled.
+#'       - `liability` (string): Liabilities in the base currency.
+#'       - `total` (string): Total funds in the base currency.
+#'       - `available` (string): Available funds in the base currency.
+#'       - `hold` (string): Funds on hold in the base currency.
+#'       - `maxBorrowSize` (string): Maximum borrowable amount for the base currency.
+#'     - `quoteAsset` (object): Details for the quote currency (same structure as `baseAsset`):
+#'       - `currency` (string): Quote currency code.
+#'       - `borrowEnabled` (boolean): Whether borrowing is enabled.
+#'       - `transferInEnabled` (boolean): Whether transfer-in is enabled.
+#'       - `liability` (string): Liabilities in the quote currency.
+#'       - `total` (string): Total funds in the quote currency.
+#'       - `available` (string): Available funds in the quote currency.
+#'       - `hold` (string): Funds on hold in the quote currency.
+#'       - `maxBorrowSize` (string): Maximum borrowable amount for the quote currency.
+#'
+#' **Example JSON Response**:  
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "totalAssetOfQuoteCurrency": "0.01",
+#'     "totalLiabilityOfQuoteCurrency": "0",
+#'     "timestamp": 1728725465994,
+#'     "assets": [
+#'       {
+#'         "symbol": "BTC-USDT",
+#'         "status": "EFFECTIVE",
+#'         "debtRatio": "0",
+#'         "baseAsset": {
+#'           "currency": "BTC",
+#'           "borrowEnabled": true,
+#'           "transferInEnabled": true,
+#'           "liability": "0",
+#'           "total": "0",
+#'           "available": "0",
+#'           "hold": "0",
+#'           "maxBorrowSize": "0"
+#'         },
+#'         "quoteAsset": {
+#'           "currency": "USDT",
+#'           "borrowEnabled": true,
+#'           "transferInEnabled": true,
+#'           "liability": "0",
+#'           "total": "0.01",
+#'           "available": "0.01",
+#'           "hold": "0",
+#'           "maxBorrowSize": "0"
+#'         }
+#'       }
+#'     ]
+#'   }
+#' }
+#' ```
+#' The function processes this response by:
+#' - Flattening the `assets` array into rows, one per trading pair.
+#' - Prefixing base and quote asset fields with `base_` and `quote_` respectively for clarity.
+#' - Coercing string values (e.g., `liability`, `total`) to numeric for R compatibility.
+#' - Converting the `timestamp` (milliseconds) to a `POSIXct` datetime in `timestamp_datetime`.
+#' - Repeating summary metrics (`totalAssetOfQuoteCurrency`, etc.) across all rows.
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
-#'   result <- await(get_isolated_margin_account_impl(query = list(symbol = "BTC-USDT", quoteCurrency = "USDT")))
-#'   print(result$summary)
-#'   print(result$assets)
+#'   result <- await(get_isolated_margin_account_impl(query = list(symbol = "BTC-USDT", quoteCurrency = "USDT", queryType = "ISOLATED")))
+#'   print(result)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
-#' @importFrom data.table as.data.table rbindlist setnames
+#' @importFrom data.table as.data.table rbindlist setcolorder
 #' @importFrom rlang abort
 #' @export
 get_isolated_margin_account_impl <- coro::async(function(
@@ -942,7 +1023,15 @@ get_isolated_margin_account_impl <- coro::async(function(
             quote_maxBorrowSize = as.character(quote_maxBorrowSize)
         )]
 
-        return(list(summary = summary_dt, assets = assets_dt))
+        data.table::setcolorder(result_dt, c(
+            "totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "timestamp", "timestamp_datetime",
+            "symbol", "status", "debtRatio", "base_currency", "base_borrowEnabled", "base_transferInEnabled",
+            "base_liability", "base_total", "base_available", "base_hold", "base_maxBorrowSize", "quote_currency",
+            "quote_borrowEnabled", "quote_transferInEnabled", "quote_liability", "quote_total", "quote_available",
+            "quote_hold", "quote_maxBorrowSize"
+        ))
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_isolated_margin_account_impl:", conditionMessage(e)))
     })
