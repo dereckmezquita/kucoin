@@ -504,6 +504,9 @@ get_spot_account_list_impl <- coro::async(function(
 #' ### Official Documentation
 #' [KuCoin Get Account Detail Spot](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-detail-spot)
 #'
+#' ### Function Validated
+#' - 2025-02-23 20h20
+#' 
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
 #'   - `api_secret` (character): your KuCoin API secret.
@@ -517,6 +520,25 @@ get_spot_account_list_impl <- coro::async(function(
 #'   - `balance` (numeric): Total funds.
 #'   - `available` (numeric): Available funds.
 #'   - `holds` (numeric): Funds on hold.
+#' @details
+#' **Raw Response Schema**:
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): data object:
+#'   - `currency` (string): Currency code.
+#'   - `balance` (string): Total funds; float as string.
+#'   - `available` (string): Available funds; float as string.
+#'   - `holds` (string): Funds on hold; float as string.
+#' ```json
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "currency": "USDT",
+#'         "balance": "26.66759503",
+#'         "available": "26.66759503",
+#'         "holds": "0"
+#'     }
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
@@ -544,12 +566,13 @@ get_spot_account_detail_impl <- coro::async(function(
         url <- paste0(base_url, endpoint)
 
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_account_and_funding/response-get_spot_account_detail_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_account_and_funding/response-get_spot_account_detail_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_detail_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_spot_account_detail_impl.Rds")
 
-        account_detail_dt <- data.table::as.data.table(parsed_response$data)
-        if (nrow(account_detail_dt) == 0) {
+        result_dt <- data.table::as.data.table(parsed_response$data)
+
+        if (nrow(result_dt) == 0) {
             return(data.table::data.table(
                 currency  = character(0),
                 balance   = numeric(0),
@@ -558,14 +581,14 @@ get_spot_account_detail_impl <- coro::async(function(
             ))
         }
 
-        account_detail_dt[, `:=`(
+        result_dt[, `:=`(
             currency  = as.character(currency),
             balance   = as.numeric(balance),
             available = as.numeric(available),
             holds     = as.numeric(holds)
         )]
 
-        return(account_detail_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_account_detail_impl:", conditionMessage(e)))
     })
