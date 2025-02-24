@@ -612,6 +612,9 @@ get_spot_account_detail_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Account Cross Margin](https://www.kucoin.com/docs-new/rest/account-info/account-funding/get-account-cross-margin)
+#' 
+#' ### Function Validated
+#' - 2025-02-23 20h27
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): your KuCoin API key.
@@ -624,25 +627,39 @@ get_spot_account_detail_impl <- coro::async(function(
 #'   - `quoteCurrency` (character, optional): Quote currency (e.g., `"USDT"`, `"KCS"`, `"BTC"`; default `"USDT"`).
 #'   - `queryType` (character, optional): Account type (`"MARGIN"`, `"MARGIN_V2"`, `"ALL"`; default `"MARGIN"`).
 #' @return Promise resolving to a `data.table` containing the following columns:
-#'   - `totalAssetOfQuoteCurrency` (numeric): Total assets in the quote currency across all accounts.
-#'   - `totalLiabilityOfQuoteCurrency` (numeric): Total liabilities in the quote currency across all accounts.
-#'   - `debtRatio` (numeric): Debt ratio for the cross margin account.
-#'   - `status` (character): Position status (e.g., `"EFFECTIVE"`).
-#'   - `currency` (character): Currency code of the individual account.
-#'   - `total` (numeric): Total funds in the account.
-#'   - `available` (numeric): Available funds in the account.
-#'   - `hold` (numeric): Funds on hold in the account.
-#'   - `liability` (numeric): Liabilities in the account.
-#'   - `maxBorrowSize` (numeric): Maximum borrowable amount for the account.
-#'   - `borrowEnabled` (logical): Whether borrowing is enabled for the account.
-#'   - `transferInEnabled` (logical): Whether transfer-in is enabled for the account.
+#'   - Summary Metrics:
+#'     - `totalAssetOfQuoteCurrency` (numeric): Total assets in the quote currency across all accounts.
+#'     - `totalLiabilityOfQuoteCurrency` (numeric): Total liabilities in the quote currency across all accounts.
+#'     - `debtRatio` (numeric): Debt ratio for the cross margin account.
+#'     - `status` (character): Position status (e.g., `"EFFECTIVE"`).
+#'   - Account Details:
+#'     - `currency` (character): Currency code of the individual account.
+#'     - `total` (numeric): Total funds in the account.
+#'     - `available` (numeric): Available funds in the account.
+#'     - `hold` (numeric): Funds on hold in the account.
+#'     - `liability` (numeric): Liabilities in the account.
+#'     - `maxBorrowSize` (numeric): Maximum borrowable amount for the account.
+#'     - `borrowEnabled` (logical): Whether borrowing is enabled for the account.
+#'     - `transferInEnabled` (logical): Whether transfer-in is enabled for the account.
 #'   If no data is present (e.g., no accounts), returns an empty `data.table` with the same columns.
 #'   The function combines summary metrics (e.g., `totalAssetOfQuoteCurrency`) with individual account details into a single table, repeating summary values across each account row if multiple accounts are present.
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
-#' - `data` (object)
-#' 
+#' - `data` (object):
+#'   - `totalAssetOfQuoteCurrency` (string): Total assets in the quote currency across all accounts.
+#'   - `totalLiabilityOfQuoteCurrency` (string): Total liabilities in the quote currency across all accounts.
+#'   - `debtRatio` (string): Debt ratio for the cross margin account.
+#'   - `status` (string): Position status enum (e.g., `"EFFECTIVE", "BANKRUPTCY", "LIQUIDATION", "REPAY", "BORROW"`).
+#'   - `accounts` (array): Array of account objects:
+#'     - `currency` (string): Currency code of the individual account.
+#'     - `total` (string): Total funds in the account; float as string.
+#'     - `available` (string): Available funds in the account; float as string.
+#'     - `hold` (string): Funds on hold in the account; float as string.
+#'     - `liability` (string): Liabilities in the account; float as string.
+#'     - `maxBorrowSize` (string): Maximum borrowable amount for the account; float as string.
+#'     - `borrowEnabled` (boolean): Whether borrowing is enabled for the account.
+#'     - `transferInEnabled` (boolean): Whether transfer-in is enabled for the account.
 #' Example JSON response:  
 #' ```
 #' {
@@ -700,6 +717,7 @@ get_cross_margin_account_impl <- coro::async(function(
 
         parsed_response <- process_kucoin_response(response, url)
         # saveRDS(parsed_response, "../../api-responses/impl_account_account_and_funding/parsed_response-get_cross_margin_account_impl.Rds")
+
         data_obj <- parsed_response$data
 
         if (is.null(data_obj) || length(data_obj$accounts) < 1) {
@@ -720,21 +738,14 @@ get_cross_margin_account_impl <- coro::async(function(
             ))
         }
 
-        # summary fields
-        totalAssetOfQuoteCurrency <- as.numeric(data_obj$totalAssetOfQuoteCurrency)
-        totalLiabilityOfQuoteCurrency <- as.numeric(data_obj$totalLiabilityOfQuoteCurrency)
-        debtRatio <- as.numeric(data_obj$debtRatio)
-        status <- as.character(data_obj$status)
-
         # accounts to be reformated into a data.table
         result_dt <- data.table::rbindlist(data_obj$accounts)
 
-
         result_dt[, `:=`(
-            totalAssetOfQuoteCurrency = as.numeric(totalAssetOfQuoteCurrency),
-            totalLiabilityOfQuoteCurrency = as.numeric(totalLiabilityOfQuoteCurrency),
-            debtRatio = as.numeric(debtRatio),
-            status = as.character(status),
+            totalAssetOfQuoteCurrency = as.numeric(data_obj$totalAssetOfQuoteCurrency),
+            totalLiabilityOfQuoteCurrency = as.numeric(data_obj$totalLiabilityOfQuoteCurrency),
+            debtRatio = as.numeric(data_obj$debtRatio),
+            status = as.character(data_obj$status),
             # ----
             currency = as.character(currency),
             total = as.numeric(total),
@@ -747,8 +758,9 @@ get_cross_margin_account_impl <- coro::async(function(
         )]
 
         data.table::setcolorder(result_dt, c(
-            "totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio", "status",
-            "currency", "total", "available", "hold", "liability", "maxBorrowSize", "borrowEnabled", "transferInEnabled"
+            "totalAssetOfQuoteCurrency", "totalLiabilityOfQuoteCurrency", "debtRatio",
+            "status", "currency", "total", "available", "hold", "liability",
+            "maxBorrowSize", "borrowEnabled", "transferInEnabled"
         ))
 
         return(result_dt[])
