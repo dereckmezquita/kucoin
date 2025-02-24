@@ -1,57 +1,137 @@
 # File: ./R/impl_account_deposit.R
 
-# box::use(
-#     ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
-#     ./utils[get_api_keys, get_base_url, build_query],
-#     ./utils_time_convert_kucoin[time_convert_from_kucoin],
-#     coro[async, await],
-#     data.table[as.data.table, rbindlist],
-#     httr[POST, GET, timeout],
-#     jsonlite[toJSON],
-#     rlang[abort, arg_match]
-# )
+box::use(
+    ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
+    ./utils[get_api_keys, get_base_url, build_query],
+    ./utils_time_convert_kucoin[time_convert_from_kucoin],
+    coro[async, await],
+    data.table[as.data.table, rbindlist],
+    httr[POST, GET, timeout],
+    jsonlite[toJSON],
+    rlang[abort, arg_match]
+)
 
 #' Add Deposit Address (V3) (Implementation)
 #'
 #' Creates a new deposit address for a specified currency on KuCoin asynchronously by sending a POST request to the `/api/v3/deposit-address/create` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
+#' ## Workflow Overview
 #' 1. **URL Construction**: Combines the base URL with the endpoint `/api/v3/deposit-address/create`.
-#' 2. **Request Body Preparation**: Creates a list with required and optional parameters (`currency`, `chain`, `to`, `amount`), converted to JSON.
-#' 3. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`.
-#' 4. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
-#' 5. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, extracting the `"data"` field and converting it to a `data.table`.
+#' 2. **Request Body Preparation**: Constructs a list with required and optional parameters (`currency`, `chain`, `to`, `amount`), then converts it to JSON.
+#' 3. **Header Preparation**: Generates authentication headers asynchronously using `build_headers()`.
+#' 4. **API Request**: Sends a POST request via `httr::POST()` with the constructed URL, headers, and JSON body, enforcing a 3-second timeout.
+#' 5. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, extracts the `"data"` field, and converts it to a `data.table`.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `POST https://api.kucoin.com/api/v3/deposit-address/create`
 #'
-#' ### Usage
-#' Utilised internally to create deposit addresses for various currencies, enabling deposits to the specified account type.
+#' ## Usage
+#' This function is used internally to generate deposit addresses for various currencies, facilitating deposits to either the funding (`main`) or spot trading (`trade`) account.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Add Deposit Address (V3)](https://www.kucoin.com/docs-new/rest/account-info/deposit/add-deposit-address-v3)
 #'
+#' ## Function Validated
+#' - Last validated: 2025-02-23 22h56
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param currency Character string; the currency for which to create the deposit address (e.g., "BTC", "ETH", "USDT").
-#' @param chain Character string (optional); the chain identifier (e.g., "eth", "bech32", "btc"). If not provided, the API uses the default chain for the currency.
-#' @param to Character string (optional); the account type to deposit to ("main" or "trade"). If not provided, defaults to "main".
-#' @param amount Character string (optional); the deposit amount, only used for Lightning Network invoices.
-#' @return Promise resolving to a `data.table` containing the deposit address details, including:
-#'   - `address` (character): The deposit address.
-#'   - `memo` (character): Address remark (may be empty).
-#'   - `chainId` (character): The chain identifier.
-#'   - `to` (character): The account type.
-#'   - `expirationDate` (integer): Expiration time (for Lightning Network).
-#'   - `currency` (character): The currency.
-#'   - `chainName` (character): The chain name.
+#' @param currency Character string; the currency for which to create the deposit address (e.g., `"BTC"`, `"ETH"`, `"USDT"`). **Required**.
+#' @param chain Character string (optional); the chain identifier for multi-chain currencies (e.g., `"eth"`, `"bech32"`, `"trx"`, `"ton"`). If omitted, the API uses the default chain (e.g., `"ERC20"` for USDT, `"Native"` for BTC). Not needed for single-chain currencies.
+#' @param to Character string (optional); the account type for the deposit. Allowed values: `"main"` (funding account) or `"trade"` (spot trading account). Defaults to `"main"`.
+#' @param amount Character string (optional); the deposit amount, applicable only for Lightning Network invoices. Ignored if not using the Lightning Network.
+#'
+#' @return A promise resolving to a `data.table` containing the deposit address details with the following columns:
+#'   - `address` (character): The generated deposit address.
+#'   - `memo` (character): Address remark or tag. Empty if no remark exists. Required for some currencies (e.g., XRP, XLM) to credit deposits.
+#'   - `chainId` (character): The chain identifier of the currency (e.g., `"ton"`, `"eth"`, `"trx"`).
+#'   - `to` (character): The account type (`"main"` or `"trade"`).
+#'   - `expirationDate` (numeric): Expiration time for Lightning Network invoices (0 if not applicable).
+#'   - `currency` (character): The currency for which the address was created.
+#'   - `chainName` (character): The chain name (e.g., `"TON"`, `"ETH"`).
+#'
+#'   If the API response lacks data (e.g., due to an error), an empty `data.table` with these columns is returned.
+#'
+#' ## Details
+#'
+#' ### Request Body Schema
+#' The request body is a JSON object with the following fields:
+#' - `currency` (string, **required**): The currency (e.g., `"BTC"`, `"ETH"`, `"USDT"`).
+#' - `chain` (string, optional): The chain identifier for multi-chain currencies. Examples:
+#'   - USDT: `"OMNI"`, `"ERC20"`, `"TRC20"` (default: `"ERC20"`).
+#'   - BTC: `"Native"`, `"Segwit"`, `"TRC20"` (parameters: `"btc"`, `"bech32"`, `"trx"`; default: `"Native"`).
+#'   - Single-chain currencies (e.g., `"TON"`): No chain specification needed unless specified (e.g., `"ton"`).
+#' - `to` (string, optional): The account type. Allowed values: `"main"` (funding account), `"trade"` (spot trading account). Defaults to `"main"`.
+#' - `amount` (string, optional): The deposit amount, only valid for Lightning Network invoices.
+#'
+#' **Example Request Body**:
+#' ```json
+#' {
+#'   "currency": "TON",
+#'   "chain": "ton",
+#'   "to": "trade"
+#' }
+#' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object):
+#'   - `address` (string): The deposit address.
+#'   - `memo` (string): Address remark or tag (empty if none). Critical for currencies requiring a memo (e.g., XRP, XLM).
+#'   - `chainId` (string): The chain identifier (e.g., `"ton"`, `"eth"`, `"trx"`).
+#'   - `to` (string): The account type (`"main"` or `"trade"`).
+#'   - `expirationDate` (integer): Expiration time for Lightning Network invoices (0 for non-Lightning networks).
+#'   - `currency` (string): The currency (e.g., `"TON"`, `"BTC"`).
+#'   - `chainName` (string): The chain name (e.g., `"TON"`, `"ETH"`).
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "address": "EQCA1BI4QRZ8qYmskSRDzJmkucGodYRTZCf_b9hckjla6dZl",
+#'     "memo": "2090821203",
+#'     "chainId": "ton",
+#'     "to": "TRADE",
+#'     "expirationDate": 0,
+#'     "currency": "TON",
+#'     "chainName": "TON"
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the `"data"` field.
+#' - Converting it to a `data.table`, ensuring proper column types (e.g., `character` for `address`, `numeric` for `expirationDate`).
+#'
+#' ### Notes
+#' - **Multi-Chain Currencies**: Specify `chain` correctly (e.g., `"trx"` for USDT on TRC20) to avoid depositing to the wrong network, which could result in lost funds.
+#' - **Memo Requirement**: For currencies like XRP or XLM, the `memo` must be included in deposit instructions to ensure funds are credited.
+#' - **Lightning Network**: The `amount` parameter is only relevant for Lightning Network deposits; otherwise, it is ignored.
+#' - **Account Types**: The `to` parameter directs deposits to either the funding account (`"main"`) or spot trading account (`"trade"`), affecting fund availability.
+#' - **Rate Limit**: This endpoint has a weight of 20 in the API rate limit pool (Management). Plan request frequency accordingly.
+#'
+#' ## Use Cases
+#' - **Automated Address Creation**: Generate deposit addresses programmatically for different currencies and chains, ideal for wallet management or deposit automation.
+#' - **Multi-Chain Support**: Create addresses for specific chains (e.g., USDT on TRC20 or ERC20) to control deposit networks.
+#' - **Account-Specific Deposits**: Direct funds to the funding account (`"main"`) for storage or the trading account (`"trade"`) for immediate use.
+#' - **Lightning Network Deposits**: Generate invoices with a specified `amount` for Lightning Network transactions.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Chain Validation**: Always specify the `chain` for multi-chain currencies and verify it matches the intended network to prevent deposit errors.
+#' - **Memo Management**: Store and provide the `memo` field when instructing deposits, especially for currencies requiring it, to avoid uncredited funds.
+#' - **Account Type Strategy**: Use `to` to align deposits with your system’s workflow (e.g., `"trade"` for immediate trading, `"main"` for long-term holding).
+#' - **Error Handling**: Check the `code` field in the response (e.g., `"200000"` for success) and handle failures (e.g., invalid currency or chain) gracefully.
+#' - **Rate Limit Awareness**: With a weight of 20 per request, monitor and throttle usage in high-frequency systems to stay within KuCoin’s limits.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Generate a deposit address for TON on the TON chain, directed to the trade account
 #' keys <- get_api_keys()
 #' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
@@ -67,6 +147,7 @@
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr POST timeout
 #' @importFrom jsonlite toJSON
@@ -81,7 +162,7 @@ add_deposit_address_v3_impl <- coro::async(function(
     to = NULL,
     amount = NULL
 ) {
-    if (!is.character(currency) && !nzchar(currency)) {
+    if (!is.character(currency) || !nzchar(currency)) {
         rlang::abort("currency must be a non-empty character string")
     }
 
@@ -110,9 +191,35 @@ add_deposit_address_v3_impl <- coro::async(function(
             encode = "raw",
             httr::timeout(3)
         )
+        # saveRDS(response, "../../api-responses/impl_account_deposit/response-add_deposit_address_v3_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        # TODO: verify this might need rbindlist instead
-        return(data.table::as.data.table(parsed_response$data))
+        # saveRDS(parsed_response, "../../api-responses/impl_account_deposit/parsed_response-add_deposit_address_v3_impl.Rds")
+
+        data_obj <- parsed_response$data
+        if (is.null(data_obj)) {
+            return(data.table::data.table(
+                address = character(0),
+                memo = character(0),
+                chainId = character(0),
+                to = character(0),
+                expirationDate = numeric(0),
+                currency = character(0),
+                chainName = character(0)
+            ))
+        }
+
+        result_dt <- data.table::as.data.table(data_obj)
+        result_dt[, `:=`(
+            address = as.character(address),
+            memo = as.character(memo),
+            chainId = as.character(chainId),
+            to = as.character(to),
+            expirationDate = as.numeric(expirationDate),
+            currency = as.character(currency),
+            chainName = as.character(chainName)
+        )]
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in add_deposit_address_v3_impl:", conditionMessage(e)))
     })
