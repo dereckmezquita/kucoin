@@ -6,7 +6,7 @@ box::use(
     ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
 )
 
-#' Add Sub-Account (Implementation)
+#' Add Sub-Account
 #'
 #' Creates a new sub-account on KuCoin asynchronously by sending a POST request to the `/api/v2/sub/user/created` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -191,7 +191,7 @@ add_subaccount_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Sub-Account Summary Information (Implementation)
+#' Retrieve Sub-Account Summary Information
 #'
 #' Retrieves a paginated summary of sub-accounts from KuCoin asynchronously and aggregates the results into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It converts millisecond timestamps in the `createdAt` column to human-readable POSIXct datetime objects where present.
 #'
@@ -350,7 +350,7 @@ get_subaccount_list_summary_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Sub-Account Balance Details (Implementation)
+#' Retrieve Sub-Account Balance Details
 #'
 #' Retrieves balance details for a specific sub-account from KuCoin asynchronously, aggregating account types into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -565,7 +565,7 @@ get_subaccount_detail_balance_impl <- coro::async(function(
     })
 })
 
-#' Retrieve Spot Sub-Account List - Balance Details (V2) (Implementation)
+#' Retrieve Spot Sub-Account List - Balance Details (V2)
 #'
 #' Retrieves paginated Spot sub-account information from KuCoin asynchronously, aggregating balance details into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
