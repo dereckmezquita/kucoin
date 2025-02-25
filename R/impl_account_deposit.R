@@ -757,7 +757,7 @@ get_deposit_history_impl <- coro::async(function(
                     ))
                 }
                 # Pre-process list to convert NULLs to NA or empty values
-                acc <- lapply(acc, function(item) {
+                acc2 <- lapply(acc, function(item) {
                     # Ensure all possible NULL fields exist, replacing with NA
                     if (is.null(item$subStatus)) item$subStatus <- NA_character_
                     if (is.null(item$url)) item$url <- NA_character_
@@ -765,7 +765,7 @@ get_deposit_history_impl <- coro::async(function(
                 })
 
                 # Create data.table with fill=TRUE to handle any missing columns
-                result_dt1 <- data.table::rbindlist(acc)
+                result_dt1 <- data.table::rbindlist(acc2)
 
                 # Add the datetime column
                 result_dt1[, createdAt_Datetime := time_convert_from_kucoin(createdAt, "ms")]
