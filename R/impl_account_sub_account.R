@@ -1,55 +1,100 @@
 # File: ./R/impl_account_sub_account.R
 
-# box::use(
-#     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-#     ./utils[ build_query, get_base_url ],
-#     ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
-# )
+box::use(
+    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+    ./utils[ build_query, get_base_url ],
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
+)
 
 #' Add Sub-Account (Implementation)
 #'
 #' Creates a new sub-account on KuCoin asynchronously by sending a POST request to the `/api/v2/sub/user/created` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
-#' 1. **URL Construction**: Retrieves the base URL using `get_base_url()` (or the user-supplied `base_url`) and appends the endpoint.
-#' 2. **Request Body Preparation**: Creates a list with required parameters (`password`, `subName`, `access`, and optional `remarks`), converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE`.
-#' 3. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`, incorporating the signature, timestamp, encrypted passphrase, and API key details.
-#' 4. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
-#' 5. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, raising an error if the HTTP status is not 200 or the API code is not `"200000"`.
-#' 6. **Result Conversion**: Converts the `data` field of the successful response into a `data.table`.
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: General
+#' - **API Rate Limit Pool**: Management
+#' - **API Rate Limit Weight**: 15
+#' - **SDK Service**: Account
+#' - **SDK Sub-Service**: SubAccount
+#' - **SDK Method Name**: `addSubAccount`
 #'
-#' ### API Endpoint
+#' ## Description
+#' This function creates a new sub-account with specified permissions and credentials, facilitating segmented account management within a master KuCoin account structure.
+#'
+#' ## Workflow Overview
+#' 1. **Request Validation**: Validates the `access` parameter against allowed values (`"Spot"`, `"Futures"`, `"Margin"`).
+#' 2. **URL Construction**: Combines the base URL with the endpoint `/api/v2/sub/user/created`.
+#' 3. **Request Body Preparation**: Creates a JSON payload with required parameters (`password`, `subName`, `access`) and optional `remarks`.
+#' 4. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`, incorporating the signature, timestamp, encrypted passphrase, and API key details.
+#' 5. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
+#' 6. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, raising an error if the HTTP status is not 200 or the API code is not `"200000"`.
+#' 7. **Result Conversion**: Extracts and converts the `data` field of the successful response into a `data.table` for structured access.
+#'
+#' ## API Endpoint
 #' `POST https://api.kucoin.com/api/v2/sub/user/created`
 #'
-#' ### Usage
-#' Utilised internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
+#' ## Usage
+#' This function is used internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem, enabling segregated trading activities under a single master account.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-25 22h26
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param password Character string; sub-account password (7–24 characters, must contain both letters and numbers).
+#' @param password Character string; sub-account password (7–24 characters, must contain both letters and numbers, cannot only contain numbers or include special characters).
 #' @param subName Character string; desired sub-account name (7–32 characters, must include at least one letter and one number, no spaces).
-#' @param access Character string; permission type for the sub-account (allowed values: `"Spot"`, `"Futures"`, `"Margin"`).
+#' @param access Character string; permission type for the sub-account. One of: `"Spot"`, `"Futures"`, `"Margin"`. Defaults to `"Spot"` if not specified.
 #' @param remarks Character string (optional); remarks or notes about the sub-account (1–24 characters if provided).
-#' @return Promise resolving to a `data.table` containing sub-account details, including at least:
+#'
+#' @return Promise resolving to a `data.table` containing sub-account details, including:
+#'   - `userId` (character): Unique identifier of the master account.
 #'   - `uid` (integer): Unique identifier for the sub-account.
 #'   - `subName` (character): Name of the sub-account.
-#'   - `remarks` (character): Any provided remarks or notes.
+#'   - `status` (integer): Current status of the sub-account.
+#'   - `type` (integer): Type of sub-account.
 #'   - `access` (character): Permission type granted to the sub-account.
-#' @details
-#' **Raw Response Schema**:  
-#' - `code` (string): Status code, where `"200000"` indicates success.  
-#' - `data` (object): Contains the sub-account details as described above.  
-#' 
-#' Example JSON response:  
+#'   - `createdAt` (integer): Timestamp of creation in milliseconds.
+#'   - `remarks` (character): Any provided remarks or notes.
+#'   - `tradeTypes` (list): Array of available trade types for the sub-account.
+#'   - `openedTradeTypes` (list): Array of currently open trade types.
+#'   - `hostedStatus` (character or NULL): Hosted status of the sub-account.
+#'
+#' ## Details
+#'
+#' ### Request Body Schema
+#' The request body is a JSON object with the following fields:
+#' - `password` (string, **required**): Password (7–24 characters, must contain letters and numbers, cannot only contain numbers or include special characters).
+#' - `subName` (string, **required**): Sub-account name (must contain 7–32 characters, at least one number and one letter, no spaces).
+#' - `access` (string, **required**): Permission type. One of: `"Spot"`, `"Futures"`, `"Margin"`.
+#' - `remarks` (string, optional): Remarks or notes (1–24 characters).
+#'
+#' **Example Request Body**:
+#' ```json
+#' {
+#'   "password": "1234567",
+#'   "remarks": "TheRemark",
+#'   "subName": "Name1234567",
+#'   "access": "Spot"
+#' }
 #' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains pagination metadata and an `items` array with the sub-account details.
+#'
+#' **Example JSON Response**:
+#' ```json
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -67,32 +112,49 @@
 #'                 "access": "All",
 #'                 "createdAt": 1668562696000,
 #'                 "remarks": "remarks",
-#'                 "tradeTypes": ["Spot", "Futures", "Margin"],
-#'                 "openedTradeTypes": ["Spot"],
+#'                 "tradeTypes": [
+#'                     "Spot",
+#'                     "Futures",
+#'                     "Margin"
+#'                 ],
+#'                 "openedTradeTypes": [
+#'                     "Spot"
+#'                 ],
 #'                 "hostedStatus": null
 #'             }
 #'         ]
 #'     }
 #' }
 #' ```
+#'
+#' The function processes this response by extracting the `"data"` field and converting it to a structured `data.table`.
+#'
+#' ## Notes
+#' - **Password Requirements**: The sub-account password must be 7-24 characters long, containing both letters and numbers. It cannot consist solely of numbers or include special characters.
+#' - **Sub-Account Name Requirements**: The name must be 7-32 characters, containing at least one letter and one number, with no spaces.
+#' - **Access Types**: The `access` parameter determines which trading features the sub-account can use (`"Spot"`, `"Futures"`, `"Margin"`).
+#' - **Rate Limit**: This endpoint has a weight of 15 in the API rate limit pool (Management). Plan request frequency accordingly.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Create a new sub-account with Spot trading permission
 #' keys <- get_api_keys()
 #' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
 #'   result <- await(add_subaccount_impl(
 #'     keys = keys,
 #'     base_url = base_url,
-#'     password = "1234567",
-#'     subName = "Name1234567",
+#'     password = "SecurePass123",
+#'     subName = "TradingBot2025",
 #'     access = "Spot",
-#'     remarks = "Test sub-account"
+#'     remarks = "Automated trading account"
 #'   ))
 #'   print(result)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST timeout
