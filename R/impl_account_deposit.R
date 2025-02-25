@@ -229,43 +229,142 @@ add_deposit_address_v3_impl <- coro::async(function(
 #'
 #' Retrieves all deposit addresses for a specified currency on KuCoin asynchronously by sending a GET request to the `/api/v3/deposit-addresses` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#'
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: General
+#' - **API Rate Limit Pool**: Management
+#' - **API Rate Limit Weight**: 5
+#' - **SDK Service**: Account
+#' - **SDK Sub-Service**: Deposit
+#' - **SDK Method Name**: `getDepositAddressV3`
+#'
+#' ## Description
+#' This function retrieves all deposit addresses for the specified currency. If no addresses are returned, you may need to create a deposit address using `add_deposit_address_v3_impl`.
+#'
+#' ## Workflow Overview
 #' 1. **URL Construction**: Combines the base URL with the endpoint `/api/v3/deposit-addresses` and appends query parameters using `build_query()`.
 #' 2. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`.
 #' 3. **API Request**: Sends a GET request using `httr::GET()` with the constructed URL and headers, applying a 3-second timeout.
-#' 4. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, extracting the `"data"` field and converting it to a `data.table` using `rbindlist()` for the array of addresses.
+#' 4. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, extracts the `"data"` field (an array of address objects), and converts it to a `data.table` using `rbindlist()`.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v3/deposit-addresses`
 #'
-#' ### Usage
-#' Utilised internally to retrieve all existing deposit addresses for a given currency, which can be used for depositing funds to the specified account type.
+#' ## Usage
+#' This function is used internally by `KucoinDeposit` to retrieve deposit addresses for a specified currency. It is not intended for direct end-user consumption.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Deposit Address (V3)](https://www.kucoin.com/docs-new/rest/account-info/deposit/get-deposit-address-v3)
 #'
+#' ## Function Validated
+#' - Last validated: 2025-02-24 19h02
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param currency Character string; the currency for which to retrieve deposit addresses (e.g., "BTC", "ETH", "USDT").
-#' @param amount Character string (optional); the deposit amount, only used for Lightning Network invoices.
-#' @param chain Character string (optional); the chain identifier (e.g., "eth", "bech32", "btc").
-#' @return Promise resolving to a `data.table` containing the deposit address details, with columns including:
+#' @param currency Character string; the currency for which to retrieve deposit addresses (e.g., `"BTC"`, `"ETH"`, `"USDT"`). **Required**.
+#' @param amount Character string (optional); the deposit amount, only used for Lightning Network invoices. Ignored if not using the Lightning Network.
+#' @param chain Character string (optional); the chain identifier (e.g., `"eth"`, `"bech32"`, `"btc"`, `"kcc"`, `"trx"`, `"bsc"`, `"arbitrum"`, `"ton"`, `"optimism"`). If specified, filters addresses to the given chain.
+#'
+#' @return A promise resolving to a `data.table` containing deposit address details for the specified currency, with the following columns:
 #'   - `address` (character): The deposit address.
-#'   - `memo` (character): Address remark (may be empty).
-#'   - `chainId` (character): The chain identifier.
-#'   - `to` (character): The account type ("main" or "trade").
-#'   - `expirationDate` (integer): Expiration time (for Lightning Network).
-#'   - `currency` (character): The currency.
-#'   - `contractAddress` (character): The token contract address.
-#'   - `chainName` (character): The chain name.
-#'   If no addresses are found, an empty `data.table` is returned.
+#'   - `memo` (character): Address remark or tag (empty if none). Required for some currencies (e.g., XRP, XLM) to credit deposits.
+#'   - `chainId` (character): The chain identifier (e.g., `"trx"`, `"eth"`, `"ton"`).
+#'   - `to` (character): The account type (`"main"` or `"trade"`).
+#'   - `expirationDate` (integer): Expiration time for Lightning Network invoices (0 if not applicable).
+#'   - `currency` (character): The currency (e.g., `"USDT"`, `"BTC"`).
+#'   - `contractAddress` (character): The token contract address (e.g., for ERC20 tokens).
+#'   - `chainName` (character): The chain name (e.g., `"TRC20"`, `"ERC20"`, `"TON"`).
+#'
+#'   If no addresses are found for the specified currency (and chain, if provided), an empty `data.table` with these columns is returned. In such cases, you may need to create a deposit address using `add_deposit_address_v3_impl`.
+#'
+#' ## Details
+#'
+#' ### Query Parameters
+#' - `currency` (string, **required**): The currency for which to retrieve deposit addresses (e.g., `"USDT"`, `"BTC"`).
+#' - `amount` (string, optional): The deposit amount, only applicable for Lightning Network invoices.
+#' - `chain` (string, optional): The chain identifier to filter addresses (e.g., `"trx"` for TRC20, `"eth"` for ERC20). If omitted, addresses for all available chains are returned.
+#'
+#' **Example Request URL**:
+#' ```http
+#' GET https://api.kucoin.com/api/v3/deposit-addresses?currency=USDT&chain=trx
+#' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (array of objects): Each object contains:
+#'   - `address` (string): The deposit address.
+#'   - `memo` (string): Address remark or tag (may be empty). Critical for currencies requiring a memo (e.g., XRP, XLM).
+#'   - `chainId` (string): The chain identifier (e.g., `"trx"`, `"eth"`, `"ton"`).
+#'   - `to` (string): The account type (`"main"` or `"trade"`).
+#'   - `expirationDate` (integer): Expiration time for Lightning Network invoices (0 for non-Lightning networks).
+#'   - `currency` (string): The currency (e.g., `"USDT"`, `"BTC"`).
+#'   - `contractAddress` (string): The token contract address (e.g., for ERC20 tokens).
+#'   - `chainName` (string): The chain name (e.g., `"TRC20"`, `"ERC20"`, `"TON"`).
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": [
+#'     {
+#'       "address": "TSv3L1fS7yA3SxzKD8c1qdX4nLP6rqNxYz",
+#'       "memo": "",
+#'       "chainId": "trx",
+#'       "to": "TRADE",
+#'       "expirationDate": 0,
+#'       "currency": "USDT",
+#'       "contractAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+#'       "chainName": "TRC20"
+#'     },
+#'     {
+#'       "address": "0x551e823a3b36865e8c5dc6e6ac6cc0b00d98533e",
+#'       "memo": "",
+#'       "chainId": "kcc",
+#'       "to": "TRADE",
+#'       "expirationDate": 0,
+#'       "currency": "USDT",
+#'       "contractAddress": "0x0039f574ee5cc39bdd162e9a88e3eb1f111baf48",
+#'       "chainName": "KCC"
+#'     },
+#'     {
+#'       "address": "EQCA1BI4QRZ8qYmskSRDzJmkucGodYRTZCf_b9hckjla6dZl",
+#'       "memo": "2085202643",
+#'       "chainId": "ton",
+#'       "to": "TRADE",
+#'       "expirationDate": 0,
+#'       "currency": "USDT",
+#'       "contractAddress": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+#'       "chainName": "TON"
+#'     },
+#'     {
+#'       "address": "0x0a2586d5a901c8e7e68f6b0dc83bfd8bd8600ff5",
+#'       "memo": "",
+#'       "chainId": "eth",
+#'       "to": "MAIN",
+#'       "expirationDate": 0,
+#'       "currency": "USDT",
+#'       "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+#'       "chainName": "ERC20"
+#'     }
+#'   ]
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the `"data"` array.
+#' - Converting it to a `data.table`, with each object in the array becoming a row.
+#' - Ensuring proper column types (e.g., `character` for `address`, `numeric` for `expirationDate`).
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Retrieve all deposit addresses for USDT on the TRC20 chain
 #' keys <- get_api_keys()
 #' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
@@ -280,6 +379,7 @@ add_deposit_address_v3_impl <- coro::async(function(
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table rbindlist
@@ -300,8 +400,6 @@ get_deposit_addresses_v3_impl <- coro::async(function(
         endpoint <- "/api/v3/deposit-addresses"
         method <- "GET"
         body <- ""
-
-        # Build query parameters
         query_list <- list(currency = currency)
         if (!is.null(amount)) {
             query_list$amount <- amount
@@ -316,26 +414,38 @@ get_deposit_addresses_v3_impl <- coro::async(function(
         url <- paste0(base_url, full_endpoint)
 
         response <- httr::GET(url, headers, httr::timeout(3))
+        # saveRDS(response, "../../api-responses/impl_account_deposit/response-get_deposit_addresses_v3_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_account_deposit/parsed_response-get_deposit_address_v3_impl.Rds")
 
-        # The response data is an array of objects, so use rbindlist
-        if (length(parsed_response$data) > 0) {
-            deposit_addresses_dt <- data.table::rbindlist(parsed_response$data)
-        } else {
-            # Return an empty data.table with the expected columns
-            deposit_addresses_dt <- data.table::data.table(
+        data_array <- parsed_response$data
+
+        if (is.null(data_array) || length(data_array) == 0) {
+            return(data.table::data.table(
                 address = character(0),
                 memo = character(0),
                 chainId = character(0),
                 to = character(0),
-                expirationDate = integer(0),
+                expirationDate = numeric(0),
                 currency = character(0),
                 contractAddress = character(0),
                 chainName = character(0)
-            )
+            ))
         }
 
-        return(deposit_addresses_dt)
+        result_dt <- data.table::rbindlist(data_array)
+        result_dt[, `:=`(
+            address = as.character(address),
+            memo = as.character(memo),
+            chainId = as.character(chainId),
+            to = as.character(to),
+            expirationDate = as.numeric(expirationDate),
+            currency = as.character(currency),
+            contractAddress = as.character(contractAddress),
+            chainName = as.character(chainName)
+        )]
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_deposit_address_v3_impl:", conditionMessage(e)))
     })
