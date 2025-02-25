@@ -50,7 +50,7 @@ test_that("add_subaccount_impl creates a subaccount and returns valid data (mock
     # Load the saved HTTP response from the RDS file.
     saved_response <- readRDS("../../api-responses/add_subaccount_impl.Rds")
 
-    # NOTE: WORKING MOCK OF HTTR::POST!!!
+    # NOTE: WORKING MOCK OF httr::POST!!!
     # Set up the mock: override POST() in the httr package.
     testthat::local_mocked_bindings(
         POST = function(url, headers, body, encode, timeout) {

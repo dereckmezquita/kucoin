@@ -1,15 +1,15 @@
 # File: ./R/helpers_api.R
 
-# box::use(
-#   ./utils[get_base_url],
-#   httr[GET, timeout, content, status_code, add_headers],
-#   jsonlite[fromJSON],
-#   rlang[error_cnd, abort],
-#   promises[promise],
-#   digest[hmac],
-#   base64enc[base64encode],
-#   coro[async, await]
-# )
+box::use(
+    ./utils[get_base_url],
+    httr[GET, timeout, content, status_code, add_headers],
+    jsonlite[fromJSON],
+    rlang[error_cnd, abort],
+    promises[promise],
+    digest[hmac],
+    base64enc[base64encode],
+    coro[async, await]
+)
 
 #' Retrieve Server Time from KuCoin Futures API
 #'
@@ -232,7 +232,11 @@ process_kucoin_response <- function(response, url = "") {
         if ("msg" %in% names(parsed_response)) {
             error_msg <- parsed_response$msg
         }
-        rlang::abort(paste("KuCoin API returned an error:", parsed_response$code, "-", error_msg))
+        rlang::abort(paste0(
+            "KuCoin API returned an error status code: ", parsed_response$code, " - ", error_msg,
+            "\nURL :", url,
+            "\nReceived JSON:\n", response_text
+        ))
     }
 
     return(parsed_response)
@@ -255,7 +259,7 @@ process_kucoin_response <- function(response, url = "") {
 #' Utilised to simplify retrieval of multi-page data from KuCoin API responses, aggregating results into a user-defined format.
 #'
 #' ### Official Documentation
-#' Not directly tied to a specific endpoint; see KuCoin API pagination guidelines.
+#' [KuCoin Pagination](https://www.kucoin.com/docs/basic-info/connection-method/pager/pagination)
 #'
 #' @param fetch_page Function fetching a page of results, returning a promise resolving to the response.
 #' @param query Named list of query parameters for the first page. Defaults to `list(currentPage = 1, pageSize = 50)`.
@@ -266,7 +270,21 @@ process_kucoin_response <- function(response, url = "") {
 #'   Defaults to `list(currentPage = "currentPage", totalPage = "totalPage")`.
 #' @param aggregate_fn Function combining accumulated results into the final output. Defaults to returning the accumulator list unchanged.
 #' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
-#' @return Promise resolving to the aggregated result as defined by `aggregate_fn`.
+#' @return Promise resolving to a list containing:
+#'   - `aggregate`: The aggregated result as defined by `aggregate_fn`.
+#'   - `next_query`: A list of query parameters for the next page, if available; otherwise, `NULL`.
+#' @details
+#' **Raw Response Schema**:
+#' Example JSON response:
+#' ```
+#' {
+#'     "currentPage": 1,
+#'     "pageSize": 50,
+#'     "totalNum": 6,
+#'     "totalPage": 1,
+#'     "data": ...
+#' }
+#' ```
 #' @examples
 #' \dontrun{
 #' fetch_page <- coro::async(function(query) {
@@ -282,7 +300,8 @@ process_kucoin_response <- function(response, url = "") {
 #'     max_pages = 3,
 #'     aggregate_fn = aggregate
 #'   ))
-#'   print(result)
+#'   print(result$aggregate)
+#'   print(result$pagination)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -321,7 +340,16 @@ auto_paginate <- coro::async(function(
             # Prepare query for next page.
             query$currentPage <- currentPage + 1
         }
-        aggregate_fn(accumulator)
+
+        return(list(
+            aggregate = aggregate_fn(accumulator),
+            pagination = list(
+                currentPage = currentPage,
+                pageSize = response$pageSize,
+                totalNum = response$totalNum,
+                totalPage = response$totalPage
+            )
+        ))
     }, error = function(e) {
         stop("Error in auto_paginate: ", conditionMessage(e))
     })
