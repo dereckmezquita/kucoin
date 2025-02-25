@@ -763,13 +763,13 @@ get_deposit_history_impl <- coro::async(function(
                     if (is.null(item$url)) item$url <- NA_character_
                     return(item)
                 })
-                
+
                 # Create data.table with fill=TRUE to handle any missing columns
                 result_dt1 <- data.table::rbindlist(acc)
-                
+
                 # Add the datetime column
                 result_dt1[, createdAt_Datetime := time_convert_from_kucoin(createdAt, "ms")]
-                
+
                 return(result_dt1[])
             },
             max_pages = max_pages
