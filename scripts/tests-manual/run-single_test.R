@@ -16,6 +16,12 @@ box::use(
         get_deposit_addresses_v3_impl,
         get_deposit_history_impl
     ],
+    ../../R/impl_account_sub_account[
+        add_subaccount_impl,
+        get_subaccount_list_summary_impl,
+        get_subaccount_detail_balance_impl,
+        get_subaccount_spot_v2_impl
+    ],
     ../../R/utils[get_api_keys, get_base_url],
     ../../R/utils_time_convert_kucoin[time_convert_from_kucoin, time_convert_to_kucoin],
     coro[async, await],
@@ -28,19 +34,16 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Example 1: Using lubridate datetime objects directly
-    cat("\n--- Example 1: Using datetime objects ---\n")
-    history1 <- await(get_deposit_history_impl(
+    # 1. Add a subaccount
+    subaccount <- await(add_subaccount_impl(
         keys = keys,
         base_url = base_url,
-        currency = "BTC",
-        status = "SUCCESS",
-        startAt = lubridate::now() - lubridate::years(3),
-        endAt = lubridate::now(),
-        page_size = 50
+        password = "some69superComplexS3cr3tP@ssw0rd",
+        subName = "rtradebot6971469",
+        access = "Spot",
+        remarks = "Some super genius remark"
     ))
-    cat("\nDeposit History for BTC (using datetime objects):\n")
-    print(history1)
+    print(subaccount)
 })
 
 # Run the main async function

@@ -58,17 +58,10 @@ box::use(
 #' @param remarks Character string (optional); remarks or notes about the sub-account (1–24 characters if provided).
 #'
 #' @return Promise resolving to a `data.table` containing sub-account details, including:
-#'   - `userId` (character): Unique identifier of the master account.
-#'   - `uid` (integer): Unique identifier for the sub-account.
+#'   - `uid` (numeric): Unique identifier for the sub-account.
 #'   - `subName` (character): Name of the sub-account.
-#'   - `status` (integer): Current status of the sub-account.
-#'   - `type` (integer): Type of sub-account.
+#'   - `remarks` (character): Remarks or notes associated with the sub-account.
 #'   - `access` (character): Permission type granted to the sub-account.
-#'   - `createdAt` (integer): Timestamp of creation in milliseconds.
-#'   - `remarks` (character): Any provided remarks or notes.
-#'   - `tradeTypes` (list): Array of available trade types for the sub-account.
-#'   - `openedTradeTypes` (list): Array of currently open trade types.
-#'   - `hostedStatus` (character or NULL): Hosted status of the sub-account.
 #'
 #' ## Details
 #'
@@ -92,6 +85,10 @@ box::use(
 #' ### Response Schema
 #' - `code` (string): Status code, where `"200000"` indicates success.
 #' - `data` (object): Contains pagination metadata and an `items` array with the sub-account details.
+#'   - `uid` (integer): Unique identifier for the sub-account.
+#'   - `subName` (string): Name of the sub-account.
+#'   - `remarks` (string): Remarks or notes associated with the sub-account.
+#'   - `access` (string): Permission type granted to the sub-account.
 #'
 #' **Example JSON Response**:
 #' ```json
@@ -169,9 +166,8 @@ add_subaccount_impl <- coro::async(function(
     access = c("Spot", "Futures", "Margin"),
     remarks = NULL
 ) {
-    access <- rlang::arg_match(access)
+    access <- rlang::arg_match0(access, values = c("Spot", "Futures", "Margin"))
     tryCatch({
-
         endpoint <- "/api/v2/sub/user/created"
         method <- "POST"
         body_list <- list(
@@ -186,9 +182,9 @@ add_subaccount_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
         url <- paste0(base_url, endpoint)
         response <- httr::POST(url, headers, body = body, encode = "raw", httr::timeout(3))
-        saveRDS(response, "./api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
         return(data.table::as.data.table(parsed_response$data))
     }, error = function(e) {
         rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
