@@ -17,8 +17,10 @@ box::use(
         get_deposit_history_impl
     ],
     ../../R/utils[get_api_keys, get_base_url],
+    ../../R/utils_time_convert_kucoin[time_convert_from_kucoin, time_convert_to_kucoin],
     coro[async, await],
-    later[loop_empty, run_now]
+    later[loop_empty, run_now],
+    lubridate
 )
 
 main_async <- async(function() {
@@ -26,15 +28,19 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Get all deposit addresses for USDT on TRX
-    addresses <- await(get_deposit_addresses_v3_impl(
+    # Example 1: Using lubridate datetime objects directly
+    cat("\n--- Example 1: Using datetime objects ---\n")
+    history1 <- await(get_deposit_history_impl(
         keys = keys,
         base_url = base_url,
         currency = "BTC",
-        chain = "btc"
+        status = "SUCCESS",
+        startAt = lubridate::now() - lubridate::years(3),
+        endAt = lubridate::now(),
+        page_size = 50
     ))
-    cat("\nDeposit Addresses for USDT on TRX:\n")
-    print(addresses)
+    cat("\nDeposit History for BTC (using datetime objects):\n")
+    print(history1)
 })
 
 # Run the main async function

@@ -35,15 +35,17 @@ main_async <- async(function() {
     print(addresses)
 
     # Get deposit history for USDT (first page)
-    history <- await(get_deposit_history_impl(
+    history1 <- await(get_deposit_history_impl(
         keys = keys,
         base_url = base_url,
-        currency = "USDT",
-        page_size = 10,
-        max_pages = 1
+        currency = "BTC",
+        status = "SUCCESS",
+        startAt = lubridate::now() - lubridate::years(3),
+        endAt = lubridate::now(),
+        page_size = 50
     ))
-    cat("\nDeposit History for USDT (first page):\n")
-    print(history)
+    cat("\nDeposit History for BTC (using datetime objects):\n")
+    print(history1)
 })
 
 # Run the main async function

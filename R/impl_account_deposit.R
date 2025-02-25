@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[auto_paginate, build_headers, process_kucoin_response],
     ./utils[get_api_keys, get_base_url, build_query],
-    ./utils_time_convert_kucoin[time_convert_from_kucoin],
+    ./utils_time_convert_kucoin[time_convert_from_kucoin, time_convert_to_kucoin],
     coro[async, await],
     data.table[as.data.table, rbindlist],
     httr[POST, GET, timeout],
@@ -11,7 +11,7 @@ box::use(
     rlang[abort, arg_match]
 )
 
-#' Add Deposit Address (V3) (Implementation)
+#' Add Deposit Address (V3)
 #'
 #' Creates a new deposit address for a specified currency on KuCoin asynchronously by sending a POST request to the `/api/v3/deposit-address/create` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -225,7 +225,7 @@ add_deposit_address_v3_impl <- coro::async(function(
     })
 })
 
-#' Get Deposit Addresses (V3) (Implementation)
+#' Get Deposit Addresses (V3)
 #'
 #' Retrieves all deposit addresses for a specified currency on KuCoin asynchronously by sending a GET request to the `/api/v3/deposit-addresses` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -451,78 +451,203 @@ get_deposit_addresses_v3_impl <- coro::async(function(
     })
 })
 
-#' Get Deposit History (Implementation)
+#' Get Deposit History
 #'
-#' Retrieves a paginated list of deposit history entries from KuCoin asynchronously by sending a GET request to the `/api/v1/deposits` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. Deposits are sorted to show the latest first, with pagination handled automatically.
+#' Retrieves a paginated list of deposit records from the KuCoin API asynchronously by sending a GET request to the `/api/v1/deposits` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
-#' 1. **URL Construction**: Combines the base URL with the endpoint `/api/v1/deposits` and constructs query parameters using `build_query()`.
-#' 2. **Pagination Initialisation**: Sets an initial query with `currentPage = 1` and the specified `page_size`, merging with additional filters.
-#' 3. **Page Fetching**: Defines an asynchronous helper function (`fetch_page`) to send GET requests for each page, including authentication headers.
-#' 4. **Automatic Pagination**: Leverages `auto_paginate` to fetch all pages up to `max_pages`, aggregating results into a single list.
-#' 5. **Response Handling**: Processes responses with `process_kucoin_response()`, combines items into a `data.table` using `rbindlist()`, and adds a `createdAtDatetime` column for human-readable timestamps.
+#' ## API Details
 #'
-#' ### API Endpoint
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: General
+#' - **API Rate Limit Pool**: Management
+#' - **API Rate Limit Weight**: 5
+#' - **SDK Service**: Account
+#' - **SDK Sub-Service**: Deposit
+#' - **SDK Method Name**: `getDepositHistory`
+#'
+#' ## Description
+#' This function retrieves deposit history records for a specified currency, with optional filtering by status and time range. Results are paginated and sorted to show the latest deposits first.
+#'
+#' ## Workflow Overview
+#' 1. **Request Preparation**: Constructs query parameters including currency, status, time range, and pagination settings.
+#' 2. **Timestamp Conversion**: Converts datetime objects to millisecond timestamps required by the KuCoin API.
+#' 3. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`.
+#' 4. **API Request**: Sends a GET request using `httr::GET()` with the constructed URL and headers, applying a 3-second timeout.
+#' 5. **Pagination Handling**: Uses `auto_paginate()` to retrieve multiple pages of results if available.
+#' 6. **Response Processing**: Converts the API response items into a structured `data.table` with proper column types.
+#' 7. **Datetime Conversion**: Adds a human-readable `createdAtDatetime` column by converting the UNIX timestamp.
+#'
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/deposits`
 #'
-#' ### Usage
-#' Utilised internally to fetch a comprehensive history of deposits for a KuCoin account, allowing filtering by currency, status, and time range.
+#' ## Usage
+#' This function is used internally to retrieve deposit history for specific currencies, optionally filtered by status and time range. It supports pagination to handle large result sets.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Deposit History](https://www.kucoin.com/docs-new/rest/account-info/deposit/get-deposit-history)
 #'
+#' ## Function Validated
+#' - Last validated: 2025-02-24 19h43
+#'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param currency Character string; the currency to filter deposits by (e.g., "BTC", "ETH", "USDT").
-#' @param status Character string (optional); the status to filter by ("PROCESSING", "SUCCESS", "FAILURE"). If not provided, all statuses are included.
-#' @param startAt Integer (optional); start time in milliseconds to filter deposits (e.g., 1728663338000).
-#' @param endAt Integer (optional); end time in milliseconds to filter deposits (e.g., 1728692138000).
-#' @param page_size Integer; number of results per page (minimum 10, maximum 500). Defaults to 50.
-#' @param max_pages Numeric; maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
-#' @return Promise resolving to a `data.table` containing the deposit history, with columns including:
-#'   - `currency` (character): The currency of the deposit (e.g., "USDT").
-#'   - `chain` (character): The chain identifier (may be empty).
-#'   - `status` (character): Deposit status ("PROCESSING", "SUCCESS", "FAILURE").
-#'   - `address` (character): Deposit address or identifier.
-#'   - `memo` (character): Address remark (may be empty).
-#'   - `isInner` (logical): Whether the deposit is internal to KuCoin.
-#'   - `amount` (character): Deposit amount.
-#'   - `fee` (character): Fee charged for the deposit.
-#'   - `walletTxId` (character or NULL): Wallet transaction ID (if applicable).
-#'   - `createdAt` (integer): Creation timestamp in milliseconds.
-#'   - `createdAtDatetime` (POSIXct): Converted creation datetime.
-#'   - `updatedAt` (integer): Last updated timestamp in milliseconds.
-#'   - `remark` (character): Additional remarks (may be empty).
-#'   - `arrears` (logical): Whether the deposit is in arrears.
-#'   If no deposits are found, an empty `data.table` with these columns is returned.
+#' @param currency Character string; the currency for which to retrieve deposit history (e.g., `"BTC"`, `"ETH"`, `"USDT"`). **Required**.
+#' @param status Character string (optional); filter deposits by status. Must be one of `"PROCESSING"`, `"SUCCESS"`, or `"FAILURE"`.
+#' @param startAt POSIXct/POSIXlt datetime object (optional); the start time for filtering deposits by creation time. Must be a lubridate datetime object.
+#' @param endAt POSIXct/POSIXlt datetime object (optional); the end time for filtering deposits by creation time. Must be a lubridate datetime object.
+#' @param page_size Numeric; number of results per page (min: 10, max: 500). Defaults to 50.
+#' @param max_pages Numeric; maximum number of pages to fetch. Defaults to `Inf` (all available pages).
+#'
+#' @return A promise resolving to a `data.table` containing deposit records with the following columns:
+#'   - `currency` (character): Currency of the deposit (e.g., `"BTC"`, `"USDT"`).
+#'   - `chain` (character): Blockchain network used for the deposit (e.g., `"ERC20"`, `"BTC-Segwit"`, `"TRC20"`, `"BEP20"`, `"ARBITRUM"`, `"TON"`, `"OPTIMISM"`).
+#'   - `status` (character): Status of the deposit (`"PROCESSING"`, `"SUCCESS"`, or `"FAILURE"`).
+#'   - `address` (character): Deposit address.
+#'   - `memo` (character): Memo or tag associated with the deposit (if applicable).
+#'   - `isInner` (logical): Whether it was an internal transfer.
+#'   - `amount` (numeric): Deposit amount.
+#'   - `fee` (numeric): Fee charged for the deposit.
+#'   - `walletTxId` (character): Transaction ID on the blockchain.
+#'   - `createdAt` (numeric): Creation timestamp in milliseconds since epoch.
+#'   - `createdAt_Datetime` (POSIXct): Human-readable datetime converted from `createdAt`.
+#'   - `updatedAt` (numeric): Last update timestamp in milliseconds since epoch.
+#'   - `updatedAt_Datetime` (POSIXct): Human-readable datetime converted from `updatedAt`.
+#'   - `remark` (character): Additional remarks.
+#'   - `arrears` (logical): Whether there is any debt. A quick rollback will cause the deposit to fail. If the deposit fails, you will need to repay the balance.
+#'   - `page_currentPage` (integer): Current page number.
+#'   - `page_pageSize` (integer): Number of results per page.
+#'   - `page_totalNum` (integer): Total number of records.
+#'   - `page_totalPage` (integer): Total number of pages.
+#'
+#'   If no deposits are found for the specified criteria, an empty `data.table` with these columns is returned.
+#'
+#' ## Details
+#'
+#' ### Query Parameters
+#' - `currency` (string, **required**): The currency for which to retrieve deposit history (e.g., `"BTC"`, `"USDT"`).
+#' - `status` (string, optional): Filter deposits by status. Allowed values: `"PROCESSING"`, `"SUCCESS"`, or `"FAILURE"`.
+#' - `startAt` (integer, optional): Start time in milliseconds since epoch.
+#' - `endAt` (integer, optional): End time in milliseconds since epoch.
+#' - `currentPage` (integer, optional): Current request page.
+#' - `pageSize` (integer, optional): Number of results per request (min: 10, max: 500).
+#'
+#' **Example Request URL**:
+#' ```http
+#' GET https://api.kucoin.com/api/v1/deposits?currency=BTC&status=SUCCESS&startAt=1645839746000&endAt=1740447746000&currentPage=1&pageSize=50
+#' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `currentPage` (integer): Current page.
+#'   - `pageSize` (integer): Page size.
+#'   - `totalNum` (integer): Total number of records.
+#'   - `totalPage` (integer): Total number of pages.
+#'   - `items` (array of objects): Each object contains:
+#'     - `currency` (string): Currency of the deposit.
+#'     - `chain` (string): The blockchain network used.
+#'     - `status` (string): Status of the deposit.
+#'     - `address` (string): Deposit address.
+#'     - `memo` (string): Address remark or tag (may be empty).
+#'     - `isInner` (boolean): Whether it was an internal transfer.
+#'     - `amount` (string): Deposit amount.
+#'     - `fee` (string): Fee charged for the deposit.
+#'     - `walletTxId` (string): Transaction ID on the blockchain.
+#'     - `createdAt` (integer): Creation timestamp in milliseconds.
+#'     - `updatedAt` (integer): Last update timestamp in milliseconds.
+#'     - `remark` (string): Additional remarks.
+#'     - `arrears` (boolean): Whether there is any debt.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "currentPage": 1,
+#'     "pageSize": 50,
+#'     "totalNum": 2,
+#'     "totalPage": 1,
+#'     "items": [
+#'       {
+#'         "currency": "BTC",
+#'         "chain": "btc",
+#'         "status": "SUCCESS",
+#'         "address": "37rbVKjSv4pJhXwSmboTBFL4XfsuMQJAw9",
+#'         "memo": "",
+#'         "isInner": false,
+#'         "amount": "0.02613141",
+#'         "fee": "0.00000000",
+#'         "walletTxId": "7353c4fe07b1948a77cfd7beae7832e7fe45d42523436dc5c365a60155328320",
+#'         "createdAt": 1655593774000,
+#'         "updatedAt": 1655594083000,
+#'         "remark": "Deposit",
+#'         "arrears": false
+#'       },
+#'       {
+#'         "currency": "BTC",
+#'         "chain": "btc",
+#'         "status": "SUCCESS",
+#'         "address": "37rbVKjSv4pJhXwSmboTBFL4XfsuMQJAw9",
+#'         "memo": "",
+#'         "isInner": false,
+#'         "amount": "0.00052079",
+#'         "fee": "0.00000000",
+#'         "walletTxId": "86ff926d5385a0e5e9c670bebe105d7787e8919867cff7b8ad0bc0b00e0f204e",
+#'         "createdAt": 1655592533000,
+#'         "updatedAt": 1655593719000,
+#'         "remark": "Deposit",
+#'         "arrears": false
+#'       }
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the `"items"` array from the `"data"` object.
+#' - Converting it to a `data.table`, with each object in the array becoming a row.
+#' - Adding a `createdAt_Datetime` column by converting the UNIX timestamp to a human-readable datetime.
+#' - Ensuring proper column types for all fields.
+#'
+#' ## Notes
+#' - **Time Range**: Use `startAt` and `endAt` parameters to narrow down the time range of deposits.
+#' - **Status Filtering**: Filter by `status` to show only successful deposits or deposits in processing.
+#' - **Pagination**: Results are paginated and sorted to show the latest first. Use `max_pages` to limit the number of pages retrieved.
+#' - **Integer Overflow**: The function automatically handles large millisecond timestamps by converting them to character strings to prevent integer overflow in R.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Retrieve BTC deposit history from the last 3 months with SUCCESS status
 #' keys <- get_api_keys()
-#' base_url <- "https://api.kucoin.com"
+#' base_url <- get_base_url()
 #' main_async <- coro::async(function() {
-#'   dt <- await(get_deposit_history_impl(
+#'   three_months_ago <- lubridate::now() - lubridate::months(3)
+#'   current_time <- lubridate::now()
+#'
+#'   history <- await(get_deposit_history_impl(
 #'     keys = keys,
 #'     base_url = base_url,
-#'     currency = "USDT",
+#'     currency = "BTC",
 #'     status = "SUCCESS",
-#'     startAt = 1728663338000,
-#'     endAt = 1728692138000,
-#'     page_size = 50,
-#'     max_pages = 2
+#'     startAt = three_months_ago,
+#'     endAt = current_time,
+#'     page_size = 50
 #'   ))
-#'   print(dt)
+#'   print(history)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
-#' @importFrom data.table rbindlist data.table
+#' @importFrom data.table rbindlist
 #' @importFrom rlang abort
 #' @export
 get_deposit_history_impl <- coro::async(function(
@@ -545,6 +670,14 @@ get_deposit_history_impl <- coro::async(function(
         rlang::abort("page_size must be an integer between 10 and 500")
     }
 
+    # Validate datetime inputs
+    if (!is.null(startAt) && !inherits(startAt, c("POSIXct", "POSIXlt", "Date"))) {
+        rlang::abort("startAt must be a lubridate datetime object")
+    }
+    if (!is.null(endAt) && !inherits(endAt, c("POSIXct", "POSIXlt", "Date"))) {
+        rlang::abort("endAt must be a lubridate datetime object")
+    }
+
     tryCatch({
         # Define the fetch_page function for pagination
         fetch_page <- coro::async(function(query) {
@@ -556,7 +689,10 @@ get_deposit_history_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
+            file_name <- paste0("get_deposit_history_impl-", query$currentPage)
+            saveRDS(response, paste0("../../api-responses/impl_account_deposit/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
+            saveRDS(parsed_response, paste0("../../api-responses/impl_account_deposit/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
 
@@ -566,18 +702,28 @@ get_deposit_history_impl <- coro::async(function(
             currentPage = 1,
             pageSize = page_size
         )
+
         if (!is.null(status)) {
             initial_query$status <- status
         }
+
+        # Process startAt datetime
         if (!is.null(startAt)) {
-            initial_query$startAt <- as.integer(startAt)
-        }
-        if (!is.null(endAt)) {
-            initial_query$endAt <- as.integer(endAt)
+            # Convert datetime to millisecond timestamp
+            start_ms <- time_convert_to_kucoin(startAt, "ms")
+            # Convert to character to avoid integer overflow
+            initial_query$startAt <- as.character(round(start_ms))
         }
 
-        # TOOD: updated return signature
-        deposit_history_dt <- await(auto_paginate(
+        # Process endAt datetime
+        if (!is.null(endAt)) {
+            # Convert datetime to millisecond timestamp
+            end_ms <- time_convert_to_kucoin(endAt, "ms")
+            # Convert to character to avoid integer overflow
+            initial_query$endAt <- as.character(round(end_ms))
+        }
+
+        results <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -598,20 +744,63 @@ get_deposit_history_impl <- coro::async(function(
                         fee = character(0),
                         walletTxId = character(0),
                         createdAt = integer(0),
+                        createdAt_datetime = lubridate::as_datetime(character(0)),
                         updatedAt = integer(0),
+                        updatedAt_datetime = lubridate::as_datetime(character(0)),
                         remark = character(0),
                         arrears = logical(0),
-                        createdAtDatetime = as.POSIXct(character(0))
+                        # pagination fields
+                        page_currentPage = integer(0),
+                        page_pageSize = integer(0),
+                        page_totalNum = integer(0),
+                        page_totalPage = integer(0)
                     ))
                 }
-                dt <- data.table::rbindlist(acc, fill = TRUE)
-                dt[, createdAtDatetime := time_convert_from_kucoin(createdAt, "ms")]
-                return(dt)
+                # Pre-process list to convert NULLs to NA or empty values
+                acc <- lapply(acc, function(item) {
+                    # Ensure all possible NULL fields exist, replacing with NA
+                    if (is.null(item$subStatus)) item$subStatus <- NA_character_
+                    if (is.null(item$url)) item$url <- NA_character_
+                    return(item)
+                })
+                
+                # Create data.table with fill=TRUE to handle any missing columns
+                result_dt1 <- data.table::rbindlist(acc)
+                
+                # Add the datetime column
+                result_dt1[, createdAt_Datetime := time_convert_from_kucoin(createdAt, "ms")]
+                
+                return(result_dt1[])
             },
             max_pages = max_pages
         ))
 
-        return(deposit_history_dt)
+        agg <- results$aggregate
+
+        agg[, `:=`(
+            currency = as.character(currency),
+            chain = as.character(chain),
+            status = as.character(status),
+            address = as.character(address),
+            memo = as.character(memo),
+            isInner = as.logical(isInner),
+            amount = as.numeric(amount),
+            fee = as.numeric(fee),
+            walletTxId = as.character(walletTxId),
+            createdAt = as.numeric(createdAt),
+            createdAt_datetime = time_convert_from_kucoin(createdAt, "ms"),
+            updatedAt = as.numeric(updatedAt),
+            updatedAt_datetime = time_convert_from_kucoin(updatedAt, "ms"),
+            remark = as.character(remark),
+            arrears = as.logical(arrears),
+            # pagination fields
+            page_currentPage = as.integer(page_currentPage),
+            page_pageSize = as.integer(page_pageSize),
+            page_totalNum = as.integer(page_totalNum),
+            page_totalPage = as.integer(page_totalPage)
+        )]
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_deposit_history_impl:", conditionMessage(e)))
     })
