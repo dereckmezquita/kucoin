@@ -1088,7 +1088,10 @@ get_all_currencies_impl <- coro::async(function(
 #' Utilised to fetch metadata for a specific trading symbol, such as price increments and trading limits.
 #'
 #' ### Official Documentation
-#' [KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-symbols)
+#' [KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-symbol)
+#' 
+#' ### Function Validated
+#' - 2025-02-26 17h17
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
@@ -1139,20 +1142,51 @@ get_symbol_impl <- coro::async(function(
     base_url = get_base_url(),
     symbol
 ) {
+    if (is.null(symbol) || !is.character(symbol)) {
+        rlang::abort("The 'symbol' parameter must be a non-empty character string.")
+    }
     tryCatch({
         endpoint <- "/api/v2/symbols/"
         url <- paste0(base_url, endpoint, symbol)
 
         # Send a GET request to the endpoint with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_symbol_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_symbol_impl.Rds")
 
         # Convert the entire 'data' field from the response into a data.table.
-        symbol_dt <- data.table::as.data.table(parsed_response$data)
+        result_dt <- data.table::as.data.table(parsed_response$data)
 
-        return(symbol_dt)
+        # coerce types
+        result_dt[, `:=`(
+            symbol = as.character(symbol),
+            name = as.character(name),
+            baseCurrency = as.character(baseCurrency),
+            quoteCurrency = as.character(quoteCurrency),
+            feeCurrency = as.character(feeCurrency),
+            market = as.character(market),
+            baseMinSize = as.numeric(baseMinSize),
+            quoteMinSize = as.numeric(quoteMinSize),
+            baseMaxSize = as.numeric(baseMaxSize),
+            quoteMaxSize = as.numeric(quoteMaxSize),
+            baseIncrement = as.numeric(baseIncrement),
+            quoteIncrement = as.numeric(quoteIncrement),
+            priceIncrement = as.numeric(priceIncrement),
+            priceLimitRate = as.numeric(priceLimitRate),
+            minFunds = as.numeric(minFunds),
+            isMarginEnabled = as.logical(isMarginEnabled),
+            enableTrading = as.logical(enableTrading),
+            feeCategory = as.numeric(feeCategory),
+            makerFeeCoefficient = as.numeric(makerFeeCoefficient),
+            takerFeeCoefficient = as.numeric(takerFeeCoefficient),
+            st = as.logical(st), # this is a special treatment flag
+            callauctionIsEnabled = as.logical(callauctionIsEnabled)
+        )]
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_symbol_impl:", conditionMessage(e)))
     })
