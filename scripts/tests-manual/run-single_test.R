@@ -48,13 +48,22 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 5: Get Symbol
-    cat("\n--- Testing get_symbol_impl ---\n")
-    btc_usdt <- await(get_symbol_impl(
-        base_url = base_url,
-        symbol = "BTC-USDT"
+    # Test 6: Get All Symbols
+    cat("\n--- Testing get_all_symbols_impl ---\n")
+    symbols <- await(get_all_symbols_impl(
+        base_url = base_url
     ))
-    print(btc_usdt)
+    cat("Total symbols:", nrow(symbols), "\n")
+    print(symbols)
+
+    # Test 7: Get All Symbols filtered by market
+    cat("\n--- Testing get_all_symbols_impl with market filter ---\n")
+    usds_symbols <- await(get_all_symbols_impl(
+        base_url = base_url,
+        market = "USDS"
+    ))
+    cat("Total USDS symbols:", nrow(usds_symbols), "\n")
+    print(usds_symbols)
 })
 
 # Run the main async function

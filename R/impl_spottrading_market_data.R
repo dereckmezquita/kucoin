@@ -1417,14 +1417,58 @@ get_all_symbols_impl <- coro::async(function(
 
         # Send a GET request to the endpoint with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_all_symbols_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_all_symbols_impl.Rds")
 
-        # Convert the entire 'data' field (an array of symbol objects) into a data.table.
-        symbols_dt <- data.table::as.data.table(parsed_response$data)
+        data_obj <- parsed_response$data
 
-        return(symbols_dt)
+        chains <- lapply(data_obj, function(el) {
+            # Loop through each element in the chain and replace zero-length items with NA
+            for (nm in names(el)) {
+                if (length(el[[nm]]) == 0) {
+                    el[[nm]] <- NA  # or use NA_character_ / NA_real_ based on expected type
+                }
+            }
+            return(el)
+        })
+        result_dt <- data.table::rbindlist(chains)
+
+        # coerce types
+        result_dt[, `:=`(
+            symbol = as.character(symbol),
+            name = as.character(name),
+            baseCurrency = as.character(baseCurrency),
+            quoteCurrency = as.character(quoteCurrency),
+            feeCurrency = as.character(feeCurrency),
+            market = as.character(market),
+            baseMinSize = as.numeric(baseMinSize),
+            quoteMinSize = as.numeric(quoteMinSize),
+            baseMaxSize = as.numeric(baseMaxSize),
+            quoteMaxSize = as.numeric(quoteMaxSize),
+            baseIncrement = as.numeric(baseIncrement),
+            quoteIncrement = as.numeric(quoteIncrement),
+            priceIncrement = as.numeric(priceIncrement),
+            priceLimitRate = as.numeric(priceLimitRate),
+            minFunds = as.numeric(minFunds),
+            isMarginEnabled = as.logical(isMarginEnabled),
+            enableTrading = as.logical(enableTrading),
+            feeCategory = as.numeric(feeCategory),
+            makerFeeCoefficient = as.numeric(makerFeeCoefficient),
+            takerFeeCoefficient = as.numeric(takerFeeCoefficient),
+            st = as.logical(st), # this is a special treatment flag
+            callauctionIsEnabled = as.logical(callauctionIsEnabled),
+            callauctionPriceFloor = as.numeric(callauctionPriceFloor),
+            callauctionPriceCeiling = as.numeric(callauctionPriceCeiling),
+            callauctionFirstStageStartTime = as.numeric(callauctionFirstStageStartTime),
+            callauctionSecondStageStartTime = as.numeric(callauctionSecondStageStartTime),
+            callauctionThirdStageStartTime = as.numeric(callauctionThirdStageStartTime),
+            tradingStartTime = as.numeric(tradingStartTime)
+        )]
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_symbols_impl:", conditionMessage(e)))
     })
