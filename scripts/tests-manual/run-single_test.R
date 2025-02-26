@@ -34,22 +34,14 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # 2. Get the list of subaccounts
-    subaccount_list <- await(get_subaccount_list_summary_impl(
+    # 4. Get the spot account information for a subaccount
+    subaccount_spot <- await(get_subaccount_spot_v2_impl(
         keys = keys,
         base_url = base_url
     ))
-    cat("Subaccount List:\n")
-    print(subaccount_list)
 
-    # 3. Get the balance of a subaccount
-    subaccount_balance <- await(get_subaccount_detail_balance_impl(
-        keys = keys,
-        base_url = base_url,
-        subUserId = subaccount_list$userId[2]
-    ))
-    cat("Subaccount Balance:\n")
-    print(subaccount_balance)
+    cat("Subaccount Spot Account Information:\n")
+    print(subaccount_spot)
 
 })
 

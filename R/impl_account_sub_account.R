@@ -185,7 +185,7 @@ add_subaccount_impl <- coro::async(function(
         # saveRDS(response, "../../api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
         # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
-        return(data.table::as.data.table(parsed_response$data))
+        return(data.table::as.data.table(parsed_response$data)[])
     }, error = function(e) {
         rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
     })
@@ -593,7 +593,6 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 
         # Combine the results; if no data is available, return an empty data.table.
         if (length(result_list) == 0) {
-            # TODO: update default empty data.table
             result_dt <- data.table::data.table(
                 subUserId = character(0),
                 subName = character(0),
@@ -626,7 +625,7 @@ get_subaccount_detail_balance_impl <- coro::async(function(
             baseAmount = as.numeric(baseAmount)
         )]
 
-        return(result_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_detail_balance_impl:", conditionMessage(e)))
     })
@@ -650,6 +649,9 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Sub-Account List - Spot Balance (V2)](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2)
+#' 
+#' ### Function Validated
+#' - Last validated: 2025-02-25 20h19
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): Your KuCoin API key.
@@ -672,6 +674,10 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 #'   - `baseCurrencyPrice` (numeric): Price of the base currency.
 #'   - `baseAmount` (numeric): Amount in the base currency.
 #'   - `tag` (character): Tag associated with the account.
+#'   - `page_currentPage` (numeric): Current page number.
+#'   - `page_pageSize` (numeric): Number of results per page.
+#'   - `page_totalNum` (numeric): Total number of sub-accounts.
+#'   - `page_totalPage` (numeric): Total number of pages.
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
@@ -789,15 +795,17 @@ get_subaccount_spot_v2_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
+            # file_name <- paste0("get_spot_subaccount_list_v2_impl_", query$currentPage)
+            # saveRDS(response, paste0("../../api-responses/impl_account_sub_account/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
+            # saveRDS(parsed_response, paste0("../../api-responses/impl_account_sub_account/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
 
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # TOOD: updated return signature
-        spot_subaccount_list_dt <- await(auto_paginate(
+        result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -859,28 +867,34 @@ get_subaccount_spot_v2_impl <- coro::async(function(
                         tag = character(0)
                     )
                 }
-                # Cast numeric columns.
-                if (nrow(final_dt) > 0) {
-                    final_dt[, `:=`(
-                        balance = as.numeric(balance),
-                        available = as.numeric(available),
-                        holds = as.numeric(holds),
-                        baseCurrencyPrice = as.numeric(baseCurrencyPrice),
-                        baseAmount = as.numeric(baseAmount)
-                    )]
-                }
-                # Set column order.
-                data.table::setcolorder(final_dt, c(
-                    "subUserId", "subName", "accountType", "currency",
-                    "balance", "available", "holds", "baseCurrency",
-                    "baseCurrencyPrice", "baseAmount", "tag"
-                ))
                 return(final_dt)
             },
             max_pages = max_pages
         ))
 
-        return(spot_subaccount_list_dt)
+        agg <- result$aggregate
+
+        agg[, `:=`(
+            balance = as.numeric(balance),
+            available = as.numeric(available),
+            holds = as.numeric(holds),
+            baseCurrencyPrice = as.numeric(baseCurrencyPrice),
+            baseAmount = as.numeric(baseAmount),
+            # pagination info
+            page_currentPage = as.numeric(result$pagination$currentPage),
+            page_pageSize = as.numeric(result$pagination$pageSize),
+            page_totalNum = as.numeric(result$pagination$totalNum),
+            page_totalPage = as.numeric(result$pagination$totalPage)
+        )]
+
+        # Set column order.
+        data.table::setcolorder(agg, c(
+            "subUserId", "subName", "accountType", "currency",
+            "balance", "available", "holds", "baseCurrency",
+            "baseCurrencyPrice", "baseAmount", "tag"
+        ))
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_subaccount_list_v2_impl:", conditionMessage(e)))
     })
