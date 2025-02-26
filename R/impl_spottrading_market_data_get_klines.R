@@ -1,16 +1,16 @@
 # File: ./R/impl_spottrading_market_data_get_klines.R
 
-# box::use(
-#     ./helpers_api[ process_kucoin_response ],
-#     ./utils[ build_query, get_base_url ],
-#     ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ],
-#     coro[async, await],
-#     data.table[as.data.table, data.table, setnames, setcolorder, setorder, rbindlist],
-#     httr[RETRY, timeout],
-#     lubridate[as_datetime, now],
-#     promises[promise_all],
-#     rlang[abort]
-# )
+box::use(
+    ./helpers_api[ process_kucoin_response ],
+    ./utils[ build_query, get_base_url ],
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ],
+    coro[async, await],
+    data.table[as.data.table, data.table, setnames, setcolorder, setorder, rbindlist],
+    httr[RETRY, timeout],
+    lubridate[as_datetime, now],
+    promises[promise_all],
+    rlang[abort]
+)
 
 #' Get Klines Market Data Allowed Frequencies
 #'
@@ -207,7 +207,7 @@ split_time_range_by_candles <- function(
     seg_starts <- seq(from, to, by = segment_seconds)
     # For each segment, extend the end by 'overlap' seconds, but do not go past the overall 'to'
     seg_ends <- pmin(seg_starts + segment_seconds + overlap, to)
-    return(data.table::data.table(from = seg_starts, to = seg_ends))
+    return(data.table::data.table(from = seg_starts, to = seg_ends)[])
 }
 
 #' Fetch a Segment of Klines Data
@@ -297,11 +297,11 @@ fetch_klines_segment <- coro::async(function(
         times = retries,
         httr::timeout(10)
     )
-    response <- process_kucoin_response(response, url)
-    data <- data.table::as.data.table(response$data)
+    processed_response <- process_kucoin_response(response, url)
+    data <- data.table::rbindlist(lapply(processed_response$data, as.list))
 
     if (nrow(data) > 0) {
-        old_cnames <- names(data)
+        old_cnames <- colnames(data)
         new_cnames <- c("timestamp", "open", "close", "high", "low", "volume", "turnover")
         data.table::setnames(data, old_cnames, new_cnames)
         data[, (1:7) := lapply(.SD, as.numeric), .SDcols = 1:7]
@@ -309,7 +309,7 @@ fetch_klines_segment <- coro::async(function(
         data.table::setcolorder(data, c("datetime", new_cnames))
         data.table::setorder(data, datetime)
     }
-    return(data)
+    return(data[])
 })
 
 #' Retrieve Historical Klines Data (Implementation)
@@ -332,6 +332,9 @@ fetch_klines_segment <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Klines](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-klines)
+#' 
+#' ### Function Validated
+#' - 2025-02-25 20h47
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading pair (e.g., `"BTC-USDT"`). Defaults to `"BTC-USDT"`.
@@ -432,5 +435,5 @@ get_klines_impl <- coro::async(function(
         result <- combined
     }
 
-    return(result)
+    return(result[])
 })
