@@ -53,8 +53,10 @@ main_async <- async(function() {
     announcements <- await(get_announcements_impl(
         base_url = base_url,
         query = list(annType = "new-listings", lang = "en_US"),
-        page_size = 5,
-        max_pages = 1
+        startAt = lubridate::now() - lubridate::days(48),
+        endAt = lubridate::now(),
+        page_size = 50,
+        max_pages = Inf
     ))
     print(announcements)
 
