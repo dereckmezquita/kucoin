@@ -596,11 +596,11 @@ get_currency_impl <- coro::async(function(
 
         # Send the GET request with a 10-second timeout
         response <- httr::GET(url, httr::timeout(10))
-        saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_currency_impl.Rds")
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_currency_impl.Rds")
 
         # Process the response and extract the 'data' field
         parsed_response <- process_kucoin_response(response, url)
-        saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_currency_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_currency_impl.Rds")
 
         data_obj <- parsed_response$data
 

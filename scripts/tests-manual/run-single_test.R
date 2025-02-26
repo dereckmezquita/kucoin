@@ -48,13 +48,13 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 2: Get Currency Details
-    cat("\n--- Testing get_currency_impl ---\n")
-    btc_details <- await(get_currency_impl(
-        base_url = base_url,
-        currency = "BTC"
+    # Test 4: Get All Currencies
+    cat("\n--- Testing get_all_currencies_impl ---\n")
+    currencies <- await(get_all_currencies_impl(
+        base_url = base_url
     ))
-    print(btc_details)
+    cat("Total currencies:", nrow(currencies), "\n")
+    print(currencies)
 })
 
 # Run the main async function
