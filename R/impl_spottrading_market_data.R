@@ -325,53 +325,255 @@ get_announcements_impl <- coro::async(function(
 
 #' Get Currency Details
 #'
-#' Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific details for multi-chain currencies.
+#' Retrieves detailed information for a specified currency from the KuCoin API asynchronously by sending a GET request to the `/api/v3/currencies/{currency}` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#'
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getCurrency`
+#'
+#' ## Description
+#' This function retrieves comprehensive details about a specified cryptocurrency, including its precision, confirmation requirements, chain support, and transaction limits. For multi-chain currencies, it can provide chain-specific details when the optional `chain` parameter is specified.
+#'
+#' ## Workflow Overview
 #' 1. **Query Construction**: Builds a query string with the optional `chain` parameter using `build_query()`.
-#' 2. **URL Assembly**: Combines `base_url`, `/api/v3/currencies/`, the `currency` code, and the query string.
-#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 2. **URL Assembly**: Combines the base URL with `/api/v3/currencies/`, the `currency` code, and the query string.
+#' 3. **API Request**: Sends a GET request using `httr::GET()` with the constructed URL, applying a 10-second timeout.
 #' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
-#' 5. **Data Conversion**: Splits `"data"` into summary fields and `chains` data, combining them into a `data.table`.
+#' 5. **Data Transformation**: Splits the response into currency summary fields and chain-specific details, processing and combining them into a structured `data.table`.
+#' 6. **Type Conversion**: Ensures proper data types for all fields (e.g., numeric for balances, logical for boolean flags).
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v3/currencies/{currency}`
 #'
-#' ### Usage
-#' Utilised to obtain metadata (e.g., precision, chain support) for a specific currency on KuCoin.
+#' ## Usage
+#' This function is used internally to obtain detailed metadata (e.g., precision, chain support, minimum withdrawal amounts) for a specific currency on KuCoin, which is essential for operations like deposits, withdrawals, and trading.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
-#' 
-#' ### Function Validated
+#'
+#' ## Function Validated
 #' - Last validated: 2025-02-26 11h31
 #'
-#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @param currency Character string; currency code (e.g., `"BTC"`, `"USDT"`).
-#' @param chain Character string (optional); specific chain for multi-chain currencies (e.g., `"ERC20"`, `"TRC20"`).
-#' @return Promise resolving to a `data.table` containing:
-#'   - `currency` (character): Unique currency code.
-#'   - `name` (character): Short name of the currency.
-#'   - `fullName` (character): Full name of the currency.
-#'   - `precision` (integer): Decimal places for the currency.
-#'   - `confirms` (integer or NULL): Block confirmations required.
-#'   - `contractAddress` (character or NULL): Contract address for tokenized currencies.
-#'   - `isMarginEnabled` (logical): Margin trading enabled status.
-#'   - `isDebitEnabled` (logical): Debit enabled status.
-#'   - Chain-specific fields (e.g., `chainName`, `withdrawalMinSize`) from the `chains` list.
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param currency Character string; the currency code for which to retrieve details (e.g., `"BTC"`, `"ETH"`, `"USDT"`).
+#' @param chain Character string (optional); specific blockchain network for multi-chain currencies. Examples:
+#'   - For USDT: `"eth"` (ERC20), `"trx"` (TRC20), `"bsc"` (BEP20), etc.
+#'   - For BTC: `"btc"` (Native), `"bech32"` (Segwit), etc.
+#'   - This parameter can be omitted for single-chain currencies.
+#'
+#' @return A promise resolving to a `data.table` containing currency details with the following columns:
+#'   - **General Currency Fields**:
+#'     - `currency` (character): Unique currency code.
+#'     - `name` (character): Short name of the currency.
+#'     - `fullName` (character): Full name of the currency.
+#'     - `precision` (numeric): Decimal places supported for the currency.
+#'     - `isMarginEnabled` (logical): Whether margin trading is enabled for this currency.
+#'     - `isDebitEnabled` (logical): Whether debit is enabled for this currency.
+#'   - **Chain-Specific Fields** (one row per chain):
+#'     - `chainName` (character): Name of the blockchain network (e.g., `"BTC"`, `"ERC20"`, `"TRC20"`).
+#'     - `withdrawalMinSize` (numeric): Minimum amount that can be withdrawn.
+#'     - `depositMinSize` (numeric): Minimum amount that can be deposited.
+#'     - `withdrawFeeRate` (numeric): Fee rate for withdrawals.
+#'     - `withdrawalMinFee` (numeric): Minimum fee charged for withdrawals.
+#'     - `isWithdrawEnabled` (logical): Whether withdrawals are currently enabled.
+#'     - `isDepositEnabled` (logical): Whether deposits are currently enabled.
+#'     - `confirms` (numeric): Number of block confirmations required.
+#'     - `preConfirms` (numeric): Number of confirmations required for advance verification.
+#'     - `contractAddress` (character): Contract address for token currencies.
+#'     - `withdrawPrecision` (numeric): Decimal precision for withdrawal amounts.
+#'     - `maxWithdraw` (numeric): Maximum amount for a single withdrawal.
+#'     - `maxDeposit` (numeric): Maximum amount for a single deposit.
+#'     - `needTag` (logical): Whether a memo/tag is required for deposits.
+#'     - `chainId` (character): Chain identifier used in API requests.
+#'
+#'   If the specified currency does not exist or no chain data is available, an empty `data.table` with these columns is returned.
+#'
+#' ## Details
+#'
+#' ### Path Parameters
+#' - `currency` (string, **required**): The currency code for which to retrieve details (e.g., `"BTC"`, `"ETH"`, `"USDT"`).
+#'
+#' ### Query Parameters
+#' - `chain` (string, optional): The blockchain network for multi-chain currencies. Examples:
+#'   - For USDT: `"eth"` (ERC20), `"trx"` (TRC20), `"bsc"` (BEP20), etc.
+#'   - For BTC: `"btc"` (Native), `"bech32"` (Segwit), etc.
+#'   - This parameter can be omitted for single-chain currencies.
+#'
+#' **Example Request URL**:
+#' ```http
+#' GET https://api.kucoin.com/api/v3/currencies/BTC?chain=bech32
+#' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `currency` (string): Unique currency code.
+#'   - `name` (string): Short name of the currency.
+#'   - `fullName` (string): Full name of the currency.
+#'   - `precision` (integer): Decimal places supported for the currency.
+#'   - `confirms` (integer, nullable): Number of block confirmations required.
+#'   - `contractAddress` (string, nullable): Contract address for token currencies.
+#'   - `isMarginEnabled` (boolean): Whether margin trading is enabled.
+#'   - `isDebitEnabled` (boolean): Whether debit is enabled.
+#'   - `chains` (array of objects): Each object contains chain-specific details:
+#'     - `chainName` (string): Name of the blockchain network.
+#'     - `withdrawalMinSize` (string): Minimum withdrawal amount.
+#'     - `depositMinSize` (string): Minimum deposit amount.
+#'     - `withdrawFeeRate` (string): Withdrawal fee rate.
+#'     - `withdrawalMinFee` (string): Minimum withdrawal fee.
+#'     - `isWithdrawEnabled` (boolean): Whether withdrawals are enabled.
+#'     - `isDepositEnabled` (boolean): Whether deposits are enabled.
+#'     - `confirms` (integer): Required confirmations.
+#'     - `preConfirms` (integer): Confirmations for advance verification.
+#'     - `contractAddress` (string): Contract address.
+#'     - `withdrawPrecision` (integer): Withdrawal precision.
+#'     - `maxWithdraw` (number, nullable): Maximum withdrawal amount.
+#'     - `maxDeposit` (string, nullable): Maximum deposit amount.
+#'     - `needTag` (boolean): Whether memo/tag is required.
+#'     - `chainId` (string): Chain identifier.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'     "code": "200000",
+#'     "data": {
+#'         "currency": "BTC",
+#'         "name": "BTC",
+#'         "fullName": "Bitcoin",
+#'         "precision": 8,
+#'         "confirms": null,
+#'         "contractAddress": null,
+#'         "isMarginEnabled": true,
+#'         "isDebitEnabled": true,
+#'         "chains": [
+#'             {
+#'                 "chainName": "BTC",
+#'                 "withdrawalMinSize": "0.001",
+#'                 "depositMinSize": "0.0002",
+#'                 "withdrawFeeRate": "0",
+#'                 "withdrawalMinFee": "0.0005",
+#'                 "isWithdrawEnabled": true,
+#'                 "isDepositEnabled": true,
+#'                 "confirms": 3,
+#'                 "preConfirms": 1,
+#'                 "contractAddress": "",
+#'                 "withdrawPrecision": 8,
+#'                 "maxWithdraw": null,
+#'                 "maxDeposit": null,
+#'                 "needTag": false,
+#'                 "chainId": "btc"
+#'             },
+#'             {
+#'                 "chainName": "Lightning Network",
+#'                 "withdrawalMinSize": "0.00001",
+#'                 "depositMinSize": "0.00001",
+#'                 "withdrawFeeRate": "0",
+#'                 "withdrawalMinFee": "0.000015",
+#'                 "isWithdrawEnabled": true,
+#'                 "isDepositEnabled": true,
+#'                 "confirms": 1,
+#'                 "preConfirms": 1,
+#'                 "contractAddress": "",
+#'                 "withdrawPrecision": 8,
+#'                 "maxWithdraw": null,
+#'                 "maxDeposit": "0.03",
+#'                 "needTag": false,
+#'                 "chainId": "btcln"
+#'             },
+#'             {
+#'                 "chainName": "KCC",
+#'                 "withdrawalMinSize": "0.0008",
+#'                 "depositMinSize": null,
+#'                 "withdrawFeeRate": "0",
+#'                 "withdrawalMinFee": "0.00002",
+#'                 "isWithdrawEnabled": true,
+#'                 "isDepositEnabled": true,
+#'                 "confirms": 20,
+#'                 "preConfirms": 20,
+#'                 "contractAddress": "0xfa93c12cd345c658bc4644d1d4e1b9615952258c",
+#'                 "withdrawPrecision": 8,
+#'                 "maxWithdraw": null,
+#'                 "maxDeposit": null,
+#'                 "needTag": false,
+#'                 "chainId": "kcc"
+#'             },
+#'             {
+#'                 "chainName": "BTC-Segwit",
+#'                 "withdrawalMinSize": "0.0008",
+#'                 "depositMinSize": "0.0002",
+#'                 "withdrawFeeRate": "0",
+#'                 "withdrawalMinFee": "0.0005",
+#'                 "isWithdrawEnabled": false,
+#'                 "isDepositEnabled": true,
+#'                 "confirms": 2,
+#'                 "preConfirms": 2,
+#'                 "contractAddress": "",
+#'                 "withdrawPrecision": 8,
+#'                 "maxWithdraw": null,
+#'                 "maxDeposit": null,
+#'                 "needTag": false,
+#'                 "chainId": "bech32"
+#'             }
+#'         ]
+#'     }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the general currency fields from the top level of the `data` object.
+#' - Processing each entry in the `chains` array, converting it to a row in the resulting `data.table`.
+#' - Adding the general currency fields to each row.
+#' - Converting string numeric values to proper numeric types and string boolean values to logical types.
+#'
+#' ## Notes
+#' - **Multi-Chain Support**: Many cryptocurrencies exist on multiple blockchain networks with different characteristics. The `chain` parameter allows querying details for a specific network.
+#' - **Chain IDs**: The `chainId` field in the response is the value you should use when specifying the `chain` parameter in this and other API calls.
+#' - **Null Values**: The API may return `null` for some fields (e.g., `maxWithdraw` for chains with no maximum). These are converted to `NA` in the resulting `data.table`.
+#' - **Empty Fields**: Some fields like `contractAddress` may be empty strings for native coins. These are preserved as empty strings in the result.
+#' - **Rate Limiting**: This endpoint has a weight of 3 in the API rate limit pool (Public). Plan request frequency accordingly.
+#' - **Chain Selection**: If a `chain` parameter is provided, the API will return details only for that specific chain. Otherwise, it returns details for all supported chains.
+#'
+#' ## Use Cases
+#' - **Deposit Configuration**: Determining minimum deposit amounts and required confirmations for user deposits.
+#' - **Withdrawal Planning**: Checking withdrawal fees, minimums, and maximums before initiating withdrawals.
+#' - **Chain Selection**: Comparing different blockchain options for multi-chain currencies to choose the most cost-effective or fastest network.
+#' - **Feature Support**: Determining if a currency supports specific features like margin trading or debit.
+#' - **Status Monitoring**: Checking if deposits or withdrawals are currently enabled for specific chains.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Chain Availability**: Always check `isWithdrawEnabled` and `isDepositEnabled` before attempting transactions, as chains may be temporarily disabled for maintenance.
+#' - **Fee Optimization**: Compare `withdrawalMinFee` and `withdrawFeeRate` across chains to select the most cost-effective option for withdrawals.
+#' - **Precision Handling**: Use the `precision` and `withdrawPrecision` fields to correctly format amounts in your transactions.
+#' - **Tag Requirements**: Check the `needTag` field for currencies that require a memo or destination tag (e.g., XRP, XLM) to avoid lost funds.
+#' - **Minimum Validation**: Ensure transaction amounts meet `withdrawalMinSize` and `depositMinSize` to avoid failed transactions.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Retrieve Bitcoin details with all supported chains
 #' main_async <- coro::async(function() {
-#'   # Bitcoin details
 #'   btc <- await(get_currency_impl(currency = "BTC"))
 #'   print(btc)
-#'   # USDT on ERC20 chain
-#'   usdt_erc20 <- await(get_currency_impl(currency = "USDT", chain = "ERC20"))
+#'   
+#'   # Example: Retrieve USDT details specifically for the ERC20 chain
+#'   usdt_erc20 <- await(get_currency_impl(currency = "USDT", chain = "eth"))
 #'   print(usdt_erc20)
+#'   
+#'   # Example: Check if withdrawals are enabled for TON on its native chain
+#'   ton <- await(get_currency_impl(currency = "TON", chain = "ton"))
+#'   withdrawal_enabled <- ton[, unique(isWithdrawEnabled)]
+#'   print(paste("TON withdrawals enabled:", withdrawal_enabled))
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table as.data.table
