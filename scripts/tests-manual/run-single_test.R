@@ -34,16 +34,14 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # 1. Add a subaccount
-    subaccount <- await(add_subaccount_impl(
+    # 2. Get the list of subaccounts
+    subaccount_list <- await(get_subaccount_list_summary_impl(
         keys = keys,
-        base_url = base_url,
-        password = "some69superComplexS3cr3tP@ssw0rd",
-        subName = "rtradebot6971469",
-        access = "Spot",
-        remarks = "Some super genius remark"
+        base_url = base_url
     ))
-    print(subaccount)
+    cat("Subaccount List:\n")
+    print(subaccount_list)
+
 })
 
 # Run the main async function

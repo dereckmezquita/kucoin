@@ -211,23 +211,23 @@ add_subaccount_impl <- coro::async(function(
 #' [KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param page_size Integer specifying the number of results per page (minimum 1, maximum 100). Defaults to 100.
 #' @param max_pages Numeric specifying the maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
 #' @return Promise resolving to a `data.table` containing aggregated sub-account summary information, including:
 #'   - `userId` (character): Unique identifier of the master account.
-#'   - `uid` (integer): Unique identifier of the sub-account.
+#'   - `uid` (numeric): Unique identifier of the sub-account.
 #'   - `subName` (character): Sub-account name.
-#'   - `status` (integer): Current status of the sub-account.
-#'   - `type` (integer): Type of sub-account.
+#'   - `status` (numeric): Current status of the sub-account, enum 2:Enable, 3:Frozen.
+#'   - `type` (numeric): Type of sub-account, enum 0, 1, 2, 5.
 #'   - `access` (character): Permission type granted (e.g., `"All"`, `"Spot"`, `"Futures"`, `"Margin"`).
-#'   - `createdAt` (integer): Timestamp of creation in milliseconds.
-#'   - `createdDatetime` (POSIXct): Converted human-readable datetime.
+#'   - `createdAt` (numeric): Timestamp of creation in milliseconds.
+#'   - `createdAt_datetime` (POSIXct): Converted human-readable datetime.
 #'   - `remarks` (character): Remarks or notes associated with the sub-account.
 #'   - `tradeTypes` (character): Separated by `;`, the trade types available to the sub-account (e.g. `"Spot;Futures;Margin"`).
 #'   - `openedTradeTypes` (character): Separated by `;`, the trade types currently open to the sub-account.
@@ -237,6 +237,21 @@ add_subaccount_impl <- coro::async(function(
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
 #' - `data` (object): Contains pagination metadata and an `items` array with sub-account summary details.  
+#'   - `userId` (string) required: Sub-account User ID
+#'   - `uid` (integer) required: Sub-account UID
+#'   - `subName` (string) required: Sub-account name
+#'   - `status` (enum<integer>) required: Sub-account; 2:Enable, 3:Frozen
+#'   - `type` (enum<integer>) required: Sub-account type; 0, 1, 2, 5
+#'       - `0`, NORMAL - Normal sub-account
+#'       - `1`, ROBOT - Robot sub-account
+#'       - `2`, Novice - New financial sub-account
+#'       - `5`, HOSTED - Asset management sub-account
+#'   - `access` (string) required: Sub-account Permission
+#'   - `createdAt` (integer <int64>) required: Time of event
+#'   - `remarks` (string) required: Remarks
+#'   - `tradeTypes` (array[string]) required: Sub-account Permissions
+#'   - `openedTradeTypes` (array[string]) required: Sub-account active permissions: If you do not have the corresponding permissions, you must log in to the sub-account and go to the corresponding web page to activate.
+#'   - `hostedStatus` (string) required
 #' 
 #' Example JSON response:  
 #' ```
@@ -307,18 +322,17 @@ get_subaccount_list_summary_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
-            file_name <- paste0("get_subaccount_list_summary_impl_", query$currentPage)
-            # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_list_summary_impl.ignore.Rds")
+            # file_name <- paste0("get_subaccount_list_summary_impl_", query$currentPage)
+            # saveRDS(response, "../../api-responses/impl_account_sub_account/response-get_subaccount_list_summary_impl.ignore.Rds")
             parsed_response <- process_kucoin_response(response, url)
-            # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_list_summary_impl.Rds")
+            # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-get_subaccount_list_summary_impl.Rds")
             return(parsed_response$data)
         })
 
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # TOOD: updated return signature
-        subaccount_summary_dt <- await(auto_paginate(
+        results <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -327,7 +341,23 @@ get_subaccount_list_summary_impl <- coro::async(function(
                 totalPage = "totalPage"
             ),
             aggregate_fn = function(acc) {
-                els <- lapply(acc, function(el) {
+                if (length(acc) == 0 || all(sapply(acc, length) == 0)) {
+                    return(data.table::data.table(
+                        userId = character(0),
+                        uid = numeric(0),
+                        subName = character(0),
+                        status = numeric(0),
+                        type = numeric(0),
+                        access = character(0),
+                        createdAt = numeric(0),
+                        createdAt_datetime = lubridate::as_datetime(character(0)),
+                        remarks = character(0),
+                        tradeTypes = character(0),
+                        openedTradeTypes = character(0),
+                        hostedStatus = character(0)
+                    ))
+                }
+                acc2 <- lapply(acc, function(el) {
                     # collapse certain fields into a single string
                     el$tradeTypes <- paste(el$tradeTypes, collapse = ";")
                     el$openTradeTypes <- paste(el$openTradeTypes, collapse = ";")
@@ -337,14 +367,48 @@ get_subaccount_list_summary_impl <- coro::async(function(
                     return(el)
                 })
                 # rbindlist can convert list of lists to data.table
-                return(data.table::rbindlist(els))
+                return(data.table::rbindlist(acc2))
             },
             max_pages = max_pages
         ))
 
-        subaccount_summary_dt[, createdDatetime := time_convert_from_kucoin(createdAt, "ms")]
+        agg <- results$aggregate
 
-        return(subaccount_summary_dt)
+        expected_cols <- c(
+            "userId", "uid", "subName", "status", "type",
+            "access", "createdAt", "createdAt_datetime", "remarks",
+            "tradeTypes", "openedTradeTypes", "hostedStatus"
+        )
+        missing_cols <- setdiff(expected_cols, names(agg))
+        for (col in missing_cols) {
+            agg[, (col) := NA_character_]
+        }
+
+        agg[, createdAt_datetime := time_convert_from_kucoin(createdAt, "ms")]
+
+        agg[, `:=`(
+            userId = as.character(userId),
+            uid = as.numeric(uid),
+            subName = as.character(subName),
+            status = as.numeric(status),
+            type = as.numeric(type),
+            access = as.character(access),
+            createdAt = as.numeric(createdAt),
+            createdAt_datetime = as.POSIXct(createdAt_datetime),
+            remarks = as.character(remarks),
+            tradeTypes = as.character(tradeTypes),
+            openedTradeTypes = as.character(openedTradeTypes),
+            hostedStatus = as.character(hostedStatus),
+            # pagination info
+            page_currentPage = as.numeric(results$pagination$currentPage),
+            page_pageSize = as.numeric(results$pagination$pageSize),
+            page_totalNum = as.numeric(results$pagination$totalNum),
+            page_totalPage = as.numeric(results$pagination$totalPage)
+        )]
+
+        data.table::setcolorder(agg, expected_cols)
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
     })
