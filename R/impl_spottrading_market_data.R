@@ -342,6 +342,9 @@ get_announcements_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Currency](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-currency)
+#' 
+#' ### Function Validated
+#' - Last validated: 2025-02-26 11h31
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param currency Character string; currency code (e.g., `"BTC"`, `"USDT"`).
@@ -391,23 +394,76 @@ get_currency_impl <- coro::async(function(
 
         # Send the GET request with a 10-second timeout
         response <- httr::GET(url, httr::timeout(10))
+        saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_currency_impl.Rds")
 
         # Process the response and extract the 'data' field
         parsed_response <- process_kucoin_response(response, url)
+        saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_currency_impl.Rds")
+
+        data_obj <- parsed_response$data
+
+        chains <- lapply(data_obj$chains, function(el) {
+            # Loop through each element in the chain and replace zero-length items with NA
+            for (nm in names(el)) {
+                if (length(el[[nm]]) == 0) {
+                    el[[nm]] <- NA  # or use NA_character_ / NA_real_ based on expected type
+                }
+            }
+            return(el)
+        })
+        result_dt <- data.table::rbindlist(chains)
 
         # Convert the resulting data (a named list) into a data.table and return it
-        summary_fields <- c(
-            "currency", "name", "fullName", "precision", "confirms",
-            "contractAddress", "isMarginEnabled", "isDebitEnabled"
-        )
+        summary_fields_vals <- data_obj[c(
+            "currency", "name", "fullName", "precision", # "confirms", "contractAddress", use the confirms/contractAddress from chain items
+            "isMarginEnabled", "isDebitEnabled"
+        )]
 
-        summary_dt <- data.table::as.data.table(parsed_response$data[summary_fields])
-        currency_dt <- data.table::as.data.table(parsed_response$data$chains)
+        # Replace NULL with NA for each element in summary_fields_vals
+        summary_fields_vals <- lapply(summary_fields_vals, function(x) {
+            if (is.null(x)) {
+                return(NA)
+            } else {
+                return(x)
+            }
+        })
 
-        return(cbind(
-            summary_dt,
-            currency_dt
+        # coerce types and add summary fields
+        result_dt[, `:=`(
+            # summary fields
+            currency = as.character(summary_fields_vals$currency),
+            name = as.character(summary_fields_vals$name),
+            fullName = as.character(summary_fields_vals$fullName),
+            precision = as.numeric(summary_fields_vals$precision),
+            isMarginEnabled = as.logical(summary_fields_vals$isMarginEnabled),
+            isDebitEnabled = as.logical(summary_fields_vals$isDebitEnabled),
+            # chain-specific fields
+            chainName = as.character(chainName),
+            withdrawalMinSize = as.numeric(withdrawalMinSize),
+            depositMinSize = as.numeric(depositMinSize),
+            withdrawFeeRate = as.numeric(withdrawFeeRate),
+            withdrawalMinFee = as.numeric(withdrawalMinFee),
+            isWithdrawEnabled = as.logical(isWithdrawEnabled),
+            isDepositEnabled = as.logical(isDepositEnabled),
+            confirms = as.numeric(confirms),
+            preConfirms = as.numeric(preConfirms),
+            contractAddress = as.character(contractAddress),
+            withdrawPrecision = as.numeric(withdrawPrecision),
+            maxWithdraw = as.numeric(maxWithdraw),
+            maxDeposit = as.numeric(maxDeposit),
+            needTag = as.logical(needTag),
+            chainId = as.character(chainId)
+        )]
+
+        data.table::setcolorder(result_dt, c(
+            "currency", "name", "fullName", "precision", "isMarginEnabled",
+            "isDebitEnabled", "chainName", "withdrawalMinSize", "depositMinSize",
+            "withdrawFeeRate", "withdrawalMinFee", "isWithdrawEnabled",
+            "isDepositEnabled", "confirms", "preConfirms", "contractAddress",
+            "withdrawPrecision", "maxWithdraw", "maxDeposit", "needTag", "chainId"
         ))
+
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_currency_impl:", conditionMessage(e)))
     })

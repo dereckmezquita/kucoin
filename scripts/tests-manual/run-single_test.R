@@ -48,18 +48,13 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 1: Get Announcements
-    cat("\n--- Testing get_announcements_impl ---\n")
-    announcements <- await(get_announcements_impl(
+    # Test 2: Get Currency Details
+    cat("\n--- Testing get_currency_impl ---\n")
+    btc_details <- await(get_currency_impl(
         base_url = base_url,
-        query = list(annType = "new-listings", lang = "en_US"),
-        startAt = lubridate::now() - lubridate::days(48),
-        endAt = lubridate::now(),
-        page_size = 50,
-        max_pages = Inf
+        currency = "BTC"
     ))
-    print(announcements)
-
+    print(btc_details)
 })
 
 # Run the main async function
