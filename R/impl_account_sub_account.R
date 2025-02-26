@@ -433,6 +433,9 @@ get_subaccount_list_summary_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
+#' 
+#' ### Function Validated
+#' - Last validated: 2025-02-25 19h24
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key`: Character string; your KuCoin API key.
@@ -557,9 +560,9 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 
         # Send the GET request.
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_detail_balance_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_sub_account/response-get_subaccount_detail_balance_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_detail_balance_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-get_subaccount_detail_balance_impl.Rds")
 
         data <- parsed_response$data
 

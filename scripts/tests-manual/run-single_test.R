@@ -42,6 +42,15 @@ main_async <- async(function() {
     cat("Subaccount List:\n")
     print(subaccount_list)
 
+    # 3. Get the balance of a subaccount
+    subaccount_balance <- await(get_subaccount_detail_balance_impl(
+        keys = keys,
+        base_url = base_url,
+        subUserId = subaccount_list$userId[2]
+    ))
+    cat("Subaccount Balance:\n")
+    print(subaccount_balance)
+
 })
 
 # Run the main async function
