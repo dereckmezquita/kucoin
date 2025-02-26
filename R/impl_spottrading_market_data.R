@@ -1075,60 +1075,206 @@ get_all_currencies_impl <- coro::async(function(
 #'
 #' Retrieves detailed information about a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
-#' 1. **URL Assembly**: Combines `base_url`, `/api/v2/symbols/`, and the `symbol`.
-#' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-#' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
-#' 4. **Data Conversion**: Converts `"data"` into a `data.table` without filtering.
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 4
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getSymbol`
 #'
-#' ### API Endpoint
+#' ## Description
+#' This function requests detailed information for a specific trading pair (symbol) on KuCoin. It provides 
+#' essential trading parameters including minimum and maximum order sizes, price and quantity increments, 
+#' and fee information. The returned data defines trading rules and constraints for the specified symbol.
+#' 
+#' Note that this endpoint provides configuration data for the trading pair itself. For market information 
+#' such as current price and volume, use Get All Tickers instead.
+#'
+#' ## Workflow Overview
+#' 1. **URL Assembly**: Combines `base_url`, `/api/v2/symbols/`, and the `symbol`.
+#' 2. **Input Validation**: Verifies that `symbol` is a non-empty character string.
+#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 5. **Type Conversion**: Converts string fields from the API response to appropriate R data types (numeric, logical).
+#'
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v2/symbols/{symbol}`
 #'
-#' ### Usage
-#' Utilised to fetch metadata for a specific trading symbol, such as price increments and trading limits.
+#' ## Usage
+#' Utilised to fetch metadata and trading rules for a specific trading symbol, such as price increments and trading limits.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Symbol](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-symbol)
 #' 
-#' ### Function Validated
-#' - 2025-02-26 17h17
+#' ## Function Validated
+#' - Last validated: 2025-02-26 17h17
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `symbol` (character): Unique trading symbol code.
-#'   - `name` (character): Name of the trading pair.
-#'   - `baseCurrency` (character): Base currency.
-#'   - `quoteCurrency` (character): Quote currency.
-#'   - `feeCurrency` (character): Currency for fees.
-#'   - `market` (character): Trading market (e.g., `"USDS"`).
-#'   - `baseMinSize` (character): Minimum order quantity.
-#'   - `quoteMinSize` (character): Minimum order funds.
-#'   - `baseMaxSize` (character): Maximum order size.
-#'   - `quoteMaxSize` (character): Maximum order funds.
-#'   - `baseIncrement` (character): Quantity increment.
-#'   - `quoteIncrement` (character): Quote increment.
-#'   - `priceIncrement` (character): Price increment.
-#'   - `priceLimitRate` (character): Price protection threshold.
-#'   - `minFunds` (character): Minimum trading amount.
-#'   - `isMarginEnabled` (logical): Margin trading status.
-#'   - `enableTrading` (logical): Trading enabled status.
-#'   - `feeCategory` (integer): Fee category.
-#'   - `makerFeeCoefficient` (character): Maker fee coefficient.
-#'   - `takerFeeCoefficient` (character): Taker fee coefficient.
-#'   - `st` (logical): Special treatment flag.
-#'   - `callauctionIsEnabled` (logical): Call auction enabled status.
-#'   - `callauctionPriceFloor` (character): Call auction price floor.
-#'   - `callauctionPriceCeiling` (character): Call auction price ceiling.
-#'   - `callauctionFirstStageStartTime` (integer): First stage start time.
-#'   - `callauctionSecondStageStartTime` (integer): Second stage start time.
-#'   - `callauctionThirdStageStartTime` (integer): Third stage start time.
-#'   - `tradingStartTime` (integer): Trading start time.
+#'   - `symbol` (character): Unique code of a symbol; it will not change after renaming (e.g., `"BTC-USDT"`).
+#'   - `name` (character): Name of trading pair; it will change after renaming (e.g., `"BTC-USDT"`).
+#'   - `baseCurrency` (character): Base currency (e.g., `"BTC"`).
+#'   - `quoteCurrency` (character): Quote currency (e.g., `"USDT"`).
+#'   - `feeCurrency` (character): The currency in which fees are charged.
+#'   - `market` (character): The trading market (e.g., `"USDS"`, `"BTC"`, `"ALTS"`).
+#'   - `baseMinSize` (numeric): The minimum order quantity required to place an order.
+#'   - `quoteMinSize` (numeric): The minimum order funds required to place a market order.
+#'   - `baseMaxSize` (numeric): The maximum order size required to place an order.
+#'   - `quoteMaxSize` (numeric): The maximum order funds required to place a market order.
+#'   - `baseIncrement` (numeric): Quantity increment; quantity must be a positive integer multiple of this value.
+#'   - `quoteIncrement` (numeric): Quote increment; funds must be a positive integer multiple of this value.
+#'   - `priceIncrement` (numeric): Price increment; price must be a positive integer multiple of this value.
+#'   - `priceLimitRate` (numeric): Threshold for price protection.
+#'   - `minFunds` (numeric): The minimum trading amount required for orders.
+#'   - `isMarginEnabled` (logical): Whether margin trading is available for this symbol.
+#'   - `enableTrading` (logical): Whether trading is enabled for this symbol.
+#'   - `feeCategory` (numeric): Fee type category (1, 2, or 3).
+#'   - `makerFeeCoefficient` (numeric): The maker fee coefficient; actual fee is multiplied by this value.
+#'   - `takerFeeCoefficient` (numeric): The taker fee coefficient; actual fee is multiplied by this value.
+#'   - `st` (logical): Whether it is a Special Treatment symbol.
+#'   - `callauctionIsEnabled` (logical): Whether call auction is enabled for this symbol.
+#'   - `callauctionPriceFloor` (character or NULL): The lowest price declared in the call auction.
+#'   - `callauctionPriceCeiling` (character or NULL): The highest bid price in the call auction.
+#'   - `callauctionFirstStageStartTime` (integer or NULL): Timestamp when first phase of call auction starts (allows adding and canceling orders).
+#'   - `callauctionSecondStageStartTime` (integer or NULL): Timestamp when second phase of call auction starts (allows adding orders, disallows canceling orders).
+#'   - `callauctionThirdStageStartTime` (integer or NULL): Timestamp when third phase of call auction starts (disallows adding and canceling orders).
+#'   - `tradingStartTime` (integer or NULL): Official opening time (end time of the third phase of call auction).
+#'
+#' ## Details
+#'
+#' ### API Request Schema
+#' - `symbol` (string, **required**): Path parameter, the trading pair symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): A single object containing trading pair details:
+#'   - `symbol` (string): Unique code of the trading pair (will not change after renaming).
+#'   - `name` (string): Name of the trading pair (may change after renaming).
+#'   - `baseCurrency` (string): Base currency code.
+#'   - `quoteCurrency` (string): Quote currency code.
+#'   - `feeCurrency` (string): Currency in which fees are charged.
+#'   - `market` (string): Trading market category.
+#'   - `baseMinSize` (string): Minimum order quantity.
+#'   - `quoteMinSize` (string): Minimum order funds for market orders.
+#'   - `baseMaxSize` (string): Maximum order quantity.
+#'   - `quoteMaxSize` (string): Maximum order funds for market orders.
+#'   - `baseIncrement` (string): Quantity increment.
+#'   - `quoteIncrement` (string): Quote increment.
+#'   - `priceIncrement` (string): Price increment.
+#'   - `priceLimitRate` (string): Price protection threshold.
+#'   - `minFunds` (string): Minimum trading amount.
+#'   - `isMarginEnabled` (boolean): Margin trading availability.
+#'   - `enableTrading` (boolean): Trading availability.
+#'   - `feeCategory` (integer): Fee type enum (1, 2, or 3).
+#'   - `makerFeeCoefficient` (string): Maker fee coefficient.
+#'   - `takerFeeCoefficient` (string): Taker fee coefficient.
+#'   - `st` (boolean): Special Treatment flag.
+#'   - `callauctionIsEnabled` (boolean): Call auction status.
+#'   - `callauctionPriceFloor` (string or null): Lowest call auction price.
+#'   - `callauctionPriceCeiling` (string or null): Highest call auction price.
+#'   - `callauctionFirstStageStartTime` (integer or null): First stage start timestamp.
+#'   - `callauctionSecondStageStartTime` (integer or null): Second stage start timestamp.
+#'   - `callauctionThirdStageStartTime` (integer or null): Third stage start timestamp.
+#'   - `tradingStartTime` (integer or null): Trading start timestamp.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "symbol": "BTC-USDT",
+#'     "name": "BTC-USDT",
+#'     "baseCurrency": "BTC",
+#'     "quoteCurrency": "USDT",
+#'     "feeCurrency": "USDT",
+#'     "market": "USDS",
+#'     "baseMinSize": "0.00001",
+#'     "quoteMinSize": "0.1",
+#'     "baseMaxSize": "10000000000",
+#'     "quoteMaxSize": "99999999",
+#'     "baseIncrement": "0.00000001",
+#'     "quoteIncrement": "0.000001",
+#'     "priceIncrement": "0.1",
+#'     "priceLimitRate": "0.1",
+#'     "minFunds": "0.1",
+#'     "isMarginEnabled": true,
+#'     "enableTrading": true,
+#'     "feeCategory": 1,
+#'     "makerFeeCoefficient": "1.00",
+#'     "takerFeeCoefficient": "1.00",
+#'     "st": false,
+#'     "callauctionIsEnabled": false,
+#'     "callauctionPriceFloor": null,
+#'     "callauctionPriceCeiling": null,
+#'     "callauctionFirstStageStartTime": null,
+#'     "callauctionSecondStageStartTime": null,
+#'     "callauctionThirdStageStartTime": null,
+#'     "tradingStartTime": null
+#'   }
+#' }
+#' ```
+#'
+#' ### Notes
+#' - **Type Conversion**: While the API returns numeric values as strings, this function converts them to R numeric types for easier use.
+#' - **Trading Rules**: The `baseMinSize` and `baseMaxSize` fields define the minimum and maximum order size.
+#' - **Price Increments**: The `priceIncrement` field specifies the minimum order price as well as the price increment. 
+#'   The order price must be a positive integer multiple of this value (e.g., if the increment is 0.01, prices like 
+#'   0.001 and 0.021 will be rejected).
+#' - **Quote Increments**: Similarly, `quoteIncrement` defines the increment for quote currency amounts.
+#' - **Future Adjustments**: The `priceIncrement` and `quoteIncrement` values may be adjusted in the future. 
+#'   KuCoin will notify users by email and site notifications before adjustments.
+#' - **Minimum Funds Rules**: 
+#'   - For limit buy orders: `[Order Amount * Order Price] >= minFunds`
+#'   - For limit sell orders: `[Order Amount * Order Price] >= minFunds`
+#'   - For market buy orders: `Order Value >= minFunds`
+#'   - For market sell orders: `[Order Amount * Last Price of Base Currency] >= minFunds`
+#' - **Order Rejections**: 
+#'   - API market buy orders (by amount) valued at `(Order Amount * Last Price of Base Currency) < minFunds` will be rejected.
+#'   - API market sell orders (by value) valued at `< minFunds` will be rejected.
+#'   - Take profit and stop loss orders at market or limit prices will be rejected when triggered if they don't meet minimum funds requirements.
+#' - **Rate Limiting**: This endpoint has a weight of 4 in the Public rate limit pool.
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
-#'   symbol_data <- await(get_symbol_impl(symbol = "BTC-USDT"))
-#'   print(symbol_data)
+#'   # Get detailed information for BTC-USDT trading pair
+#'   btc_usdt <- await(get_symbol_impl(symbol = "BTC-USDT"))
+#'   
+#'   # Calculate the minimum BTC amount that can be bought with 100 USDT at current price of 62000
+#'   current_price <- 62000
+#'   usdt_amount <- 100
+#'   min_btc <- usdt_amount / current_price
+#'   
+#'   # Check if the amount is above minimum order size
+#'   if (min_btc >= btc_usdt$baseMinSize) {
+#'     cat("Can buy", min_btc, "BTC with 100 USDT\n")
+#'   } else {
+#'     cat("Cannot buy BTC with 100 USDT - minimum required:", 
+#'         btc_usdt$baseMinSize, "BTC\n")
+#'   }
+#'   
+#'   # Print information about price precision 
+#'   cat("Price must be increments of", btc_usdt$priceIncrement, "USDT\n")
+#'   cat("Quantity must be increments of", btc_usdt$baseIncrement, "BTC\n")
+#'   
+#'   # Check if margin trading is enabled
+#'   if (btc_usdt$isMarginEnabled) {
+#'     cat("Margin trading is enabled for BTC-USDT\n")
+#'   } else {
+#'     cat("Margin trading is not available for BTC-USDT\n")
+#'   }
+#'   
+#'   # Calculate maker and taker fees for a 1 BTC purchase
+#'   purchase_amount <- 1 * current_price  # 1 BTC at current price
+#'   maker_fee <- purchase_amount * (btc_usdt$makerFeeCoefficient / 100)
+#'   taker_fee <- purchase_amount * (btc_usdt$takerFeeCoefficient / 100)
+#'   cat("Maker fee for 1 BTC purchase:", maker_fee, "USDT\n")
+#'   cat("Taker fee for 1 BTC purchase:", taker_fee, "USDT\n")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
