@@ -667,6 +667,47 @@ get_currency_impl <- coro::async(function(
     })
 })
 
+#' Process Currency Object
+#'
+#' Transforms a currency object from the KuCoin API into a structured `data.table`, flattening nested chain information
+#' and ensuring consistent data types across all fields. This internal helper function is designed to support
+#' `get_all_currencies_impl()`.
+#'
+#' ### Workflow Overview
+#' 1. **Empty Check**: If the input is `NULL` or contains no chains, returns an empty `data.table` with predefined structure.
+#' 2. **Chain Processing**: Processes each chain, replacing zero-length items with `NA`.
+#' 3. **Summary Field Extraction**: Extracts and handles currency summary fields (e.g., `currency`, `name`, `fullName`).
+#' 4. **Data Type Coercion**: Converts all values to appropriate R data types (character, numeric, logical).
+#' 5. **Column Ordering**: Sets column order to prioritize summary fields followed by chain-specific fields.
+#'
+#' @param currency_obj List containing currency data from the KuCoin API, with summary fields and a `chains` array.
+#' @return `data.table` containing flattened currency data with one row per chain, including:
+#'   - **Summary Fields**:
+#'     - `currency` (character): Unique currency code.
+#'     - `name` (character): Short name.
+#'     - `fullName` (character): Full name.
+#'     - `precision` (numeric): Decimal places.
+#'     - `isMarginEnabled` (logical): Margin trading status.
+#'     - `isDebitEnabled` (logical): Debit status.
+#'   - **Chain-Specific Fields**:
+#'     - `chainName` (character): Blockchain name.
+#'     - `withdrawalMinSize` (numeric): Minimum withdrawal amount.
+#'     - `depositMinSize` (numeric): Minimum deposit amount.
+#'     - `withdrawFeeRate` (numeric): Withdrawal fee rate.
+#'     - `withdrawalMinFee` (numeric): Minimum withdrawal fee.
+#'     - `isWithdrawEnabled` (logical): Withdrawal enabled status.
+#'     - `isDepositEnabled` (logical): Deposit enabled status.
+#'     - `confirms` (numeric): Chain-specific confirmations.
+#'     - `preConfirms` (numeric): Pre-confirmations.
+#'     - `contractAddress` (character): Chain-specific contract address.
+#'     - `withdrawPrecision` (numeric): Withdrawal precision.
+#'     - `maxWithdraw` (numeric): Maximum withdrawal amount.
+#'     - `maxDeposit` (numeric): Maximum deposit amount.
+#'     - `needTag` (logical): Memo/tag requirement.
+#'     - `chainId` (character): Blockchain identifier.
+#'
+#' @importFrom data.table data.table rbindlist setcolorder
+#' @keywords internal
 process_currency <- function(currency_obj) {
     # if no data return empty data.table
     if (is.null(currency_obj) || length(currency_obj$chains) == 0) {
@@ -778,60 +819,216 @@ process_currency <- function(currency_obj) {
 #'
 #' Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details into a `data.table`.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getAllCurrencies`
+#'
+#' ## Description
+#' This function requests a comprehensive list of currencies supported by KuCoin, including their associated chains. 
+#' Not all currencies returned can be used for trading. For multi-chain currencies (like BTC), this endpoint provides 
+#' detailed information about each supported chain, including deposit/withdrawal parameters and status.
+#'
+#' ## Workflow Overview
 #' 1. **URL Assembly**: Combines `base_url` with `/api/v3/currencies`.
 #' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
 #' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
 #' 4. **Data Iteration**: Loops through each currency, extracting summary fields and chain data (if present).
 #' 5. **Result Assembly**: Combines summary and chain data into a `data.table`, adding dummy chain columns with `NA` if no chains exist.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v3/currencies`
 #'
-#' ### Usage
+#' ## Usage
 #' Utilised to fetch comprehensive currency details, including multi-chain support, for market analysis or configuration.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
-#' 
-#' ### Function Validated
-#' - 2025-02-26 15h41
+#'
+#' ## Function Validated
+#' - Last validated: 2025-02-26 15h41
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a `data.table` containing:
 #'   - **Summary Fields**:
-#'     - `currency` (character): Unique currency code.
-#'     - `name` (character): Short name.
-#'     - `fullName` (character): Full name.
-#'     - `precision` (integer): Decimal places.
-#'     - `confirms` (integer or NA): Block confirmations.
-#'     - `contractAddress` (character or NA): Primary contract address.
-#'     - `isMarginEnabled` (logical): Margin trading status.
-#'     - `isDebitEnabled` (logical): Debit status.
+#'     - `currency` (character): Unique currency code that will never change (used as the primary identifier).
+#'     - `name` (character): Short name (may change after renaming).
+#'     - `fullName` (character): Full currency name (may change after renaming).
+#'     - `precision` (numeric): Currency precision (decimal places).
+#'     - `isMarginEnabled` (logical): Whether margin trading is supported.
+#'     - `isDebitEnabled` (logical): Whether debit is supported.
 #'   - **Chain-Specific Fields**:
-#'     - `chainName` (character or NA): Blockchain name.
-#'     - `withdrawalMinSize` (character or NA): Minimum withdrawal amount.
-#'     - `depositMinSize` (character or NA): Minimum deposit amount.
-#'     - `withdrawFeeRate` (character or NA): Withdrawal fee rate.
-#'     - `withdrawalMinFee` (character or NA): Minimum withdrawal fee.
-#'     - `isWithdrawEnabled` (logical or NA): Withdrawal enabled status.
-#'     - `isDepositEnabled` (logical or NA): Deposit enabled status.
-#'     - `confirms` (integer or NA): Chain-specific confirmations.
-#'     - `preConfirms` (integer or NA): Pre-confirmations.
-#'     - `chain_contractAddress` (character or NA): Chain-specific contract address.
-#'     - `withdrawPrecision` (integer or NA): Withdrawal precision.
-#'     - `maxWithdraw` (character or NA): Maximum withdrawal amount.
-#'     - `maxDeposit` (character or NA): Maximum deposit amount.
-#'     - `needTag` (logical or NA): Memo/tag requirement.
-#'     - `chainId` (character or NA): Blockchain identifier.
-#'     - `depositFeeRate` (character or NA): Deposit fee rate.
-#'     - `withdrawMaxFee` (character or NA): Maximum withdrawal fee.
-#'     - `depositTierFee` (character or NA): Tiered deposit fee.
+#'     - `chainName` (character): Chain name of currency.
+#'     - `withdrawalMinSize` (numeric): Minimum withdrawal amount (coerced from string).
+#'     - `depositMinSize` (numeric): Minimum deposit amount (coerced from string).
+#'     - `withdrawFeeRate` (numeric): Withdrawal fee rate (coerced from string).
+#'     - `withdrawalMinFee` (numeric): Minimum fees charged for withdrawal (coerced from string).
+#'     - `isWithdrawEnabled` (logical): Whether withdrawal is supported.
+#'     - `isDepositEnabled` (logical): Whether deposit is supported.
+#'     - `confirms` (numeric): Number of block confirmations.
+#'     - `preConfirms` (numeric): Number of blocks for advance on-chain verification.
+#'     - `contractAddress` (character): Contract address.
+#'     - `withdrawPrecision` (numeric): Withdrawal precision bit (maximum decimal place length).
+#'     - `maxWithdraw` (numeric): Maximum amount for single withdrawal (coerced from string).
+#'     - `maxDeposit` (numeric): Maximum amount for single deposit (only for Lightning Network, coerced from string).
+#'     - `needTag` (logical): Whether memo/tag is required.
+#'     - `chainId` (character): Chain ID of the currency.
+#'     - Optional fields that may be present for some currencies:
+#'       - `depositFeeRate` (numeric): Deposit fee rate (coerced from string, may be NA).
+#'       - `withdrawMaxFee` (numeric): Maximum withdrawal fee (coerced from string, may be NA).
+#'       - `depositTierFee` (character): Tiered deposit fee information (may be NA).
+#'
+#' ## Details
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (array): Array of currency objects, each containing:
+#'   - `currency` (string): Unique currency code.
+#'   - `name` (string): Currency name.
+#'   - `fullName` (string): Full currency name.
+#'   - `precision` (integer): Currency precision.
+#'   - `confirms` (integer or null): Number of block confirmations.
+#'   - `contractAddress` (string or null): Contract address.
+#'   - `isMarginEnabled` (boolean): Margin support status.
+#'   - `isDebitEnabled` (boolean): Debit support status.
+#'   - `chains` (array): Array of chain objects, each containing:
+#'     - `chainName` (string): Chain name.
+#'     - `withdrawalMinSize` (string): Minimum withdrawal amount as string.
+#'     - `depositMinSize` (string or null): Minimum deposit amount as string.
+#'     - `withdrawFeeRate` (string): Withdrawal fee rate as string.
+#'     - `withdrawalMinFee` (string): Minimum withdrawal fee as string.
+#'     - `isWithdrawEnabled` (boolean): Withdrawal support status.
+#'     - `isDepositEnabled` (boolean): Deposit support status.
+#'     - `confirms` (integer): Chain-specific confirmations.
+#'     - `preConfirms` (integer): Pre-confirmations.
+#'     - `contractAddress` (string): Chain-specific contract address.
+#'     - `withdrawPrecision` (integer): Withdrawal precision.
+#'     - `maxWithdraw` (string or null): Maximum withdrawal amount as string.
+#'     - `maxDeposit` (string or null): Maximum deposit amount as string.
+#'     - `needTag` (boolean): Memo/tag requirement.
+#'     - `chainId` (string): Chain identifier.
+#'     - `depositFeeRate` (string, optional): Deposit fee rate.
+#'     - `withdrawMaxFee` (string, optional): Maximum withdrawal fee.
+#'     - `depositTierFee` (string, optional): Tiered deposit fee.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": [
+#'     {
+#'       "currency": "BTC",
+#'       "name": "BTC",
+#'       "fullName": "Bitcoin",
+#'       "precision": 8,
+#'       "confirms": null,
+#'       "contractAddress": null,
+#'       "isMarginEnabled": true,
+#'       "isDebitEnabled": true,
+#'       "chains": [
+#'         {
+#'           "chainName": "BTC",
+#'           "withdrawalMinSize": "0.001",
+#'           "depositMinSize": "0.0002",
+#'           "withdrawFeeRate": "0",
+#'           "withdrawalMinFee": "0.0005",
+#'           "isWithdrawEnabled": true,
+#'           "isDepositEnabled": true,
+#'           "confirms": 3,
+#'           "preConfirms": 1,
+#'           "contractAddress": "",
+#'           "withdrawPrecision": 8,
+#'           "maxWithdraw": null,
+#'           "maxDeposit": null,
+#'           "needTag": false,
+#'           "chainId": "btc"
+#'         },
+#'         {
+#'           "chainName": "Lightning Network",
+#'           "withdrawalMinSize": "0.00001",
+#'           "depositMinSize": "0.00001",
+#'           "withdrawFeeRate": "0",
+#'           "withdrawalMinFee": "0.000015",
+#'           "isWithdrawEnabled": true,
+#'           "isDepositEnabled": true,
+#'           "confirms": 1,
+#'           "preConfirms": 1,
+#'           "contractAddress": "",
+#'           "withdrawPrecision": 8,
+#'           "maxWithdraw": null,
+#'           "maxDeposit": "0.03",
+#'           "needTag": false,
+#'           "chainId": "btcln"
+#'         }
+#'       ]
+#'     },
+#'     {
+#'       "currency": "BTCP",
+#'       "name": "BTCP",
+#'       "fullName": "Bitcoin Private",
+#'       "precision": 8,
+#'       "confirms": null,
+#'       "contractAddress": null,
+#'       "isMarginEnabled": false,
+#'       "isDebitEnabled": false,
+#'       "chains": [
+#'         {
+#'           "chainName": "BTCP",
+#'           "withdrawalMinSize": "0.100000",
+#'           "depositMinSize": null,
+#'           "withdrawFeeRate": "0",
+#'           "withdrawalMinFee": "0.010000",
+#'           "isWithdrawEnabled": false,
+#'           "isDepositEnabled": false,
+#'           "confirms": 6,
+#'           "preConfirms": 6,
+#'           "contractAddress": "",
+#'           "withdrawPrecision": 8,
+#'           "maxWithdraw": null,
+#'           "maxDeposit": null,
+#'           "needTag": false,
+#'           "chainId": "btcp"
+#'         }
+#'       ]
+#'     }
+#'   ]
+#' }
+#' ```
+#'
+#' ### Notes
+#' - **Currency Codes**: Currency codes conform to the ISO 4217 standard where possible. Currencies without ISO 4217 representation may use custom codes.
+#' - **Currency Identification**: For a coin, the `currency` field is a fixed value and serves as the only recognized identifier. The `name` and `fullName` fields may change if the currency is renamed.
+#' - **Example**: If XRB is renamed to "Nano", you would still use "XRB" (the currency code) to reference it.
+#' - **Multi-Chain Support**: Many cryptocurrencies are available on multiple blockchains (e.g., BTC on native Bitcoin, Lightning Network, KCC, etc.), each with different parameters.
+#' - **Optional Fields**: Some currencies may include additional fields like `depositFeeRate`, `withdrawMaxFee`, and `depositTierFee` which are not present for all currencies.
+#' - **Rate Limiting**: This endpoint has a weight of 3 in the Public rate limit pool. Consider caching the results if multiple calls are needed.
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Fetch all currencies
 #'   currencies <- await(get_all_currencies_impl())
-#'   print(currencies)
+#'   
+#'   # Print the total number of currencies
+#'   cat("Total currencies:", length(unique(currencies$currency)), "\n")
+#'   
+#'   # Filter for a specific currency to see all its chains
+#'   btc_chains <- currencies[currency == "BTC"]
+#'   print(btc_chains)
+#'   
+#'   # Find all currencies that support margin trading
+#'   margin_currencies <- unique(currencies[isMarginEnabled == TRUE]$currency)
+#'   cat("Margin-enabled currencies:", length(margin_currencies), "\n")
+#'   
+#'   # Find all chains that support deposits but not withdrawals
+#'   deposit_only <- currencies[isDepositEnabled == TRUE & isWithdrawEnabled == FALSE]
+#'   print(deposit_only[, .(currency, chainName, chainId)])
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
