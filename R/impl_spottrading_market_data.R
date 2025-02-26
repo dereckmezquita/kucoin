@@ -3,7 +3,7 @@
 box::use(
     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
     ./utils[ verify_symbol, build_query, get_api_keys, get_base_url ],
-    ./utils_time_convert_kucoin[ time_convert_from_kucoin ],
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin, time_convert_to_kucoin ],
     coro[async, await],
     data.table[as.data.table, data.table, rbindlist, setcolorder, setnames],
     httr[GET, timeout],
@@ -11,65 +11,213 @@ box::use(
     utils[modifyList]
 )
 
-#' Get Announcements (Implementation)
+#' Get Announcements
 #'
-#' Retrieves the latest announcements from the KuCoin API asynchronously, aggregating paginated results into a single `data.table`. This internal function is designed for use within a larger system and is not intended for direct end-user consumption.
+#' Retrieves the latest announcements from the KuCoin API asynchronously by sending a GET request to the `/api/v3/announcements` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
-#' 1. **Query Construction**: Merges default parameters (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) with user-supplied `query` using `utils::modifyList()`.
-#' 2. **URL Assembly**: Combines `base_url` with `/api/v3/announcements` and the query string from `build_query()`.
-#' 3. **Page Fetching**: Defines an async `fetch_page` function to send a GET request with a 10-second timeout via `httr::GET()`.
-#' 4. **Pagination**: Utilises `auto_paginate` to fetch all pages up to `max_pages`, extracting `"items"` from each response.
-#' 5. **Aggregation**: Combines results into a `data.table` with `data.table::rbindlist()`.
+#' ## API Details
 #'
-#' ### API Endpoint
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 20
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getAnnouncements`
+#'
+#' ## Description
+#' This function retrieves the latest news announcements from KuCoin, with the default search being for announcements within a month. It automatically handles pagination to aggregate all results into a single data structure, converting millisecond timestamps to human-readable datetime objects.
+#'
+#' ## Workflow Overview
+#' 1. **Query Construction**: Merges default parameters (`currentPage = 1`, `pageSize = 50`, `annType = "latest-announcements"`, `lang = "en_US"`) with user-supplied `query` parameters.
+#' 2. **Time Conversion**: Converts POSIXct datetime objects for `startAt` and `endAt` to millisecond timestamps required by the KuCoin API.
+#' 3. **URL Assembly**: Combines the base URL with the endpoint `/api/v3/announcements` and appends the query string.
+#' 4. **API Request**: Sends a GET request using `httr::GET()` with the constructed URL, applying a 10-second timeout.
+#' 5. **Pagination Handling**: Uses `auto_paginate()` to retrieve multiple pages of results until all pages are fetched or `max_pages` is reached.
+#' 6. **Data Processing**: Aggregates all pages into a single `data.table`, converting array fields like `annType` to semicolon-delimited strings.
+#' 7. **Datetime Conversion**: Adds a human-readable `cTime_datetime` column by converting the UNIX timestamp.
+#'
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v3/announcements`
 #'
-#' ### Usage
-#' Utilised to gather KuCoin news announcements (e.g., updates, promotions) for market analysis or display.
+#' ## Usage
+#' This function is used internally to gather KuCoin news announcements (e.g., updates, promotions, new listings, maintenance notices) for market analysis, notifications, or display purposes.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
-#' 
-#' ### Function Validated
-#' - 2025-02-25 21h32
 #'
-#' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @param query Named list; additional query parameters to filter announcements. Supported:
-#'   - `currentPage` (integer, optional): Page number to retrieve.
-#'   - `pageSize` (integer, optional): Number of announcements per page.
-#'   - `annType` (string, optional): Type of announcements (e.g., `"latest-announcements"`, `"activities"`, `"product-updates"`, `"vip"`, `"maintenance-updates"`, `"delistings"`, `"others"`, `"api-campaigns"`, `"new-listings"`).
-#'   - `lang` (string, optional): Language (e.g., `"en_US"`, `"zh_HK"`, `"ja_JP"`).
-#'   - `startTime` (integer, optional): Start time in milliseconds.
-#'   - `endTime` (integer, optional): End time in milliseconds.
-#' @param page_size Integer; number of results per page (default 50).
-#' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages).
-#' @return Promise resolving to a `data.table` containing:
+#' ## Function Validated
+#' - Last validated: 2025-02-25 21h32
+#'
+#' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
+#' @param query Named list; additional query parameters to filter announcements. Supported parameters:
+#'   - `currentPage` (integer, optional): Page number to retrieve. Default is 1.
+#'   - `pageSize` (integer, optional): Number of announcements per page. Default is 50.
+#'   - `annType` (string, optional): Type of announcements. Default is `"latest-announcements"`. 
+#'     Allowed values: `"latest-announcements"`, `"activities"`, `"new-listings"`, `"product-updates"`, 
+#'     `"vip"`, `"maintenance-updates"`, `"delistings"`, `"others"`, `"api-campaigns"`.
+#'   - `lang` (string, optional): Language code. Default is `"en_US"`. 
+#'     Allowed values: `"en_US"`, `"zh_HK"`, `"ja_JP"`, `"ko_KR"`, `"pl_PL"`, `"es_ES"`, `"fr_FR"`, 
+#'     `"ar_AE"`, `"it_IT"`, `"id_ID"`, `"nl_NL"`, `"pt_PT"`, `"vi_VN"`, `"de_DE"`, `"tr_TR"`, 
+#'     `"ms_MY"`, `"ru_RU"`, `"th_TH"`, `"hi_IN"`, `"bn_BD"`, `"fil_PH"`, `"ur_PK"`.
+#' @param page_size Integer; number of results per page. Default is 50.
+#' @param max_pages Numeric; maximum number of pages to fetch. Default is `Inf` (all available pages).
+#' @param startAt POSIXct/POSIXlt datetime object (optional); the start time for filtering announcements by publication time.
+#' @param endAt POSIXct/POSIXlt datetime object (optional); the end time for filtering announcements by publication time.
+#'
+#' @return A promise resolving to a `data.table` containing announcement information with the following columns:
 #'   - `annId` (numeric): Unique announcement ID.
 #'   - `annTitle` (character): Announcement title.
-#'   - `annType` (character): Separated by `;` if multiple types.
-#'   - `annDesc` (character): Announcement description.
-#'   - `cTime` (numeric): Release time in Unix milliseconds.
-#'   - `cTime_datetime` (POSIXct): Release time as a datetime object.
-#'   - `language` (character): Language of the announcement.
-#'   - `annUrl` (character): URL to the full announcement.
-#'   - `page_currentPage` (numeric): Current page number.
-#'   - `page_pageSize` (numeric): Records per page.
-#'   - `page_totalNum` (numeric): Total number of announcements.
-#'   - `page_totalPage` (numeric): Total pages available.
+#'   - `annType` (character): Semicolon-delimited list of announcement types (e.g., `"latest-announcements;new-listings"`).
+#'   - `annDesc` (character): Announcement description or summary.
+#'   - `cTime` (numeric): Release timestamp in milliseconds since epoch.
+#'   - `cTime_datetime` (POSIXct): Human-readable datetime converted from `cTime`.
+#'   - `language` (character): Language code of the announcement (e.g., `"en_US"`, `"zh_HK"`).
+#'   - `annUrl` (character): URL to the full announcement on KuCoin's website.
+#'   - `page_currentPage` (numeric): Current page number in the pagination.
+#'   - `page_pageSize` (numeric): Number of results per page.
+#'   - `page_totalNum` (numeric): Total number of announcements matching the criteria.
+#'   - `page_totalPage` (numeric): Total number of pages available.
+#'
+#'   If no announcements are found for the specified criteria, an empty `data.table` with these columns is returned.
+#'
+#' ## Details
+#'
+#' ### Query Parameters
+#' - `currentPage` (integer, optional): Page number to retrieve. Default is 1.
+#' - `pageSize` (integer, optional): Number of announcements per page. Default is 50.
+#' - `annType` (string, optional): Type of announcements. Default is `"latest-announcements"`. Multiple types can be specified.
+#'   - `"latest-announcements"`: All latest announcements
+#'   - `"activities"`: Latest activities
+#'   - `"new-listings"`: New currency listings
+#'   - `"product-updates"`: Product updates
+#'   - `"vip"`: Institutions and VIPs
+#'   - `"maintenance-updates"`: System maintenance
+#'   - `"delistings"`: Currency delistings
+#'   - `"others"`: Other announcements
+#'   - `"api-campaigns"`: API user activities
+#' - `lang` (string, optional): Language code. Default is `"en_US"`.
+#' - `startTime` (integer, optional): Start time in milliseconds since epoch.
+#' - `endTime` (integer, optional): End time in milliseconds since epoch.
+#'
+#' **Example Request URL**:
+#' ```http
+#' GET https://api.kucoin.com/api/v3/announcements?currentPage=1&pageSize=50&annType=latest-announcements&lang=en_US&startTime=1729594043000&endTime=1729697729000
+#' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `totalNum` (integer): Total number of announcements matching the criteria.
+#'   - `totalPage` (integer): Total number of pages available.
+#'   - `currentPage` (integer): Current page number.
+#'   - `pageSize` (integer): Number of results per page.
+#'   - `items` (array of objects): Each object contains:
+#'     - `annId` (integer): Unique announcement ID.
+#'     - `annTitle` (string): Announcement title.
+#'     - `annType` (array of strings): Array of announcement types.
+#'     - `annDesc` (string): Announcement description.
+#'     - `cTime` (integer): Release timestamp in milliseconds.
+#'     - `language` (string): Language code of the announcement.
+#'     - `annUrl` (string): URL to the full announcement.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "totalNum": 195,
+#'     "totalPage": 13,
+#'     "currentPage": 1,
+#'     "pageSize": 15,
+#'     "items": [
+#'       {
+#'         "annId": 129045,
+#'         "annTitle": "KuCoin Isolated Margin Adds the Scroll (SCR) Trading Pair",
+#'         "annType": [
+#'           "latest-announcements"
+#'         ],
+#'         "annDesc": "To enrich the variety of assets available, KuCoin's Isolated Margin Trading platform has added the Scroll (SCR) asset and trading pair.",
+#'         "cTime": 1729594043000,
+#'         "language": "en_US",
+#'         "annUrl": "https://www.kucoin.com/announcement/kucoin-isolated-margin-adds-scr?lang=en_US"
+#'       },
+#'       {
+#'         "annId": 129001,
+#'         "annTitle": "DAPP-30D Fixed Promotion, Enjoy an APR of 200%!",
+#'         "annType": [
+#'           "latest-announcements",
+#'           "activities"
+#'         ],
+#'         "annDesc": "KuCoin Earn will be launching the DAPP Fixed Promotion at 10:00:00 on October 22, 2024 (UTC). The available product is "DAPP-30D'' with an APR of 200%.",
+#'         "cTime": 1729588460000,
+#'         "language": "en_US",
+#'         "annUrl": "https://www.kucoin.com/announcement/dapp-30d-fixed-promotion-enjoy?lang=en_US"
+#'       }
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the `"items"` array from the `"data"` object.
+#' - Converting the `annType` array to a semicolon-delimited string for tabular representation.
+#' - Adding a `cTime_datetime` column by converting the UNIX timestamp to a human-readable datetime.
+#' - Ensuring proper column types for all fields.
+#'
+#' ## Notes
+#' - **Default Search Period**: By default, the API returns announcements from within the last month.
+#' - **Language Support**: The function supports multiple languages through the `lang` parameter, with `"en_US"` as the default.
+#' - **Announcement Types**: An announcement can belong to multiple types (e.g., both `"latest-announcements"` and `"new-listings"`).
+#' - **Pagination**: Results are paginated with a default of 50 results per page. The function automatically handles pagination by default.
+#' - **Array Conversion**: The `annType` array in the API response is converted to a semicolon-delimited string for easier tabular representation.
+#' - **Rate Limiting**: This endpoint has a weight of 20 in the API rate limit pool (Public). Plan request frequency accordingly.
+#' - **Time Parameters**: The function accepts standard R datetime objects (`POSIXct`/`POSIXlt`) for time ranges and converts them to the millisecond format required by the API.
+#'
+#' ## Use Cases
+#' - **Market News Monitoring**: Keeping track of new listings, delistings, and other market-affecting announcements.
+#' - **Maintenance Awareness**: Monitoring system maintenance updates to plan trading activities accordingly.
+#' - **Promotional Tracking**: Following promotional activities and campaigns.
+#' - **Multi-language Support**: Retrieving announcements in different languages for global user bases.
+#' - **Historical Analysis**: Analyzing announcement patterns over time by using `startAt` and `endAt` parameters.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Regular Polling**: Implement periodic polling to stay updated on new announcements, particularly for maintenance notices that might affect trading.
+#' - **Event-Driven Logic**: Use new listing/delisting announcements to trigger trading strategy adjustments.
+#' - **Language Targeting**: Specify appropriate language codes when targeting specific regions or user groups.
+#' - **Efficient Date Filtering**: Use `startAt` and `endAt` to retrieve only new announcements since the last check.
+#' - **Rate Limit Awareness**: With a weight of 20 per request, monitor and throttle usage in high-frequency systems to stay within KuCoin's limits.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Retrieve latest announcements in English (default behavior)
 #' main_async <- coro::async(function() {
-#'   # Default: latest announcements in English
 #'   announcements <- await(get_announcements_impl())
 #'   print(announcements)
-#'   # Filtered by type and language
-#'   activities <- await(get_announcements_impl(query = list(annType = "activities", lang = "en_US")))
-#'   print(activities)
+#'   
+#'   # Example: Filtered by type (new coin listings) and language (Japanese)
+#'   new_listings_jp <- await(get_announcements_impl(
+#'     query = list(
+#'       annType = "new-listings", 
+#'       lang = "ja_JP"
+#'     )
+#'   ))
+#'   print(new_listings_jp)
+#'   
+#'   # Example: Retrieve announcements within a specific time range using POSIXct objects
+#'   one_week_ago <- lubridate::now() - lubridate::days(7)
+#'   current_time <- lubridate::now()
+#'   recent_announcements <- await(get_announcements_impl(
+#'     startAt = one_week_ago,
+#'     endAt = current_time
+#'   ))
+#'   print(recent_announcements)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
 #' @importFrom data.table rbindlist
@@ -77,15 +225,30 @@ box::use(
 #' @importFrom rlang abort
 #' @export
 get_announcements_impl <- coro::async(function(
-  base_url = get_base_url(),
-  query = list(),
-  page_size = 50,
-  max_pages = Inf
+    base_url = get_base_url(),
+    query = list(),
+    startAt = lubridate::now() - lubridate::hours(48),
+    endAt = lubridate::now(),
+    page_size = 50,
+    max_pages = Inf
 ) {
     tryCatch({
         # Merge default pagination parameters with user-supplied query parameters.
         default_query <- list(currentPage = 1, pageSize = page_size, annType = "latest-announcements", lang = "en_US")
         query <- utils::modifyList(default_query, query)
+
+        # Process datetime inputs if provided
+        if (!inherits(startAt, c("POSIXct", "POSIXlt", "Date"))) {
+            rlang::abort("startAt must be a POSIXct/POSIXlt datetime object")
+        }
+        start_ms <- time_convert_to_kucoin(startAt, "ms")
+        query$startTime <- as.character(round(start_ms))
+
+        if (!inherits(endAt, c("POSIXct", "POSIXlt", "Date"))) {
+            rlang::abort("endAt must be a POSIXct/POSIXlt datetime object")
+        }
+        end_ms <- time_convert_to_kucoin(endAt, "ms")
+        query$endTime <- as.character(round(end_ms))
 
         # Define a function to fetch a single page of announcements.
         fetch_page <- coro::async(function(q) {
@@ -99,15 +262,33 @@ get_announcements_impl <- coro::async(function(
             # saveRDS(parsed_response, paste0("../../api-responses/impl_spottrading_market_data/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
-        
-        # TOOD: updated return signature
+
         result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = query,
             items_field = "items",
             paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
             aggregate_fn = function(acc) {
-                # collapste annType into a single string by ;
+                # Handle empty results case
+                if (length(acc) == 0 || all(sapply(acc, length) == 0)) {
+                    return(data.table::data.table(
+                        annId = numeric(0),
+                        annTitle = character(0),
+                        annType = character(0),
+                        annDesc = character(0),
+                        cTime = numeric(0),
+                        cTime_datetime = lubridate::as_datetime(character(0)),
+                        language = character(0),
+                        annUrl = character(0),
+                        # Pagination fields
+                        page_currentPage = numeric(0),
+                        page_pageSize = numeric(0),
+                        page_totalNum = numeric(0),
+                        page_totalPage = numeric(0)
+                    ))
+                }
+
+                # Convert annType arrays to semicolon-delimited strings
                 acc2 <- lapply(acc, function(el) {
                     el$annType <- paste(el$annType, collapse = ";")
                     return(el)
@@ -119,6 +300,7 @@ get_announcements_impl <- coro::async(function(
 
         agg <- result$aggregate
 
+        # Ensure proper column types and add datetime conversion
         agg[, `:=`(
             annId = as.numeric(annId),
             annTitle = as.character(annTitle),
@@ -141,7 +323,7 @@ get_announcements_impl <- coro::async(function(
     })
 })
 
-#' Get Currency Details (Implementation)
+#' Get Currency Details
 #'
 #' Retrieves detailed information for a specified currency from the KuCoin API asynchronously, including chain-specific details for multi-chain currencies.
 #'
@@ -231,7 +413,7 @@ get_currency_impl <- coro::async(function(
     })
 })
 
-#' Get All Currencies (Implementation)
+#' Get All Currencies
 #'
 #' Retrieves a list of all currencies available on KuCoin asynchronously, combining summary and chain-specific details into a `data.table`.
 #'
@@ -371,7 +553,7 @@ get_all_currencies_impl <- coro::async(function(
     })
 })
 
-#' Get Symbol (Implementation)
+#' Get Symbol
 #'
 #' Retrieves detailed information about a specified trading symbol from the KuCoin API asynchronously.
 #'
@@ -458,7 +640,7 @@ get_symbol_impl <- coro::async(function(
     })
 })
 
-#' Get All Symbols (Implementation)
+#' Get All Symbols
 #'
 #' Retrieves a list of all available trading symbols from the KuCoin API asynchronously, optionally filtered by market.
 #'
@@ -550,7 +732,7 @@ get_all_symbols_impl <- coro::async(function(
     })
 })
 
-#' Get Ticker (Implementation)
+#' Get Ticker
 #'
 #' Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
 #'
@@ -629,7 +811,7 @@ get_ticker_impl <- coro::async(function(
     })
 })
 
-#' Get All Tickers (Implementation)
+#' Get All Tickers
 #'
 #' Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
 #'
@@ -714,7 +896,7 @@ get_all_tickers_impl <- coro::async(function(
     })
 })
 
-#' Get Trade History (Implementation)
+#' Get Trade History
 #'
 #' Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
 #'
@@ -784,7 +966,7 @@ get_trade_history_impl <- coro::async(function(
     })
 })
 
-#' Get Part OrderBook (Implementation)
+#' Get Part OrderBook
 #'
 #' Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API asynchronously.
 #'
@@ -1002,7 +1184,7 @@ get_full_orderbook_impl <- coro::async(function(
     })
 })
 
-#' Get 24-Hour Statistics (Implementation)
+#' Get 24-Hour Statistics
 #'
 #' Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously.
 #'
@@ -1081,7 +1263,7 @@ get_24hr_stats_impl <- coro::async(function(
     })
 })
 
-#' Get Market List (Implementation)
+#' Get Market List
 #'
 #' Retrieves the list of all available trading markets from the KuCoin API asynchronously.
 #'
@@ -1120,13 +1302,13 @@ get_market_list_impl <- coro::async(function(
     tryCatch({
         endpoint <- "/api/v1/markets"
         url <- paste0(base_url, endpoint)
-        
+
         # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
-        
+
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
-        
+
         return(parsed_response$data)
     }, error = function(e) {
         rlang::abort(paste("Error in get_market_list_impl:", conditionMessage(e)))
