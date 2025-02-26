@@ -22,6 +22,20 @@ box::use(
         get_subaccount_detail_balance_impl,
         get_subaccount_spot_v2_impl
     ],
+    ../../R/impl_spottrading_market_data[
+        get_announcements_impl,
+        get_currency_impl,
+        get_all_currencies_impl,
+        get_symbol_impl,
+        get_all_symbols_impl,
+        get_ticker_impl,
+        get_all_tickers_impl,
+        get_trade_history_impl,
+        get_part_orderbook_impl,
+        get_full_orderbook_impl,
+        get_24hr_stats_impl,
+        get_market_list_impl
+    ],
     ../../R/utils[get_api_keys, get_base_url],
     ../../R/utils_time_convert_kucoin[time_convert_from_kucoin, time_convert_to_kucoin],
     coro[async, await],
@@ -34,14 +48,15 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # 4. Get the spot account information for a subaccount
-    subaccount_spot <- await(get_subaccount_spot_v2_impl(
-        keys = keys,
-        base_url = base_url
+    # Test 1: Get Announcements
+    cat("\n--- Testing get_announcements_impl ---\n")
+    announcements <- await(get_announcements_impl(
+        base_url = base_url,
+        query = list(annType = "new-listings", lang = "en_US"),
+        page_size = 5,
+        max_pages = 1
     ))
-
-    cat("Subaccount Spot Account Information:\n")
-    print(subaccount_spot)
+    print(announcements)
 
 })
 

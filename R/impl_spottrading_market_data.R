@@ -1,15 +1,15 @@
 # File: ./R/impl_spottrading_market_data.R
 
-# box::use(
-#     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-#     ./utils[ build_query, get_api_keys, get_base_url ],
-#     ./utils_time_convert_kucoin[ verify_symbol, time_convert_from_kucoin ],
-#     coro[async, await],
-#     data.table[as.data.table, data.table, rbindlist, setcolorder, setnames],
-#     httr[GET, timeout],
-#     rlang[abort],
-#     utils[modifyList]
-# )
+box::use(
+    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+    ./utils[ verify_symbol, build_query, get_api_keys, get_base_url ],
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin ],
+    coro[async, await],
+    data.table[as.data.table, data.table, rbindlist, setcolorder, setnames],
+    httr[GET, timeout],
+    rlang[abort],
+    utils[modifyList]
+)
 
 #' Get Announcements (Implementation)
 #'
@@ -30,6 +30,9 @@
 #'
 #' ### Official Documentation
 #' [KuCoin Get Announcements](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-announcements)
+#' 
+#' ### Function Validated
+#' - 2025-02-25 21h32
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param query Named list; additional query parameters to filter announcements. Supported:
@@ -42,17 +45,18 @@
 #' @param page_size Integer; number of results per page (default 50).
 #' @param max_pages Numeric; maximum number of pages to fetch (default `Inf` for all pages).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `annId` (integer): Unique announcement ID.
+#'   - `annId` (numeric): Unique announcement ID.
 #'   - `annTitle` (character): Announcement title.
-#'   - `annType` (list): List of announcement types.
+#'   - `annType` (character): Separated by `;` if multiple types.
 #'   - `annDesc` (character): Announcement description.
-#'   - `cTime` (integer): Release time in Unix milliseconds.
+#'   - `cTime` (numeric): Release time in Unix milliseconds.
+#'   - `cTime_datetime` (POSIXct): Release time as a datetime object.
 #'   - `language` (character): Language of the announcement.
 #'   - `annUrl` (character): URL to the full announcement.
-#'   - `currentPage` (integer): Current page number.
-#'   - `pageSize` (integer): Records per page.
-#'   - `totalNum` (integer): Total number of announcements.
-#'   - `totalPage` (integer): Total pages available.
+#'   - `page_currentPage` (numeric): Current page number.
+#'   - `page_pageSize` (numeric): Records per page.
+#'   - `page_totalNum` (numeric): Total number of announcements.
+#'   - `page_totalPage` (numeric): Total pages available.
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
@@ -89,23 +93,49 @@ get_announcements_impl <- coro::async(function(
             qs <- build_query(q)
             url <- paste0(base_url, endpoint, qs)
             response <- httr::GET(url, httr::timeout(10))
+            # file_name <- paste0("get_announcements_impl_", q$currentPage)
+            # saveRDS(response, paste0("../../api-responses/impl_spottrading_market_data/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
+            # saveRDS(parsed_response, paste0("../../api-responses/impl_spottrading_market_data/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
         
         # TOOD: updated return signature
-        aggregated <- await(auto_paginate(
+        result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = query,
             items_field = "items",
             paginate_fields = list(currentPage = "currentPage", totalPage = "totalPage"),
             aggregate_fn = function(acc) {
-                return(data.table::rbindlist(acc, fill = TRUE))
+                # collapste annType into a single string by ;
+                acc2 <- lapply(acc, function(el) {
+                    el$annType <- paste(el$annType, collapse = ";")
+                    return(el)
+                })
+                return(data.table::rbindlist(acc2))
             },
             max_pages = max_pages
         ))
-        
-        return(aggregated)
+
+        agg <- result$aggregate
+
+        agg[, `:=`(
+            annId = as.numeric(annId),
+            annTitle = as.character(annTitle),
+            annType = as.character(annType),
+            annDesc = as.character(annDesc),
+            cTime = as.numeric(cTime),
+            cTime_datetime = time_convert_from_kucoin(cTime, "ms"),
+            language = as.character(language),
+            annUrl = as.character(annUrl),
+            # Pagination fields
+            page_currentPage = as.numeric(result$pagination$currentPage),
+            page_pageSize = as.numeric(result$pagination$pageSize),
+            page_totalNum = as.numeric(result$pagination$totalNum),
+            page_totalPage = as.numeric(result$pagination$totalPage)
+        )]
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_announcements_impl:", conditionMessage(e)))
     })
