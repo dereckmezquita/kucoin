@@ -438,10 +438,10 @@ get_subaccount_list_summary_impl <- coro::async(function(
 #' - Last validated: 2025-02-25 19h24
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param subUserId Character string representing the sub-account user ID for which balance details are retrieved.
@@ -652,10 +652,10 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 #' [KuCoin Get Sub-Account List - Spot Balance (V2)](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param page_size Integer specifying the number of results per page (minimum 10, maximum 100). Defaults to 100.
