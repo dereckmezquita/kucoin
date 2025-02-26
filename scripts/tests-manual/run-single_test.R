@@ -54,7 +54,7 @@ main_async <- async(function() {
         base_url = base_url
     ))
     cat("Total currencies:", nrow(currencies), "\n")
-    print(currencies)
+    print(head(currencies, 3))
 })
 
 # Run the main async function

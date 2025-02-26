@@ -615,11 +615,13 @@ get_currency_impl <- coro::async(function(
         })
         result_dt <- data.table::rbindlist(chains)
 
-        # Convert the resulting data (a named list) into a data.table and return it
-        summary_fields_vals <- data_obj[c(
-            "currency", "name", "fullName", "precision", # "confirms", "contractAddress", use the confirms/contractAddress from chain items
+        # "confirms", "contractAddress", use the confirms/contractAddress from chain items
+        summary_fields <- c(
+            "currency", "name", "fullName", "precision",
             "isMarginEnabled", "isDebitEnabled"
-        )]
+        )
+        # Convert the resulting data (a named list) into a data.table and return it
+        summary_fields_vals <- data_obj[summary_fields]
 
         # Replace NULL with NA for each element in summary_fields_vals
         summary_fields_vals <- lapply(summary_fields_vals, function(x) {
@@ -657,19 +659,120 @@ get_currency_impl <- coro::async(function(
             chainId = as.character(chainId)
         )]
 
-        data.table::setcolorder(result_dt, c(
-            "currency", "name", "fullName", "precision", "isMarginEnabled",
-            "isDebitEnabled", "chainName", "withdrawalMinSize", "depositMinSize",
-            "withdrawFeeRate", "withdrawalMinFee", "isWithdrawEnabled",
-            "isDepositEnabled", "confirms", "preConfirms", "contractAddress",
-            "withdrawPrecision", "maxWithdraw", "maxDeposit", "needTag", "chainId"
-        ))
+        data.table::setcolorder(result_dt, c(summary_fields, setdiff(colnames(result_dt), summary_fields)))
 
         return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_currency_impl:", conditionMessage(e)))
     })
 })
+
+process_currency <- function(currency_obj) {
+    # if no data return empty data.table
+    if (is.null(currency_obj) || length(currency_obj$chains) == 0) {
+        return(data.table::data.table(
+            # summary fields
+            currency = character(0),
+            name = character(0),
+            fullName = character(0),
+            precision = numeric(0),
+            # will ignore these summary level fields as the information is also present in the chain level
+            # confirms = numeric(0),
+            # contractAddress = character(0),
+            isMarginEnabled = logical(0),
+            isDebitEnabled = logical(0),
+            # chain-specific fields
+            chainName = character(0),
+            withdrawalMinSize = numeric(0),
+            depositMinSize = numeric(0),
+            withdrawFeeRate = numeric(0),
+            withdrawalMinFee = numeric(0),
+            isWithdrawEnabled = logical(0),
+            isDepositEnabled = logical(0),
+            confirms = numeric(0),
+            preConfirms = numeric(0),
+            contractAddress = character(0),
+            withdrawPrecision = numeric(0),
+            maxWithdraw = numeric(0),
+            maxDeposit = numeric(0),
+            needTag = logical(0),
+            chainId = character(0)
+        ))
+    }
+
+    # process to convert any length(0) NULL items to NA
+    chains <- lapply(currency_obj$chains, function(el) {
+        # Loop through each element in the chain and replace zero-length items with NA
+        for (nm in names(el)) {
+            if (length(el[[nm]]) == 0) {
+                el[[nm]] <- NA  # or use NA_character_ / NA_real_ based on expected type
+            }
+        }
+        return(el)
+    })
+    chain_dt <- data.table::rbindlist(chains, fill = TRUE)
+
+    # "confirms", "contractAddress", use the confirms/contractAddress from chain items
+    summary_fields <- c(
+        "currency", "name", "fullName", "precision",
+        "isMarginEnabled", "isDebitEnabled"
+    )
+    # Replace NULL with NA for each element in summary_fields_vals
+    summary_fields_vals <- currency_obj[summary_fields]
+    summary_fields_vals <- lapply(summary_fields_vals, function(x) {
+        if (is.null(x)) {
+            return(NA)
+        } else {
+            return(x)
+        }
+    })
+    # # address cols that are sometimes missing
+    # if (is.null(chain_dt$withdrawalMinSize)) {
+    #     chain_dt$withdrawalMinSize <- NA_real_
+    # }
+    # if (is.null(chain_dt$chainName)) {
+    #     chain_dt$chainName <- NA_character_
+    # }
+    # if (is.null(chain_dt$depositMinSize)) {
+    #     chain_dt$depositMinSize <- NA_real_
+    # }
+    if (is.null(chain_dt$withdrawFeeRate)) {
+        chain_dt$withdrawFeeRate <- NA_real_
+    }
+    # if (is.null(chain_dt$withdrawalMinFee)) {
+    #     chain_dt$withdrawalMinFee <- NA_real_
+    # }
+    # coerce types and add summary fields
+    chain_dt[, `:=`(
+        # summary fields
+        currency = as.character(summary_fields_vals$currency),
+        name = as.character(summary_fields_vals$name),
+        fullName = as.character(summary_fields_vals$fullName),
+        precision = as.numeric(summary_fields_vals$precision),
+        isMarginEnabled = as.logical(summary_fields_vals$isMarginEnabled),
+        isDebitEnabled = as.logical(summary_fields_vals$isDebitEnabled),
+        # chain-specific fields
+        chainName = as.character(chainName),
+        withdrawalMinSize = as.numeric(withdrawalMinSize),
+        depositMinSize = as.numeric(depositMinSize),
+        withdrawFeeRate = as.numeric(withdrawFeeRate),
+        withdrawalMinFee = as.numeric(withdrawalMinFee),
+        isWithdrawEnabled = as.logical(isWithdrawEnabled),
+        isDepositEnabled = as.logical(isDepositEnabled),
+        confirms = as.numeric(confirms),
+        preConfirms = as.numeric(preConfirms),
+        contractAddress = as.character(contractAddress),
+        withdrawPrecision = as.numeric(withdrawPrecision),
+        maxWithdraw = as.numeric(maxWithdraw),
+        maxDeposit = as.numeric(maxDeposit),
+        needTag = as.logical(needTag),
+        chainId = as.character(chainId)
+    )]
+
+    data.table::setcolorder(chain_dt, c(summary_fields, setdiff(colnames(chain_dt), summary_fields)))
+
+    return(chain_dt[])
+}
 
 #' Get All Currencies
 #'
@@ -690,6 +793,9 @@ get_currency_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get All Currencies](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-currencies)
+#' 
+#' ### Function Validated
+#' - 2025-02-26 15h41
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a `data.table` containing:
@@ -744,68 +850,25 @@ get_all_currencies_impl <- coro::async(function(
 
         # Send a GET request to the endpoint with a timeout of 10 seconds.
         response <- httr::GET(url, httr::timeout(10))
+        saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_all_currencies_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_all_currencies_impl.Rds")
 
-        # Iterate over each row (currency) in the returned data.frame.
-        result_list <- lapply(seq_len(nrow(parsed_response$data)), function(i) {
-            # Extract the i-th row as a one-row data.frame.
-            curr <- parsed_response$data[i, , drop = FALSE]
+        data_obj <- parsed_response$data
 
-            # Build a summary data.table from the currency row.
-            summary_dt <- data.table::data.table(
-                currency = curr$currency,
-                name = curr$name,
-                fullName = curr$fullName,
-                precision = curr$precision,
-                confirms = curr$confirms,
-                contractAddress = curr$contractAddress,
-                isMarginEnabled = curr$isMarginEnabled,
-                isDebitEnabled = curr$isDebitEnabled
-            )
+        currencies_list <- vector("list", length(data_obj))
 
-            # Attempt to extract the chains data.
-            chains_data <- curr$chains[[1]]
+        for (i in seq_along(data_obj)) {
+            curr_currency_obj <- data_obj[[i]]
+            currencies_list[[i]] <- process_currency(curr_currency_obj)
+        }
 
-            # Check if chains_data is a data.frame with at least one row.
-            if (is.data.frame(chains_data) && nrow(chains_data) > 0) {
-                chains_dt <- data.table::as.data.table(chains_data, fill = TRUE)
-                # Rename the chain-level 'contractAddress' to avoid conflicts.
-                if ("contractAddress" %in% names(chains_dt)) {
-                    data.table::setnames(chains_dt, "contractAddress", "chain_contractAddress")
-                }
-                # Replicate the summary row for each chain.
-                summary_dt <- summary_dt[rep(1, nrow(chains_dt))]
-                return(cbind(summary_dt, chains_dt))
-            } else {
-                # If no chains exist, create dummy chain columns (all NA).
-                dummy_chain <- data.table::data.table(
-                    chainName = NA_character_,
-                    withdrawalMinSize = NA_character_,
-                    depositMinSize = NA_character_,
-                    withdrawFeeRate = NA_character_,
-                    withdrawalMinFee = NA_character_,
-                    isWithdrawEnabled = NA,
-                    isDepositEnabled = NA,
-                    confirms = NA_integer_,
-                    preConfirms = NA_integer_,
-                    chain_contractAddress = NA_character_,
-                    withdrawPrecision = NA_integer_,
-                    maxWithdraw = NA_character_,
-                    maxDeposit = NA_character_,
-                    needTag = NA,
-                    chainId = NA_character_,
-                    depositFeeRate = NA_character_,
-                    withdrawMaxFee = NA_character_,
-                    depositTierFee = NA_character_
-                )
-                return(cbind(summary_dt, dummy_chain))
-            }
-        })
+        unique(lapply(currencies_list, names))
+        result_dt <- data.table::rbindlist(currencies_list, fill = TRUE)
 
-        final_dt <- data.table::rbindlist(result_list, fill = TRUE)
-        return(final_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_currencies_impl:", conditionMessage(e)))
     })
