@@ -3532,26 +3532,96 @@ get_24hr_stats_impl <- coro::async(function(
 #'
 #' Retrieves the list of all available trading markets from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getMarketList`
+#'
+#' ## Description
+#' This function requests the transaction currency identifiers for the entire trading marketplace.
+#' It provides a list of all market segments available on KuCoin, which can be used to categorise
+#' and filter trading pairs. Market segments represent groups of trading pairs with similar characteristics
+#' or themes, such as stablecoin markets (USDS), token ecosystems (BTC, ETH), or investment themes (DeFi, AI).
+#'
+#' ## Workflow Overview
 #' 1. **URL Assembly**: Combines `base_url` with `/api/v1/markets`.
 #' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
 #' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field as a character vector.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/markets`
 #'
-#' ### Usage
-#' Utilised to identify available trading markets on KuCoin for filtering or querying market-specific data.
+#' ## Usage
+#' Utilised to identify available trading market segments on KuCoin for filtering, categorising, or querying 
+#' market-specific data. This is particularly useful when designing interfaces for market selection or 
+#' implementing trading strategies that focus on specific market segments.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Market List](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-market-list)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-27 09h31
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
-#' @return Promise resolving to a character vector of trading market identifiers (e.g., `"USDS"`, `"TON"`).
+#' @return Promise resolving to a character vector of trading market identifiers (e.g., `"USDS"`, `"BTC"`, `"DeFi"`).
+#'
+#' ## Details
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (array of strings): List of market identifiers.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": [
+#'     "USDS",
+#'     "TON",
+#'     "AI",
+#'     "DePIN",
+#'     "PoW",
+#'     "BRC-20",
+#'     "ETF",
+#'     "KCS",
+#'     "Meme",
+#'     "Solana",
+#'     "FIAT",
+#'     "VR&AR",
+#'     "DeFi",
+#'     "Polkadot",
+#'     "BTC",
+#'     "ALTS",
+#'     "Layer 1"
+#'   ]
+#' }
+#' ```
+#'
+#' The function extracts the `data` array and returns it directly as a character vector.
+#'
+#' ## Notes
+#' - **Public Endpoint**: This endpoint does not require authentication.
+#' - **Market Changes**: Some market names may change over time:
+#'   - "SC" has been changed to "USDS", but "SC" can still be used as a query parameter.
+#'   - The ETH, NEO, and TRX markets have been merged into the "ALTS" market.
+#' - **Usage in Filtering**: Market identifiers can be used with other endpoints to filter trading pairs.
+#' - **Rate Limiting**: This endpoint has a weight of 3 in the Public rate limit pool.
+#' - **Response Simplicity**: This is one of the simpler endpoints, returning just an array of strings.
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get the list of available markets
 #'   markets <- await(get_market_list_impl())
+#'   
+#'   # Display all available markets
+#'   cat("Available trading markets on KuCoin:\n")
 #'   print(markets)
 #' })
 #' main_async()
@@ -3570,9 +3640,11 @@ get_market_list_impl <- coro::async(function(
 
         # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_market_list_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_market_list_impl.Rds")
 
         return(parsed_response$data)
     }, error = function(e) {

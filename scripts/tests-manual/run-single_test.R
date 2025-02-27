@@ -48,13 +48,12 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 14: Get 24-Hour Statistics
-    cat("\n--- Testing get_24hr_stats_impl ---\n")
-    stats <- await(get_24hr_stats_impl(
-        base_url = base_url,
-        symbol = "BTC-USDT"
+    # Test 15: Get Market List
+    cat("\n--- Testing get_market_list_impl ---\n")
+    markets <- await(get_market_list_impl(
+        base_url = base_url
     ))
-    print(stats)
+    print(markets)
 })
 
 # Run the main async function
