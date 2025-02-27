@@ -2046,7 +2046,7 @@ get_ticker_impl <- coro::async(function(
 #'   - `makerFeeRate` (character): Basic maker fee rate.
 #'   - `takerCoefficient` (character): Taker fee coefficient; actual fee must be multiplied by this value.
 #'   - `makerCoefficient` (character): Maker fee coefficient; actual fee must be multiplied by this value.
-#'   - `time` (integer): Snapshot timestamp in milliseconds.
+#'   - `time` (numeric): Snapshot timestamp in milliseconds.
 #'   - `time_datetime` (POSIXct): Converted snapshot timestamp as a POSIXct datetime object.
 #'
 #' ## Details
@@ -2350,10 +2350,31 @@ get_all_tickers_impl <- coro::async(function(
 
         result_dt <- data.table::rbindlist(ticker_list2)
 
-        # Add the snapshot time information.
-        result_dt[, time := parsed_response$data$time]
-        result_dt[, time_datetime := time_convert_from_kucoin(time, "ms")]
-
+        # coerce types
+        result_dt[, `:=`(
+            # summary stats
+            time = as.numeric(parsed_response$data$time),
+            time_datetime = time_convert_from_kucoin(parsed_response$data$time, "ms"),
+            # ticker info
+            symbol = as.character(symbol),
+            symbolName = as.character(symbolName),
+            buy = as.character(buy),
+            bestBidSize = as.character(bestBidSize),
+            sell = as.character(sell),
+            bestAskSize = as.character(bestAskSize),
+            changeRate = as.character(changeRate),
+            changePrice = as.character(changePrice),
+            high = as.character(high),
+            low = as.character(low),
+            vol = as.character(vol),
+            volValue = as.character(volValue),
+            last = as.character(last),
+            averagePrice = as.character(averagePrice),
+            takerFeeRate = as.character(takerFeeRate),
+            makerFeeRate = as.character(makerFeeRate),
+            takerCoefficient = as.character(takerCoefficient),
+            makerCoefficient = as.character(makerCoefficient)
+        )]
         return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_tickers_impl:", conditionMessage(e)))
