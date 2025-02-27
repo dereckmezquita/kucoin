@@ -41,3 +41,53 @@ KC-API-KEY = XXXXXXXXXX
 KC-API-SECRET = XXXXXXXXXX
 KC-API-PASSPHRASE = XXXXXXXXXX
 ```
+
+### Asynchronous Programming
+
+`kucoin` is built on top of `coro::async` and `promises`. This means
+that all functions are asynchronous and return promises. One can use
+`kucoin` in two ways, either by using the `coro::async` function or by
+using the `then` and `catch` methods of the promises.
+
+For a run down on `asynchronous` programming see my blog post here:
+[Async programming in R for JS
+devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
+
+``` r
+box::use(
+    kucoin[ KucoinSpotMarketData ],
+    coro[ async ],
+    later[ loop_empty, run_now ]
+)
+
+market_data <- KucoinSpotMarketData$new()
+
+async_main <- async(function() {
+    data <- await(market_data$get_24hr_stats("BTC-USDT"))
+    print(data)
+})
+
+async_main()
+
+market_data$get_24hr_stats("BTC-USDT")$
+    then(function(result) {
+        print(result)
+    })$
+    catch(function(error) {
+        print(error)
+    })
+
+# run the event loop
+while (!loop_empty()) {
+    run_now(timeoutSecs = Inf, all = TRUE)
+}
+```
+
+    #>              timestamp      time_ms   symbol     buy    sell changeRate
+    #>                 <POSc>        <num>   <char>  <char>  <char>     <char>
+    #> 1: 2025-02-21 19:42:02 1.740167e+12 BTC-USDT 95454.7 95454.8    -0.0286
+    #> 11 variable(s) not shown: [changePrice <char>, high <char>, low <char>, vol <char>, volValue <char>, last <char>, averagePrice <char>, takerFeeRate <char>, makerFeeRate <char>, takerCoefficient <char>, ...]
+    #>              timestamp      time_ms   symbol     buy    sell changeRate
+    #>                 <POSc>        <num>   <char>  <char>  <char>     <char>
+    #> 1: 2025-02-21 19:42:02 1.740167e+12 BTC-USDT 95454.7 95454.8    -0.0286
+    #> 11 variable(s) not shown: [changePrice <char>, high <char>, low <char>, vol <char>, volValue <char>, last <char>, averagePrice <char>, takerFeeRate <char>, makerFeeRate <char>, takerCoefficient <char>, ...]

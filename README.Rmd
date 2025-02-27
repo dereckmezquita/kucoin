@@ -9,8 +9,9 @@ knitr::opts_chunk$set(
     fig.path = "man/figures/README-",
     fig.align = "center",
     out.width = "100%",
-    collapse = TRUE,
-    comment = "#>"
+    collapse = FALSE,
+    comment = "#>",
+    results = "hold"
 )
 
 options("datatable.print.topn" = 3, "datatable.print.nrows" = 50, "datatable.print.class" = TRUE, "datatable.print.trunc.cols" = TRUE)
@@ -51,3 +52,38 @@ KC-API-SECRET = XXXXXXXXXX
 KC-API-PASSPHRASE = XXXXXXXXXX
 ```
 
+### Asynchronous Programming
+
+`kucoin` is built on top of `coro::async` and `promises`. This means that all functions are asynchronous and return promises. One can use `kucoin` in two ways, either by using the `coro::async` function or by using the `then` and `catch` methods of the promises.
+
+For a run down on `asynchronous` programming see my blog post here: [Async programming in R for JS devs](https://derecksnotes.com/blog/20250208_async-programming-in-R-for-JS-devs)
+
+```{r get-market-data}
+box::use(
+    kucoin[ KucoinSpotMarketData ],
+    coro[ async ],
+    later[ loop_empty, run_now ]
+)
+
+market_data <- KucoinSpotMarketData$new()
+
+async_main <- async(function() {
+    data <- await(market_data$get_24hr_stats("BTC-USDT"))
+    print(data)
+})
+
+async_main()
+
+market_data$get_24hr_stats("BTC-USDT")$
+    then(function(result) {
+        print(result)
+    })$
+    catch(function(error) {
+        print(error)
+    })
+
+# run the event loop
+while (!loop_empty()) {
+    run_now(timeoutSecs = Inf, all = TRUE)
+}
+```
