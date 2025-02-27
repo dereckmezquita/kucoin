@@ -42,6 +42,8 @@ main_async <- async(function() {
     print(order_dt)
     returned_orderId <- order_dt$orderId
 
+    Sys.sleep(10)
+
     # Test 2: Cancel the order
     cat("Test 2: Cancel the porevious order\n")
     cancelled_orderId <- await(cancel_order_by_order_id_impl(
