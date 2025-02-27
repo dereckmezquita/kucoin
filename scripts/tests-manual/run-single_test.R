@@ -48,13 +48,13 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 8: Get Ticker
-    cat("\n--- Testing get_ticker_impl ---\n")
-    ticker <- await(get_ticker_impl(
-        base_url = base_url,
-        symbol = "BTC-USDT"
+    # Test 9: Get All Tickers
+    cat("\n--- Testing get_all_tickers_impl ---\n")
+    tickers <- await(get_all_tickers_impl(
+        base_url = base_url
     ))
-    print(ticker)
+    cat("Total tickers:", nrow(tickers), "\n")
+    print(tickers)
 })
 
 # Run the main async function

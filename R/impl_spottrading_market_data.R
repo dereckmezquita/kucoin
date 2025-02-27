@@ -2044,22 +2044,32 @@ get_all_tickers_impl <- coro::async(function(
 
         # Send a GET request to the endpoint with a timeout of 10 seconds.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_all_tickers_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_all_tickers_impl.Rds")
 
         # Extract the global snapshot time and the ticker array.
-        global_time <- parsed_response$data$time
         ticker_list <- parsed_response$data$ticker
 
-        # Convert the ticker array into a data.table.
-        ticker_dt <- data.table::as.data.table(ticker_list)
+        ticker_list2 <- lapply(ticker_list, function(el) {
+            # Loop through each element in the chain and replace zero-length items with NA
+            for (nm in names(el)) {
+                if (length(el[[nm]]) == 0 && is.null(el[[nm]])) {
+                    el[[nm]] <- NA  # or use NA_character_ / NA_real_ based on expected type
+                }
+            }
+            return(el)
+        })
+
+        result_dt <- data.table::rbindlist(ticker_list2)
 
         # Add the snapshot time information.
-        ticker_dt[, globalTime_ms := global_time]
-        ticker_dt[, globalTime_datetime := time_convert_from_kucoin(global_time, "ms")]
+        result_dt[, time := parsed_response$data$time]
+        result_dt[, time_datetime := time_convert_from_kucoin(time, "ms")]
 
-        return(ticker_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_all_tickers_impl:", conditionMessage(e)))
     })
