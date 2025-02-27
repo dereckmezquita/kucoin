@@ -2592,10 +2592,7 @@ get_part_orderbook_impl <- coro::async(function(
 ) {
     tryCatch({
         # Validate the size parameter.
-        requested_size <- as.integer(size)
-        if (!(requested_size %in% c(20, 100))) {
-            rlang::abort("Invalid size. Allowed values are 20 and 100.")
-        }
+        requested_size <- rlang::arg_match0(as.character(size), c("20", "100"))
 
         # Construct query string and full URL.
         qs <- build_query(list(symbol = symbol))
@@ -2604,42 +2601,45 @@ get_part_orderbook_impl <- coro::async(function(
 
         # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_part_orderbook_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_part_orderbook_impl.Rds")
+
         data_obj <- parsed_response$data
 
-        # Extract global snapshot fields.
-        global_time <- data_obj$time   # in milliseconds
-        sequence <- data_obj$sequence
-
         # Create a data.table for bids.
-        bids_dt <- data.table::data.table(
-            price = data_obj$bids[, 1],
-            size  = data_obj$bids[, 2],
-            side  = "bid"
-        )
+        bids_dt <- data.table::rbindlist(lapply(data_obj$bids, function(x) {
+            return(data.table::data.table(
+                price = as.numeric(x[1]),
+                size = as.numeric(x[2]),
+                side = "bid"
+            ))
+        }))
 
         # Create a data.table for asks.
-        asks_dt <- data.table::data.table(
-            price = data_obj$asks[, 1],
-            size  = data_obj$asks[, 2],
-            side  = "ask"
-        )
+        asks_dt <- data.table::rbindlist(lapply(data_obj$asks, function(x) {
+            return(data.table::data.table(
+                price = as.numeric(x[1]),
+                size = as.numeric(x[2]),
+                side = "ask"
+            ))
+        }))
 
         # Combine the bids and asks into a single data.table.
         orderbook_dt <- data.table::rbindlist(list(bids_dt, asks_dt))
 
         # Append global snapshot fields.
-        orderbook_dt[, time_ms := global_time]
-        orderbook_dt[, sequence := sequence]
-        orderbook_dt[, timestamp := time_convert_from_kucoin(global_time, "ms")]
+        orderbook_dt[, time := as.numeric(data_obj$time)]
+        orderbook_dt[, sequence := as.numeric(data_obj$sequence)]
+        orderbook_dt[, time_datetime := time_convert_from_kucoin(global_time, "ms")]
 
         # Reorder columns to move global fields to the front.
-        data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
+        data.table::setcolorder(orderbook_dt, c("time_datetime", "time", "sequence", "side", "price", "size"))
         data.table::setorder(orderbook_dt, price, size)
 
-        return(orderbook_dt)
+        return(orderbook_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_part_orderbook_impl:", conditionMessage(e)))
     })
