@@ -48,15 +48,13 @@ main_async <- async(function() {
     keys <- get_api_keys()
     base_url <- get_base_url()
 
-    # Test 13: Get Full OrderBook (Authenticated)
-    cat("\n--- Testing get_full_orderbook_impl ---\n")
-    full_orderbook <- await(get_full_orderbook_impl(
-        keys = keys,
+    # Test 14: Get 24-Hour Statistics
+    cat("\n--- Testing get_24hr_stats_impl ---\n")
+    stats <- await(get_24hr_stats_impl(
         base_url = base_url,
         symbol = "BTC-USDT"
     ))
-    cat("Total order levels:", nrow(full_orderbook), "\n")
-    print(full_orderbook)
+    print(stats)
 })
 
 # Run the main async function

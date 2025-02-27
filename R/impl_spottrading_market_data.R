@@ -3232,27 +3232,49 @@ get_full_orderbook_impl <- coro::async(function(
 #'
 #' Retrieves 24-hour market statistics for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 15
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `get24hrStats`
+#'
+#' ## Description
+#' This function requests the statistics of a specific trading symbol over the last 24 hours.
+#' It provides a comprehensive overview of market activity including price changes, volume, and 
+#' trading fees. This endpoint is commonly used for obtaining current market conditions and 
+#' historical performance metrics.
+#'
+#' ## Workflow Overview
 #' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
 #' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/stats`, and the query string.
 #' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
 #' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
-#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, renames `time` to `time_ms`, and adds a `timestamp` column via `time_convert_from_kucoin()`.
+#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, adds a `time_datetime` column, and reorders columns.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/market/stats`
 #'
-#' ### Usage
-#' Utilised to fetch a 24-hour snapshot of market statistics for a trading symbol, including volume and price changes.
+#' ## Usage
+#' Utilised to obtain a snapshot of market statistics for a trading symbol over the past 24 hours.
+#' Particularly useful for market analysis, visualising price movements, calculating volatility, 
+#' and making trading decisions based on recent market activity.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get 24hr Stats](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-24hr-stats)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-27 09h21
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
-#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
+#'   - `time_datetime` (POSIXct): Snapshot timestamp as a POSIXct datetime object.
+#'   - `time` (numeric): Snapshot timestamp in milliseconds.
 #'   - `symbol` (character): Trading symbol.
 #'   - `buy` (character): Best bid price.
 #'   - `sell` (character): Best ask price.
@@ -3260,19 +3282,195 @@ get_full_orderbook_impl <- coro::async(function(
 #'   - `changePrice` (character): 24-hour price change.
 #'   - `high` (character): 24-hour high price.
 #'   - `low` (character): 24-hour low price.
-#'   - `vol` (character): 24-hour trading volume.
-#'   - `volValue` (character): 24-hour turnover.
+#'   - `vol` (character): 24-hour trading volume based on base currency.
+#'   - `volValue` (character): 24-hour traded amount.
 #'   - `last` (character): Last traded price.
-#'   - `averagePrice` (character): 24-hour average price.
-#'   - `takerFeeRate` (character): Taker fee rate.
-#'   - `makerFeeRate` (character): Maker fee rate.
+#'   - `averagePrice` (character): Average trading price in the last 24 hours.
+#'   - `takerFeeRate` (character): Basic taker fee.
+#'   - `makerFeeRate` (character): Basic maker fee.
 #'   - `takerCoefficient` (character): Taker fee coefficient.
 #'   - `makerCoefficient` (character): Maker fee coefficient.
+#'
+#' ## Details
+#'
+#' ### Query Parameters
+#' - `symbol` (string, **required**): Trading symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `time` (numeric): Timestamp in milliseconds.
+#'   - `symbol` (string): Trading symbol.
+#'   - `buy` (numeric): Best bid price.
+#'   - `sell` (numeric): Best ask price.
+#'   - `changeRate` (numeric): 24-hour change rate.
+#'   - `changePrice` (numeric): 24-hour change price.
+#'   - `high` (numeric): Highest price in 24 hours.
+#'   - `low` (numeric): Lowest price in 24 hours.
+#'   - `vol` (numeric): 24-hour volume, executed based on base currency.
+#'   - `volValue` (numeric): 24-hour traded amount.
+#'   - `last` (numeric): Last traded price.
+#'   - `averagePrice` (numeric): Average trading price in the last 24 hours.
+#'   - `takerFeeRate` (numeric): Basic taker fee.
+#'   - `makerFeeRate` (numeric): Basic maker fee.
+#'   - `takerCoefficient` (numeric): Taker fee coefficient.
+#'   - `makerCoefficient` (numeric): Maker fee coefficient.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "time": 1729175612158,
+#'     "symbol": "BTC-USDT",
+#'     "buy": "66982.4",
+#'     "sell": "66982.5",
+#'     "changeRate": "-0.0114",
+#'     "changePrice": "-778.1",
+#'     "high": "68107.7",
+#'     "low": "66683.3",
+#'     "vol": "1738.02898182",
+#'     "volValue": "117321982.415978333",
+#'     "last": "66981.5",
+#'     "averagePrice": "67281.21437289",
+#'     "takerFeeRate": "0.001",
+#'     "makerFeeRate": "0.001",
+#'     "takerCoefficient": "1",
+#'     "makerCoefficient": "1"
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Converting the `data` object into a `data.table`.
+#' - Adding a `time_datetime` column by converting the `time` field to a POSIXct datetime object.
+#' - Reordering columns to place `time_datetime` and `time` first for consistency.
+#'
+#' ## Notes
+#' - **Public Endpoint**: This endpoint does not require authentication.
+#' - **Rate Limiting**: This endpoint has a relatively high weight of 15 in the Public rate limit pool.
+#' - **Numerical Values**: All numerical values are returned as strings and may need to be converted to appropriate numeric types for calculations.
+#' - **Fee Information**: Includes current fee rates for the symbol, useful for calculating trading costs.
+#' - **Fee Coefficients**: The actual fee is calculated by multiplying the fee rate by the coefficient. If the coefficient is 0, it means no fee.
+#' - **Change Rate**: Negative values indicate price decrease, positive values indicate price increase.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Volatility Analysis**: Calculate intraday volatility using high and low prices:
+#'   ```r
+#'   calculate_volatility <- function(stats_dt) {
+#'     high <- as.numeric(stats_dt$high)
+#'     low <- as.numeric(stats_dt$low)
+#'     last <- as.numeric(stats_dt$last)
+#'     
+#'     # Calculate volatility as percentage of price range relative to current price
+#'     volatility <- (high - low) / last * 100
+#'     return(volatility)
+#'   }
+#'   ```
+#'
+#' - **Price Momentum Analysis**: Assess price momentum using change rate:
+#'   ```r
+#'   analyse_momentum <- function(stats_dt) {
+#'     change_rate <- as.numeric(stats_dt$changeRate)
+#'     
+#'     if (change_rate > 0.05) {
+#'       return("Strong bullish momentum")
+#'     } else if (change_rate > 0.01) {
+#'       return("Moderate bullish momentum")
+#'     } else if (change_rate < -0.05) {
+#'       return("Strong bearish momentum")
+#'     } else if (change_rate < -0.01) {
+#'       return("Moderate bearish momentum")
+#'     } else {
+#'       return("Neutral momentum")
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Fee Cost Analysis**: Calculate total fee costs for a potential trade:
+#'   ```r
+#'   calculate_fees <- function(stats_dt, trade_value, is_taker = TRUE) {
+#'     if (is_taker) {
+#'       fee_rate <- as.numeric(stats_dt$takerFeeRate)
+#'       coefficient <- as.numeric(stats_dt$takerCoefficient)
+#'     } else {
+#'       fee_rate <- as.numeric(stats_dt$makerFeeRate)
+#'       coefficient <- as.numeric(stats_dt$makerCoefficient)
+#'     }
+#'     
+#'     fee_amount <- trade_value * fee_rate * coefficient
+#'     return(fee_amount)
+#'   }
+#'   ```
+#'
+#' - **Market Liquidity Assessment**: Evaluate trading volume as a liquidity indicator:
+#'   ```r
+#'   assess_liquidity <- function(stats_dt, trade_size) {
+#'     volume <- as.numeric(stats_dt$vol)
+#'     
+#'     # Calculate trade size as percentage of 24h volume
+#'     trade_percentage <- (trade_size / volume) * 100
+#'     
+#'     if (trade_percentage < 0.1) {
+#'       return(list(impact = "Low", percentage = trade_percentage))
+#'     } else if (trade_percentage < 1) {
+#'       return(list(impact = "Medium", percentage = trade_percentage))
+#'     } else {
+#'       return(list(impact = "High", percentage = trade_percentage))
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Daily Range Analysis**: Calculate where the current price is within the day's range:
+#'   ```r
+#'   range_position <- function(stats_dt) {
+#'     high <- as.numeric(stats_dt$high)
+#'     low <- as.numeric(stats_dt$low)
+#'     last <- as.numeric(stats_dt$last)
+#'     
+#'     # 0 means at the low, 1 means at the high
+#'     position <- (last - low) / (high - low)
+#'     return(position)
+#'   }
+#'   ```
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Retrieve 24-hour statistics for BTC-USDT
 #'   stats <- await(get_24hr_stats_impl(symbol = "BTC-USDT"))
-#'   print(stats)
+#'   
+#'   # Display basic market information
+#'   cat("Market statistics for", stats$symbol, "as of", format(stats$time_datetime), "\n")
+#'   cat("Current price:", stats$last, "\n")
+#'   cat("24h change:", stats$changePrice, "(", as.numeric(stats$changeRate) * 100, "%)\n")
+#'   cat("24h range:", stats$low, "-", stats$high, "\n")
+#'   cat("24h volume:", stats$vol, "with value of", stats$volValue, "\n")
+#'   
+#'   # Calculate and display the bid-ask spread
+#'   bid <- as.numeric(stats$buy)
+#'   ask <- as.numeric(stats$sell)
+#'   spread <- ask - bid
+#'   spread_bps <- (spread / bid) * 10000
+#'   
+#'   cat("Current bid-ask spread:", spread, "(", format(spread_bps, digits = 2), "bps)\n")
+#'   
+#'   # Calculate and display price volatility
+#'   high <- as.numeric(stats$high)
+#'   low <- as.numeric(stats$low)
+#'   last <- as.numeric(stats$last)
+#'   volatility <- (high - low) / last * 100
+#'   
+#'   cat("24h volatility:", format(volatility, digits = 2), "%\n")
+#'   
+#'   # Calculate fee costs for a hypothetical $10,000 trade
+#'   trade_value <- 10000
+#'   taker_fee <- trade_value * as.numeric(stats$takerFeeRate) * as.numeric(stats$takerCoefficient)
+#'   maker_fee <- trade_value * as.numeric(stats$makerFeeRate) * as.numeric(stats$makerCoefficient)
+#'   
+#'   cat("Fee for $10,000 trade:", 
+#'       "\n  Taker:", taker_fee, 
+#'       "\n  Maker:", maker_fee, "\n")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -3292,16 +3490,39 @@ get_24hr_stats_impl <- coro::async(function(
         url <- paste0(base_url, endpoint, qs)
 
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_24hr_stats_impl.ignore.Rds")
+
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_24hr_stats_impl.Rds")
+
         data_obj <- parsed_response$data
 
         stats_dt <- data.table::as.data.table(data_obj)
-        stats_dt[, timestamp := time_convert_from_kucoin(time, "ms")]
 
-        data.table::setnames(stats_dt, "time", "time_ms")
-        data.table::setcolorder(stats_dt, c("timestamp", "time_ms", setdiff(names(stats_dt), c("timestamp", "time_ms"))))
+        # coerce types
+        stats_dt[, `:=`(
+            time_datetime = time_convert_from_kucoin(time, "ms"),
+            time = as.numeric(time),
+            symbol = as.character(symbol),
+            buy = as.numeric(buy),
+            sell = as.numeric(sell),
+            changeRate = as.numeric(changeRate),
+            changePrice = as.numeric(changePrice),
+            high = as.numeric(high),
+            low = as.numeric(low),
+            vol = as.numeric(vol),
+            volValue = as.numeric(volValue),
+            last = as.numeric(last),
+            averagePrice = as.numeric(averagePrice),
+            takerFeeRate = as.numeric(takerFeeRate),
+            makerFeeRate = as.numeric(makerFeeRate),
+            takerCoefficient = as.numeric(takerCoefficient),
+            makerCoefficient = as.numeric(makerCoefficient)
+        )]
 
-        return(stats_dt)
+        data.table::setcolorder(stats_dt, c("time_datetime", "time", setdiff(names(stats_dt), c("time_datetime", "time"))))
+
+        return(stats_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_24hr_stats_impl:", conditionMessage(e)))
     })
