@@ -2798,91 +2798,115 @@ get_part_orderbook_impl <- coro::async(function(
     size
 ) {
     tryCatch({
-        # Validate the size parameter.
+        # Validate the size parameter
         requested_size <- rlang::arg_match0(as.character(size), c("20", "100"))
 
-        # Construct query string and full URL.
+        # Construct query string and full URL
         qs <- build_query(list(symbol = symbol))
         endpoint <- paste0("/api/v1/market/orderbook/level2_", requested_size)
         url <- paste0(base_url, endpoint, qs)
 
-        # Send the GET request with a 10-second timeout.
+        # Send the GET request with a 10-second timeout
         response <- httr::GET(url, httr::timeout(10))
-        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_part_orderbook_impl.ignore.Rds")
 
-        # Process and validate the response.
+        # Process and validate the response
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_part_orderbook_impl.Rds")
-
         data_obj <- parsed_response$data
 
-        # Create a data.table for bids.
-        bids_dt <- data.table::rbindlist(lapply(data_obj$bids, function(x) {
-            return(data.table::data.table(
-                price = as.numeric(x[1]),
-                size = as.numeric(x[2]),
-                side = "bid"
-            ))
-        }))
+        # Extract snapshot metadata
+        time_ms <- as.numeric(data_obj$time)
+        seq_num <- as.character(data_obj$sequence)
+        time_dt <- time_convert_from_kucoin(time_ms, "ms")
 
-        # Create a data.table for asks.
-        asks_dt <- data.table::rbindlist(lapply(data_obj$asks, function(x) {
-            return(data.table::data.table(
-                price = as.numeric(x[1]),
-                size = as.numeric(x[2]),
-                side = "ask"
-            ))
-        }))
+        # Count the number of bids and asks
+        num_bids <- length(data_obj$bids)
+        num_asks <- length(data_obj$asks)
+        total_rows <- num_bids + num_asks
 
-        # Combine the bids and asks into a single data.table.
-        orderbook_dt <- data.table::rbindlist(list(bids_dt, asks_dt))
+        # Preallocate vectors for the final data table
+        all_prices <- numeric(total_rows)
+        all_sizes <- numeric(total_rows)
+        all_sides <- character(total_rows)
+        all_times <- rep(time_ms, total_rows)
+        all_seqs <- rep(seq_num, total_rows)
+        all_datetimes <- rep(time_dt, total_rows)
 
-        # Append global snapshot fields.
-        orderbook_dt[, time := as.numeric(data_obj$time)]
-        orderbook_dt[, sequence := as.numeric(data_obj$sequence)]
-        orderbook_dt[, time_datetime := time_convert_from_kucoin(data_obj$time, "ms")]
+        # Process bids (already sorted high to low in the API response)
+        for (i in 1:num_bids) {
+            bid_item <- data_obj$bids[[i]]
+            all_prices[i] <- as.numeric(bid_item[1])
+            all_sizes[i] <- as.numeric(bid_item[2])
+            all_sides[i] <- "bid"
+        }
 
-        # Reorder columns to move global fields to the front.
-        data.table::setcolorder(orderbook_dt, c("time_datetime", "time", "sequence", "side", "price", "size"))
+        # Process asks (already sorted low to high in the API response)
+        for (i in 1:num_asks) {
+            ask_item <- data_obj$asks[[i]]
+            idx <- num_bids + i
+            all_prices[idx] <- as.numeric(ask_item[1])
+            all_sizes[idx] <- as.numeric(ask_item[2])
+            all_sides[idx] <- "ask"
+        }
 
-        # Sort bids in descending order by price (highest first) and asks in ascending order (lowest first)
-        # orderbook_dt <- orderbook_dt[order(side, data.table::fifelse(side == "bid", -price, price))]
+        # Create the data table directly with all columns in the desired order
+        orderbook_dt <- data.table::data.table(
+            time_datetime = all_datetimes,
+            time = all_times,
+            sequence = all_seqs,
+            side = all_sides,
+            price = all_prices,
+            size = all_sizes
+        )
 
-        # First sort all rows by side
-        data.table::setorder(orderbook_dt, side)
-
-        # Then sort bids in descending order 
-        orderbook_dt[side == "bid", data.table::setorder(.SD, -price)]
-
-        # And sort asks in ascending order
-        orderbook_dt[side == "ask", data.table::setorder(.SD, price)]
-
-        return(orderbook_dt[])
+        # No need for sorting since the API already returns data in the correct order
+        return(orderbook_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_part_orderbook_impl:", conditionMessage(e)))
     })
 })
 
-#' Get Full OrderBook (Implementation, Authenticated)
+#' Get Full OrderBook
 #'
-#' Retrieves the full orderbook depth data for a specified trading symbol from the KuCoin API asynchronously, requiring authentication.
+#' Retrieves the full orderbook depth data (aggregated by price) for a specified trading symbol from the KuCoin API asynchronously, requiring authentication.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: General
+#' - **API Rate Limit Pool**: Spot
+#' - **API Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getFullOrderBook`
+#'
+#' ## Description
+#' This function requests the complete orderbook depth data for a specific trading symbol on KuCoin.
+#' It provides a comprehensive snapshot of all bid and ask orders aggregated by price levels. This endpoint 
+#' is typically used by professional traders, as it uses more server resources and has strict access rate limits.
+#' To maintain an up-to-date orderbook, it's recommended to use WebSocket incremental feed after retrieving this initial snapshot.
+#'
+#' ## Workflow Overview
 #' 1. **Header Preparation**: Constructs authentication headers with `build_headers()` using `keys`.
 #' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
 #' 3. **URL Assembly**: Combines `base_url`, `/api/v3/market/orderbook/level2`, and the query string.
 #' 4. **HTTP Request**: Sends a GET request with headers and a 10-second timeout via `httr::GET()`.
 #' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
-#' 6. **Data Conversion**: Converts bids and asks into `data.table`s, adds `side`, combines them, and appends snapshot fields.
+#' 6. **Data Conversion**: Processes bid and ask arrays into a combined data table with snapshot metadata.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v3/market/orderbook/level2`
 #'
-#' ### Usage
-#' Utilised to fetch the complete orderbook for a trading symbol, requiring API authentication for detailed depth data.
+#' ## Usage
+#' Utilised to obtain a complete snapshot of the orderbook for a trading symbol, showing all aggregated bids and asks. 
+#' Particularly useful for market analysis, trading strategy development, and execution algorithms that require 
+#' comprehensive depth information.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Full OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-full-orderbook)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-27 09h03
 #'
 #' @param keys List; API configuration parameters from `get_api_keys()`, including:
 #'   - `api_key` (character): KuCoin API key.
@@ -2893,18 +2917,226 @@ get_part_orderbook_impl <- coro::async(function(
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
-#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
-#'   - `sequence` (character): Orderbook update sequence.
+#'   - `time_datetime` (POSIXct): Snapshot timestamp as a POSIXct datetime object.
+#'   - `time` (numeric): Snapshot timestamp in milliseconds.
+#'   - `sequence` (character): Orderbook update sequence number.
 #'   - `side` (character): Order side (`"bid"` or `"ask"`).
-#'   - `price` (character): Aggregated price level.
-#'   - `size` (character): Aggregated size at that price.
+#'   - `price` (numeric): Price level.
+#'   - `size` (numeric): Aggregated size at that price level.
+#'
+#' ## Details
+#'
+#' ### Query Parameters
+#' - `symbol` (string, **required**): Trading symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `time` (integer <int64>): Timestamp (milliseconds).
+#'   - `sequence` (string): Sequence number.
+#'   - `bids` (array of arrays): Bids, from high to low. Each inner array contains price and size. Example:
+#'     ```json
+#'     "bids": [
+#'       ["66976.4", "0.69109872"],  // First array: [price, size]
+#'       ["66976.3", "0.14377"]      // Second array: [price, size]
+#'     ]
+#'     ```
+#'   - `asks` (array of arrays): Asks, from low to high. Each inner array contains price and size. Example:
+#'     ```json
+#'     "asks": [
+#'       ["66976.5", "0.05408199"],  // First array: [price, size]
+#'       ["66976.8", "0.0005"]       // Second array: [price, size]
+#'     ]
+#'     ```
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "time": 1729176273859,
+#'     "sequence": "14610502970",
+#'     "bids": [
+#'       [
+#'         "66976.4",
+#'         "0.69109872"
+#'       ],
+#'       [
+#'         "66976.3",
+#'         "0.14377"
+#'       ]
+#'     ],
+#'     "asks": [
+#'       [
+#'         "66976.5",
+#'         "0.05408199"
+#'       ],
+#'       [
+#'         "66976.8",
+#'         "0.0005"
+#'       ]
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the global timestamp and sequence from the `data` object.
+#' - Converting each bid and ask array into a row in the resulting `data.table`.
+#' - Adding a `side` column to differentiate bids and asks.
+#' - Converting the timestamp to a POSIXct datetime object.
+#'
+#' ## Notes
+#' - **Authentication Required**: Unlike the partial orderbook endpoint, this endpoint requires API authentication.
+#' - **Resource Intensive**: This endpoint uses more server resources and is subject to stricter rate limiting.
+#' - **Professional Use**: Generally used by professional traders requiring complete market depth data.
+#' - **Sorted Orders**: Bids are sorted from high to low, while asks are sorted from low to high.
+#' - **Data Freshness**: The `time` field indicates when the snapshot was taken.
+#' - **Sequence Number**: The `sequence` field can be used to synchronise with WebSocket updates.
+#' - **Rate Limiting**: This endpoint has a weight of 3 in the Spot rate limit pool.
+#' - **WebSocket Integration**: For real-time updates, use the WebSocket incremental feed after retrieving this snapshot.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Market Liquidity Analysis**: Analyse the distribution of liquidity throughout the orderbook:
+#'   ```r
+#'   analyse_liquidity_distribution <- function(orderbook_dt, price_ranges) {
+#'     results <- list()
+#'     mid_price <- (orderbook_dt[side == "bid", max(price)] + orderbook_dt[side == "ask", min(price)]) / 2
+
+#'     for (range_pct in price_ranges) {
+#'       lower_bound <- mid_price * (1 - range_pct/100)
+#'       upper_bound <- mid_price * (1 + range_pct/100)
+
+#'       bid_liquidity <- orderbook_dt[side == "bid" & price >= lower_bound, sum(size * price)]
+#'       ask_liquidity <- orderbook_dt[side == "ask" & price <= upper_bound, sum(size * price)]
+
+#'       results[[paste0(range_pct, "%")]] <- list(
+#'         bid_liquidity = bid_liquidity,
+#'         ask_liquidity = ask_liquidity,
+#'         ratio = bid_liquidity / ask_liquidity
+#'       )
+#'     }
+
+#'     return(results)
+#'   }
+#'   ```
+#'
+#' - **Slippage Estimation**: Calculate expected slippage for various order sizes:
+#'   ```r
+#'   estimate_slippage <- function(orderbook_dt, side, order_size, base_price = NULL) {
+#'     if (is.null(base_price)) {
+#'       if (side == "buy") {
+#'         base_price <- orderbook_dt[side == "ask", min(price)]
+#'       } else {
+#'         base_price <- orderbook_dt[side == "bid", max(price)]
+#'       }
+#'     }
+
+#'     if (side == "buy") {
+#'       asks <- orderbook_dt[side == "ask"][order(price)]
+#'       remaining <- order_size
+#'       weighted_price <- 0
+
+#'       for (i in 1:nrow(asks)) {
+#'         if (remaining <= 0) break
+#'         filled <- min(remaining, asks$size[i])
+#'         weighted_price <- weighted_price + filled * asks$price[i]
+#'         remaining <- remaining - filled
+#'       }
+
+#'       if (remaining > 0) {
+#'         warning("Order size exceeds available liquidity in orderbook")
+#'         return(NA)
+#'       }
+
+#'       avg_price <- weighted_price / order_size
+#'       slippage_pct <- (avg_price / base_price - 1) * 100
+#'       return(list(avg_price = avg_price, slippage_pct = slippage_pct))
+#'     } else {
+#'       # Similar logic for sell orders
+#'       # ...
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Orderbook Imbalance**: Detect potential price movements based on orderbook imbalance:
+#'   ```r
+#'   calculate_imbalance_metrics <- function(orderbook_dt, depth_levels = 10) {
+#'     top_bids <- orderbook_dt[side == "bid"][order(-price)][1:depth_levels]
+#'     top_asks <- orderbook_dt[side == "ask"][order(price)][1:depth_levels]
+
+#'     bid_volume <- sum(top_bids$size)
+#'     ask_volume <- sum(top_asks$size)
+
+#'     bid_value <- sum(top_bids$size * top_bids$price)
+#'     ask_value <- sum(top_asks$size * top_asks$price)
+
+#'     return(list(
+#'       volume_ratio = bid_volume / ask_volume,
+#'       value_ratio = bid_value / ask_value,
+#'       bid_dominance = bid_volume / (bid_volume + ask_volume)
+#'     ))
+#'   }
+#'   ```
+#'
+#' - **Orderbook Visualisation**: Create a visual representation of the orderbook:
+#'   ```r
+#'   visualise_orderbook <- function(orderbook_dt, depth = 20) {
+#'     library(ggplot2)
+
+#'     # Extract top levels
+#'     top_bids <- orderbook_dt[side == "bid"][order(-price)][1:depth]
+#'     top_asks <- orderbook_dt[side == "ask"][order(price)][1:depth]
+
+#'     # Combine for plotting
+#'     plot_data <- rbind(top_bids, top_asks)
+
+#'     # Calculate cumulative size
+#'     plot_data[, cumulative_size := cumsum(size), by = side]
+
+#'     # Create plot
+#'     ggplot(plot_data, aes(x = price, y = cumulative_size, fill = side)) +
+#'       geom_col() +
+#'       scale_fill_manual(values = c("bid" = "green", "ask" = "red")) +
+#'       labs(title = "Market Depth", x = "Price", y = "Cumulative Size") +
+#'       theme_minimal()
+#'   }
+#'   ```
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get API authentication keys
 #'   keys <- get_api_keys()
+#'   
+#'   # Retrieve the full orderbook for BTC-USDT
 #'   orderbook <- await(get_full_orderbook_impl(keys = keys, symbol = "BTC-USDT"))
-#'   print(orderbook)
+#'   
+#'   # Display basic orderbook statistics
+#'   cat("Orderbook timestamp:", format(orderbook[1, time_datetime]), "\n")
+#'   cat("Total bid levels:", orderbook[side == "bid", .N], "\n")
+#'   cat("Total ask levels:", orderbook[side == "ask", .N], "\n")
+#'   
+#'   # Calculate and display the bid-ask spread
+#'   top_bid <- orderbook[side == "bid", max(price)]
+#'   top_ask <- orderbook[side == "ask", min(price)]
+#'   spread <- top_ask - top_bid
+#'   spread_bps <- (spread / top_bid) * 10000
+#'   
+#'   cat("Current spread:", spread, "(", format(spread_bps, digits = 2), "bps )\n")
+#'   
+#'   # Analyse liquidity within 0.5% of mid price
+#'   mid_price <- (top_bid + top_ask) / 2
+#'   price_range <- 0.005 * mid_price
+#'   
+#'   bid_liquidity <- orderbook[side == "bid" & price >= (mid_price - price_range), 
+#'                             sum(size)]
+#'   ask_liquidity <- orderbook[side == "ask" & price <= (mid_price + price_range), 
+#'                             sum(size)]
+#'   
+#'   cat("Bid liquidity within 0.5%:", bid_liquidity, "\n")
+#'   cat("Ask liquidity within 0.5%:", ask_liquidity, "\n")
+#'   cat("Liquidity ratio (bid/ask):", bid_liquidity / ask_liquidity, "\n")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -2919,55 +3151,74 @@ get_full_orderbook_impl <- coro::async(function(
     base_url = get_base_url(),
     symbol
 ) {
+    if (is.null(symbol) || !is.character(symbol)) {
+        rlang::abort("The 'symbol' parameter must be a non-empty character string.")
+    }
     tryCatch({
-        # Construct the query string with the required symbol.
+        # API request setup
         qs <- build_query(list(symbol = symbol))
         endpoint <- "/api/v3/market/orderbook/level2"
         full_endpoint <- paste0(endpoint, qs)
 
-        # Prepare authentication headers.
+        # Prepare authentication headers
         method <- "GET"
         body <- ""
         headers <- await(build_headers(method, full_endpoint, body, keys))
 
-        # Construct the full URL.
+        # Send the API request
         url <- paste0(base_url, full_endpoint)
-
-        # Send the GET request with a 10-second timeout.
         response <- httr::GET(url, headers, httr::timeout(10))
 
-        # Process and validate the response.
+        # Parse the response
         parsed_response <- process_kucoin_response(response, url)
         data_obj <- parsed_response$data
 
-        # Extract global snapshot fields.
-        global_time <- data_obj$time   # in milliseconds
-        sequence <- data_obj$sequence
+        # Extract snapshot metadata
+        time_ms <- as.numeric(data_obj$time)
+        seq_num <- as.character(data_obj$sequence)
+        time_dt <- time_convert_from_kucoin(time_ms, "ms")
 
-        # Create data.tables for bids and asks from their matrices.
-        bids_dt <- data.table::data.table(
-            price = data_obj$bids[, 1],
-            size  = data_obj$bids[, 2],
-            side  = "bid"
+        # Count the number of bids and asks
+        num_bids <- length(data_obj$bids)
+        num_asks <- length(data_obj$asks)
+        total_rows <- num_bids + num_asks
+
+        # Preallocate vectors for the combined data table
+        all_prices <- numeric(total_rows)
+        all_sizes <- numeric(total_rows)
+        all_sides <- character(total_rows)
+        all_times <- rep(time_ms, total_rows)
+        all_seqs <- rep(seq_num, total_rows)
+        all_datetimes <- rep(time_dt, total_rows)
+
+        # Process bids (which are already sorted high to low in the API response)
+        for (i in 1:num_bids) {
+            bid_item <- data_obj$bids[[i]]
+            all_prices[i] <- as.numeric(bid_item[1])
+            all_sizes[i] <- as.numeric(bid_item[2])
+            all_sides[i] <- "bid"
+        }
+
+        # Process asks (which are already sorted low to high in the API response)
+        for (i in 1:num_asks) {
+            ask_item <- data_obj$asks[[i]]
+            idx <- num_bids + i
+            all_prices[idx] <- as.numeric(ask_item[1])
+            all_sizes[idx] <- as.numeric(ask_item[2])
+            all_sides[idx] <- "ask"
+        }
+
+        # Create the data table directly without rbindlist
+        orderbook_dt <- data.table::data.table(
+            time_datetime = all_datetimes,
+            time = all_times,
+            sequence = all_seqs,
+            side = all_sides,
+            price = all_prices,
+            size = all_sizes
         )
-        asks_dt <- data.table::data.table(
-            price = data_obj$asks[, 1],
-            size  = data_obj$asks[, 2],
-            side  = "ask"
-        )
 
-        # Combine bids and asks into a single data.table.
-        orderbook_dt <- data.table::rbindlist(list(bids_dt, asks_dt))
-
-        # Append global snapshot fields.
-        orderbook_dt[, time_ms := global_time]
-        orderbook_dt[, sequence := sequence]
-        orderbook_dt[, timestamp := time_convert_from_kucoin(global_time, "ms")]
-
-        # Reorder columns so that global fields appear first.
-        data.table::setcolorder(orderbook_dt, c("timestamp", "time_ms", "sequence", "side", "price", "size"))
-        data.table::setorder(orderbook_dt, price, size)
-
+        # No need to sort - the API already returns data in the correct order!
         return(orderbook_dt)
     }, error = function(e) {
         rlang::abort(paste("Error in get_full_orderbook_impl:", conditionMessage(e)))
