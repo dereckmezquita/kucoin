@@ -1695,40 +1695,247 @@ get_all_symbols_impl <- coro::async(function(
 #'
 #' Retrieves Level 1 market data (ticker information) for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
-#' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
-#' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level1`, and the query string.
-#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
-#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, adds `symbol`, renames `time` to `time_ms`, and adds a `timestamp` column via `time_convert_from_kucoin()`.
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 2
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getTicker`
 #'
-#' ### API Endpoint
+#' ## Description
+#' This function requests real-time Level 1 market data for a specific trading symbol on KuCoin.
+#' It provides the current best bid and ask prices and sizes, along with the most recent trade
+#' price and size. This is essential market data for price monitoring, spread analysis, and
+#' execution algorithms.
+#'
+#' ## Workflow Overview
+#' 1. **Input Validation**: Verifies that `symbol` is a non-empty character string.
+#' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level1`, and the query string.
+#' 4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 6. **Data Enrichment**: Adds `symbol`, converts millisecond timestamp to POSIXct datetime, and reorders columns.
+#'
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/market/orderbook/level1`
 #'
-#' ### Usage
+#' ## Usage
 #' Utilised to obtain real-time ticker data (e.g., best bid/ask, last price) for a trading symbol.
+#' This is typically used for monitoring current prices, calculating spreads, and making trading decisions.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-26 17h49
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `symbol` (character): Trading symbol.
-#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
-#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
-#'   - `sequence` (character): Update sequence identifier.
+#'   - `symbol` (character): Trading symbol (e.g., `"BTC-USDT"`).
+#'   - `time` (integer): Snapshot timestamp in milliseconds.
+#'   - `time_datetime` (POSIXct): Converted snapshot timestamp as a POSIXct datetime object.
+#'   - `sequence` (character): Sequence number for synchronising updates.
 #'   - `price` (character): Last traded price.
 #'   - `size` (character): Last traded size.
 #'   - `bestBid` (character): Best bid price.
 #'   - `bestBidSize` (character): Best bid size.
 #'   - `bestAsk` (character): Best ask price.
 #'   - `bestAskSize` (character): Best ask size.
+#'
+#' ## Details
+#'
+#' ### Request Parameters
+#' - `symbol` (string, **required**): Trading symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): A single object containing ticker information:
+#'   - `time` (integer <int64>): Timestamp in milliseconds.
+#'   - `sequence` (string): Sequence number for updates.
+#'   - `price` (string): Last traded price.
+#'   - `size` (string): Last traded size.
+#'   - `bestBid` (string): Best bid price.
+#'   - `bestBidSize` (string): Best bid size.
+#'   - `bestAsk` (string): Best ask price.
+#'   - `bestAskSize` (string): Best ask size.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "time": 1729172965609,
+#'     "sequence": "14609309753",
+#'     "price": "67269",
+#'     "size": "0.000025",
+#'     "bestBid": "67267.5",
+#'     "bestBidSize": "0.000025",
+#'     "bestAsk": "67267.6",
+#'     "bestAskSize": "1.24808993"
+#'   }
+#' }
+#' ```
+#'
+#' ### Notes
+#' - **Data Freshness**: This endpoint provides real-time data with minimal delay. The `time` field indicates when the snapshot was taken.
+#' - **Sequence Number**: The `sequence` field can be used to order updates when polling frequently.
+#' - **Price Representation**: All price and size values are returned as strings to preserve precision. You may need to convert them to numeric types for calculations.
+#' - **Spread Calculation**: The spread can be calculated as `as.numeric(bestAsk) - as.numeric(bestBid)`.
+#' - **Rate Limiting**: This endpoint has a weight of 2 in the Public rate limit pool.
+#'
+#' ### Advice for Automated Traders
+#' - **Efficient Polling**: For high-frequency applications, implement a polling mechanism that respects rate limits:
+#'   ```r
+#'   poll_ticker <- function(symbol, interval_ms = 500) {
+#'     last_poll <- Sys.time()
+#'     coro::async(function() {
+#'       while(TRUE) {
+#'         current <- Sys.time()
+#'         if (difftime(current, last_poll, units = "msecs") >= interval_ms) {
+#'           ticker <- await(get_ticker_impl(symbol = symbol))
+#'           process_ticker(ticker)
+#'           last_poll <- Sys.time()
+#'         }
+#'         Sys.sleep(0.01)  # Small sleep to prevent CPU overuse
+#'       }
+#'     })
+#'   }
+#'   ```
+#'
+#' - **Smart Order Routing**: Use ticker data to make intelligent routing decisions:
+#'   ```r
+#'   determine_order_type <- function(ticker, target_price, tolerance = 0.0001) {
+#'     bid <- as.numeric(ticker$bestBid)
+#'     ask <- as.numeric(ticker$bestAsk)
+#'     
+#'     if (target_price <= bid * (1 + tolerance)) {
+#'       return("limit_sell")  # Can sell at or above target with limit order
+#'     } else if (target_price >= ask * (1 - tolerance)) {
+#'       return("limit_buy")   # Can buy at or below target with limit order
+#'     } else {
+#'       # Price is inside the spread, may need market order or patience
+#'       return("market_or_wait")
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Spread Monitoring**: Implement spread monitoring for trading signals:
+#'   ```r
+#'   is_spread_favourable <- function(ticker, max_spread_bps = 10) {
+#'     bid <- as.numeric(ticker$bestBid)
+#'     ask <- as.numeric(ticker$bestAsk)
+#'     spread_bps <- (ask - bid) / bid * 10000
+#'     
+#'     return(spread_bps <= max_spread_bps)
+#'   }
+#'   ```
+#'
+#' - **Price Impact Estimation**: Use the best bid/ask sizes to estimate potential price impact:
+#'   ```r
+#'   estimate_impact <- function(ticker, order_size, side = "buy") {
+#'     if (side == "buy") {
+#'       size_ratio <- order_size / as.numeric(ticker$bestAskSize)
+#'       return(ifelse(size_ratio <= 1, 0, log(size_ratio) * 0.01))  # Simplified impact model
+#'     } else {
+#'       size_ratio <- order_size / as.numeric(ticker$bestBidSize)
+#'       return(ifelse(size_ratio <= 1, 0, log(size_ratio) * 0.01))
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Volatility Calculation**: Track price changes for volatility estimation:
+#'   ```r
+#'   update_volatility <- function(ticker, price_history, window = 20) {
+#'     price_history <- c(price_history, as.numeric(ticker$price))
+#'     if (length(price_history) > window) {
+#'       price_history <- price_history[(length(price_history) - window + 1):length(price_history)]
+#'     }
+#'     
+#'     if (length(price_history) >= 2) {
+#'       returns <- diff(log(price_history))
+#'       volatility <- sd(returns) * sqrt(252 * 24 * 60 * 60 / 300)  # Annualised from 5-min returns
+#'       return(list(volatility = volatility, price_history = price_history))
+#'     }
+#'     
+#'     return(list(volatility = NA, price_history = price_history))
+#'   }
+#'   ```
+#'
+#' - **Crossed Markets Detection**: Implement safety checks for unusual market conditions:
+#'   ```r
+#'   is_market_crossed <- function(ticker) {
+#'     bid <- as.numeric(ticker$bestBid)
+#'     ask <- as.numeric(ticker$bestAsk)
+#'     
+#'     return(bid >= ask)  # A crossed market (bid ≥ ask) indicates potential issues
+#'   }
+#'   ```
+#'
+#' - **Composite Price Calculation**: Calculate a composite mid-price weighted by order sizes:
+#'   ```r
+#'   weighted_mid_price <- function(ticker) {
+#'     bid <- as.numeric(ticker$bestBid)
+#'     ask <- as.numeric(ticker$bestAsk)
+#'     bid_size <- as.numeric(ticker$bestBidSize)
+#'     ask_size <- as.numeric(ticker$bestAskSize)
+#'     
+#'     total_size <- bid_size + ask_size
+#'     weighted_price <- (bid * ask_size + ask * bid_size) / total_size
+#'     
+#'     return(weighted_price)
+#'   }
+#'   ```
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get current ticker for BTC-USDT
 #'   ticker <- await(get_ticker_impl(symbol = "BTC-USDT"))
-#'   print(ticker)
+#'   
+#'   # Print the basic ticker information
+#'   cat("Symbol:", ticker$symbol, "\n")
+#'   cat("Time:", format(ticker$time_datetime, "%Y-%m-%d %H:%M:%S"), "\n")
+#'   cat("Last price:", ticker$price, "\n")
+#'   cat("Best bid:", ticker$bestBid, "Size:", ticker$bestBidSize, "\n")
+#'   cat("Best ask:", ticker$bestAsk, "Size:", ticker$bestAskSize, "\n")
+#'   
+#'   # Calculate and print the spread
+#'   spread <- as.numeric(ticker$bestAsk) - as.numeric(ticker$bestBid)
+#'   spread_pct <- spread / as.numeric(ticker$bestBid) * 100
+#'   cat("Spread:", sprintf("%.2f (%.4f%%)", spread, spread_pct), "\n")
+#'   
+#'   # Check if the spread is tight enough for trading
+#'   max_acceptable_spread_pct <- 0.05  # 0.05% maximum acceptable spread
+#'   if (spread_pct <= max_acceptable_spread_pct) {
+#'     cat("Spread is acceptable for trading\n")
+#'   } else {
+#'     cat("Spread is too wide for optimal trading\n")
+#'   }
+#'   
+#'   # Fetch tickers for multiple symbols
+#'   symbols <- c("BTC-USDT", "ETH-USDT", "SOL-USDT")
+#'   tickers <- list()
+#'   
+#'   for (sym in symbols) {
+#'     tickers[[sym]] <- await(get_ticker_impl(symbol = sym))
+#'   }
+#'   
+#'   # Compare prices across symbols
+#'   comparison <- data.frame(
+#'     Symbol = sapply(symbols, function(s) tickers[[s]]$symbol),
+#'     Price = sapply(symbols, function(s) as.numeric(tickers[[s]]$price)),
+#'     Spread_Pct = sapply(symbols, function(s) {
+#'       (as.numeric(tickers[[s]]$bestAsk) - as.numeric(tickers[[s]]$bestBid)) / 
+#'       as.numeric(tickers[[s]]$bestBid) * 100
+#'     })
+#'   )
+#'   
+#'   print(comparison)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -1742,6 +1949,9 @@ get_ticker_impl <- coro::async(function(
     base_url = get_base_url(),
     symbol
 ) {
+    if (is.null(symbol) || !is.character(symbol)) {
+        rlang::abort("The 'symbol' parameter must be a non-empty character string.")
+    }
     tryCatch({
         qs <- build_query(list(symbol = symbol))
         endpoint <- "/api/v1/market/orderbook/level1"
@@ -1749,22 +1959,22 @@ get_ticker_impl <- coro::async(function(
 
         # Send a GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_ticker_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_ticker_impl.Rds")
 
         # Convert the 'data' field (a named list) to a data.table.
         ticker_dt <- data.table::as.data.table(parsed_response$data)
         ticker_dt[, symbol := symbol]
 
         # convert kucoin time to POSIXct
-        ticker_dt[, timestamp := time_convert_from_kucoin(time, "ms")]
-        # rename the time col to time_ms
-        data.table::setnames(ticker_dt, "time", "time_ms")
+        ticker_dt[, time_datetime := time_convert_from_kucoin(time, "ms")]
 
-        move_cols <- c("symbol", "timestamp", "time_ms")
+        move_cols <- c("symbol", "time", "time_datetime")
         data.table::setcolorder(ticker_dt, c(move_cols, setdiff(names(ticker_dt), move_cols)))
-        return(ticker_dt)
+        return(ticker_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_ticker_impl:", conditionMessage(e)))
     })
