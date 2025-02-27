@@ -1959,11 +1959,11 @@ get_ticker_impl <- coro::async(function(
 
         # Send a GET request with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
-        saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_ticker_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_ticker_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
-        saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_ticker_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_ticker_impl.Rds")
 
         # Convert the 'data' field (a named list) to a data.table.
         ticker_dt <- data.table::as.data.table(parsed_response$data)
