@@ -37,7 +37,7 @@ main_async <- async(function() {
         side = "buy",
         price = 1,                # Extremely low price for testing purposes
         size = 0.0001,              # Small order size
-        remark = "Test: limit order at absurd price"
+        remark = "Test:limit absurd"
     ))
     print(order_dt)
     returned_orderId <- order_dt$orderId
