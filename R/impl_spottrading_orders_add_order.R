@@ -11,7 +11,7 @@
 #     rlang[abort, arg_match0]
 # )
 
-#' Place Order (Shared Implementation)
+#' Place Order (Shared Implementation Helper)
 #'
 #' This is a shared helper function for placing orders or testing order placement on the KuCoin Spot trading system.
 #' It handles parameter validation, request body construction, authentication, API request sending, and response processing.
