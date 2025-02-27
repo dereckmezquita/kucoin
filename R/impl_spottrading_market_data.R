@@ -1731,7 +1731,7 @@ get_all_symbols_impl <- coro::async(function(
 #' [KuCoin Get Ticker](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-ticker)
 #' 
 #' ## Function Validated
-#' - Last validated: 2025-02-26 17h49
+#' - Last validated: 2025-02-26 18h14
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
