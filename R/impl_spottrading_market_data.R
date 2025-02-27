@@ -1812,7 +1812,7 @@ get_all_symbols_impl <- coro::async(function(
 #'   determine_order_type <- function(ticker, target_price, tolerance = 0.0001) {
 #'     bid <- as.numeric(ticker$bestBid)
 #'     ask <- as.numeric(ticker$bestAsk)
-#'     
+
 #'     if (target_price <= bid * (1 + tolerance)) {
 #'       return("limit_sell")  # Can sell at or above target with limit order
 #'     } else if (target_price >= ask * (1 - tolerance)) {
@@ -1830,7 +1830,7 @@ get_all_symbols_impl <- coro::async(function(
 #'     bid <- as.numeric(ticker$bestBid)
 #'     ask <- as.numeric(ticker$bestAsk)
 #'     spread_bps <- (ask - bid) / bid * 10000
-#'     
+
 #'     return(spread_bps <= max_spread_bps)
 #'   }
 #'   ```
@@ -1855,13 +1855,13 @@ get_all_symbols_impl <- coro::async(function(
 #'     if (length(price_history) > window) {
 #'       price_history <- price_history[(length(price_history) - window + 1):length(price_history)]
 #'     }
-#'     
+
 #'     if (length(price_history) >= 2) {
 #'       returns <- diff(log(price_history))
 #'       volatility <- sd(returns) * sqrt(252 * 24 * 60 * 60 / 300)  # Annualised from 5-min returns
 #'       return(list(volatility = volatility, price_history = price_history))
 #'     }
-#'     
+
 #'     return(list(volatility = NA, price_history = price_history))
 #'   }
 #'   ```
@@ -1871,7 +1871,7 @@ get_all_symbols_impl <- coro::async(function(
 #'   is_market_crossed <- function(ticker) {
 #'     bid <- as.numeric(ticker$bestBid)
 #'     ask <- as.numeric(ticker$bestAsk)
-#'     
+
 #'     return(bid >= ask)  # A crossed market (bid ≥ ask) indicates potential issues
 #'   }
 #'   ```
@@ -1883,10 +1883,10 @@ get_all_symbols_impl <- coro::async(function(
 #'     ask <- as.numeric(ticker$bestAsk)
 #'     bid_size <- as.numeric(ticker$bestBidSize)
 #'     ask_size <- as.numeric(ticker$bestAskSize)
-#'     
+
 #'     total_size <- bid_size + ask_size
 #'     weighted_price <- (bid * ask_size + ask * bid_size) / total_size
-#'     
+
 #'     return(weighted_price)
 #'   }
 #'   ```
@@ -2121,14 +2121,14 @@ get_ticker_impl <- coro::async(function(
 #'   market_scan <- function(criteria) {
 #'     coro::async(function() {
 #'       all_tickers <- await(get_all_tickers_impl())
-#'       
+
 #'       # Apply filter criteria
 #'       matches <- all_tickers[
 #'         as.numeric(changeRate) > criteria$min_change_rate &
 #'         as.numeric(vol) > criteria$min_volume &
 #'         as.numeric(last) > criteria$min_price
 #'       ]
-#'       
+
 #'       return(matches)
 #'     })
 #'   }
@@ -2139,16 +2139,16 @@ get_ticker_impl <- coro::async(function(
 #'   calculate_market_breadth <- function(tickers, base_currency = "USDT") {
 #'     # Filter for pairs with the specified base currency
 #'     base_pairs <- tickers[grepl(paste0("-", base_currency, "$"), symbol)]
-#'     
+
 #'     # Calculate breadth indicators
 #'     total_pairs <- nrow(base_pairs)
 #'     advancing <- sum(as.numeric(base_pairs$changeRate) > 0)
 #'     declining <- sum(as.numeric(base_pairs$changeRate) < 0)
 #'     unchanged <- total_pairs - advancing - declining
-#'     
+
 #'     advance_decline_ratio <- advancing / max(declining, 1)
 #'     advance_decline_line <- advancing - declining
-#'     
+
 #'     return(list(
 #'       total_pairs = total_pairs,
 #'       advancing = advancing,
@@ -2170,7 +2170,7 @@ get_ticker_impl <- coro::async(function(
 #'       volume = as.numeric(vol),
 #'       price = as.numeric(last)
 #'     )]
-#'     
+
 #'     # Rank by volatility in descending order
 #'     return(volatility_data[order(-volatility)])
 #'   }
@@ -2182,13 +2182,13 @@ get_ticker_impl <- coro::async(function(
 #'   build_correlation_matrix <- function(price_history, top_n = 20) {
 #'     # Extract the most active symbols by volume
 #'     top_symbols <- names(sort(colSums(price_history$volume), decreasing = TRUE))[1:min(top_n, ncol(price_history$volume))]
-#'     
+
 #'     # Calculate returns
 #'     returns <- apply(price_history$close[, top_symbols], 2, function(x) diff(log(x)))
-#'     
+
 #'     # Calculate correlation matrix
 #'     correlation_matrix <- cor(returns, use = "pairwise.complete.obs")
-#'     
+
 #'     return(correlation_matrix)
 #'   }
 #'   ```
@@ -2201,11 +2201,11 @@ get_ticker_impl <- coro::async(function(
 #'       maker_fee = as.numeric(makerFeeRate) * as.numeric(makerCoefficient),
 #'       taker_fee = as.numeric(takerFeeRate) * as.numeric(takerCoefficient)
 #'     )]
-#'     
+
 #'     # Group by fee structure
 #'     fee_groups <- fee_data[, .N, by = .(maker_fee, taker_fee)]
 #'     fee_groups <- fee_groups[order(maker_fee, taker_fee)]
-#'     
+
 #'     return(fee_groups)
 #'   }
 #'   ```
@@ -2220,21 +2220,21 @@ get_ticker_impl <- coro::async(function(
 #'       volume = as.numeric(vol),
 #'       change_rate = as.numeric(changeRate)
 #'     )]
-#'     
+
 #'     # Calculate z-scores
 #'     numeric_data[, `:=`(
 #'       price_z = (price - mean(price, na.rm = TRUE)) / sd(price, na.rm = TRUE),
 #'       volume_z = (volume - mean(volume, na.rm = TRUE)) / sd(volume, na.rm = TRUE),
 #'       change_z = (change_rate - mean(change_rate, na.rm = TRUE)) / sd(change_rate, na.rm = TRUE)
 #'     )]
-#'     
+
 #'     # Identify anomalies
 #'     anomalies <- numeric_data[
 #'       abs(price_z) > z_score_threshold | 
 #'       abs(volume_z) > z_score_threshold | 
 #'       abs(change_z) > z_score_threshold
 #'     ]
-#'     
+
 #'     return(anomalies[order(-abs(volume_z))])
 #'   }
 #'   ```
@@ -2248,14 +2248,14 @@ get_ticker_impl <- coro::async(function(
 #'   get_cached_tickers <- function(max_age_seconds = 120) {
 #'     coro::async(function() {
 #'       current_time <- Sys.time()
-#'       
+
 #'       # Check if cache needs refresh
 #'       if (is.null(tickers_cache) || 
 #'           difftime(current_time, last_fetch_time, units = "secs") > max_age_seconds) {
 #'         tickers_cache <<- await(get_all_tickers_impl())
 #'         last_fetch_time <<- current_time
 #'       }
-#'       
+
 #'       return(tickers_cache)
 #'     })
 #'   }
@@ -2542,40 +2542,247 @@ get_trade_history_impl <- coro::async(function(
 #'
 #' Retrieves partial orderbook depth data (20 or 100 levels) for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 2
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getPartOrderBook`
+#'
+#' ## Description
+#' This function requests partial orderbook depth data (aggregated by price) for a specific trading symbol on KuCoin.
+#' It provides a snapshot of bid and ask orders at specific price levels (either 20 or 100 levels). This endpoint
+#' is recommended for faster system response and reduced traffic consumption compared to the full orderbook endpoint.
+#'
+#' ## Workflow Overview
 #' 1. **Input Validation**: Ensures `size` is 20 or 100, aborting if invalid.
 #' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
 #' 3. **URL Assembly**: Combines `base_url`, `/api/v1/market/orderbook/level2_{size}`, and the query string.
 #' 4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
 #' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
-#' 6. **Data Conversion**: Converts bids and asks into separate `data.table`s, adds `side`, combines them, and appends snapshot fields.
+#' 6. **Data Conversion**: Processes bid and ask arrays into separate data tables, then combines them with snapshot metadata.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/market/orderbook/level2_{size}`
 #'
-#' ### Usage
-#' Utilised to obtain a snapshot of the orderbook for a trading symbol, showing aggregated bid and ask levels.
+#' ## Usage
+#' Utilised to obtain a snapshot of the orderbook for a trading symbol, showing aggregated bids and asks at specified price levels.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Part OrderBook](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-part-orderbook)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-26 21h29
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
-#' @param size Integer; orderbook depth (20 or 100).
+#' @param size Integer; orderbook depth (20 or 100); this represents the number of levels to return, a level is a price point with aggregated size.
 #' @return Promise resolving to a `data.table` containing:
-#'   - `timestamp` (POSIXct): Snapshot timestamp in UTC.
-#'   - `time_ms` (integer): Snapshot timestamp in milliseconds.
-#'   - `sequence` (character): Orderbook update sequence.
+#'   - `time_datetime` (POSIXct): Snapshot timestamp as a POSIXct datetime object.
+#'   - `time` (numeric): Snapshot timestamp in milliseconds.
+#'   - `sequence` (character): Orderbook update sequence number.
 #'   - `side` (character): Order side (`"bid"` or `"ask"`).
-#'   - `price` (character): Aggregated price level.
-#'   - `size` (character): Aggregated size at that price.
+#'   - `price` (numeric): Price level.
+#'   - `size` (numeric): Aggregated size at that price level.
+#'
+#' ## Details
+#'
+#' ### Path Parameters
+#' - `size` (integer, **required**): Get the depth layer, optional value: 20, 100.
+#'
+#' ### Query Parameters
+#' - `symbol` (string, **required**): Trading symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains:
+#'   - `time` (integer <int64>): Timestamp (milliseconds).
+#'   - `sequence` (string): Sequence number.
+#'   - `bids` (array of arrays): Bids, from high to low. Each inner array contains price and size. Example:
+#'     ```json
+#'     "bids": [
+#'       ["66976.4", "0.69109872"],  // First array: [price, size]
+#'       ["66976.3", "0.14377"]      // Second array: [price, size]
+#'     ]
+#'     ```
+#'   - `asks` (array of arrays): Asks, from low to high. Each inner array contains price and size. Example:
+#'     ```json
+#'     "asks": [
+#'       ["66976.5", "0.05408199"],  // First array: [price, size]
+#'       ["66976.8", "0.0005"]       // Second array: [price, size]
+#'     ]
+#'     ```
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "time": 1729176273859,
+#'     "sequence": "14610502970",
+#'     "bids": [
+#'       [
+#'         "66976.4",
+#'         "0.69109872"
+#'       ],
+#'       [
+#'         "66976.3",
+#'         "0.14377"
+#'       ]
+#'     ],
+#'     "asks": [
+#'       [
+#'         "66976.5",
+#'         "0.05408199"
+#'       ],
+#'       [
+#'         "66976.8",
+#'         "0.0005"
+#'       ]
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' The function processes this response by:
+#' - Extracting the global timestamp and sequence from the `data` object.
+#' - Converting each bid and ask array into a row in the resulting `data.table`.
+#' - Adding a `side` column to differentiate bids and asks.
+#' - Converting the timestamp to a POSIXct datetime object.
+#'
+#' ## Notes
+#' - **Sorted Orders**: Bids are sorted from high to low, while asks are sorted from low to high.
+#' - **Data Freshness**: The `time` field indicates when the snapshot was taken.
+#' - **Sequence Number**: The `sequence` field can be used to order updates when polling frequently.
+#' - **Rate Limiting**: This endpoint has a weight of 2 in the Public rate limit pool.
+#' - **Size Options**: Only 20 or 100 levels can be requested; requests with other values will be rejected.
+#'
+#' ## Advice for Automated Trading Systems
+#' - **Market Depth Analysis**: Use the orderbook data to calculate available liquidity at different price levels:
+#'   ```r
+#'   calculate_liquidity <- function(orderbook_dt, side, price_threshold) {
+#'     if (side == "bid") {
+#'       # Sum all bid sizes at or above the threshold price
+#'       return(orderbook_dt[side == "bid" & price >= price_threshold, sum(size)])
+#'     } else {
+#'       # Sum all ask sizes at or below the threshold price
+#'       return(orderbook_dt[side == "ask" & price <= price_threshold, sum(size)])
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Market Impact Estimation**: Estimate price impact for different order sizes:
+#'   ```r
+#'   estimate_market_impact <- function(orderbook_dt, side, order_size) {
+#'     if (side == "buy") {
+#'       # Sort asks by price (low to high)
+#'       asks <- orderbook_dt[side == "ask"][order(price)]
+
+#'       # Initialize variables
+#'       remaining_size <- order_size
+#'       total_cost <- 0
+
+#'       for (i in 1:nrow(asks)) {
+#'         if (remaining_size <= 0) break
+
+#'         # Calculate how much can be filled at this price level
+#'         filled_at_level <- min(remaining_size, asks$size[i])
+
+#'         # Add to total cost
+#'         total_cost <- total_cost + filled_at_level * asks$price[i]
+
+#'         # Reduce remaining size
+#'         remaining_size <- remaining_size - filled_at_level
+#'       }
+
+#'       # Calculate average price
+#'       avg_price <- total_cost / order_size
+#'       return(list(avg_price = avg_price, filled = (order_size - remaining_size)))
+#'     } else {
+#'       # For sell orders, use similar logic with bids
+#'       # ...
+#'     }
+#'   }
+#'   ```
+#'
+#' - **Microstructure Analysis**: Monitor order imbalance for momentum signals:
+#'   ```r
+#'   calculate_order_imbalance <- function(orderbook_dt, levels = 5) {
+#'     top_bids <- orderbook_dt[side == "bid"][order(-price)][1:levels]
+#'     top_asks <- orderbook_dt[side == "ask"][order(price)][1:levels]
+
+#'     bid_volume <- sum(top_bids$size * top_bids$price)
+#'     ask_volume <- sum(top_asks$size * top_asks$price)
+
+#'     imbalance_ratio <- bid_volume / (bid_volume + ask_volume)
+#'     return(imbalance_ratio)  # Values > 0.5 indicate buying pressure
+#'   }
+#'   ```
+#'
+#' - **Spread Analysis**: Track and analyse the bid-ask spread for trading signals:
+#'   ```r
+#'   analyse_spread <- function(orderbook_dt) {
+#'     top_bid <- orderbook_dt[side == "bid", max(price)]
+#'     top_ask <- orderbook_dt[side == "ask", min(price)]
+
+#'     spread <- top_ask - top_bid
+#'     spread_bps <- (spread / top_bid) * 10000  # In basis points
+
+#'     return(list(spread = spread, spread_bps = spread_bps))
+#'   }
+#'   ```
+#'
+#' - **Optimal Order Placement**: Determine optimal order placement to minimise market impact:
+#'   ```r
+#'   suggest_limit_price <- function(orderbook_dt, side, urgency = "low") {
+#'     if (side == "buy") {
+#'       if (urgency == "low") {
+#'         # Passive placement just above best bid
+#'         return(orderbook_dt[side == "bid", max(price)] + min_tick)
+#'       } else if (urgency == "medium") {
+#'         # Mid-spread placement
+#'         best_bid <- orderbook_dt[side == "bid", max(price)]
+#'         best_ask <- orderbook_dt[side == "ask", min(price)]
+#'         return(best_bid + (best_ask - best_bid) / 2)
+#'       } else {
+#'         # Aggressive placement at best ask
+#'         return(orderbook_dt[side == "ask", min(price)])
+#'       }
+#'     } else {
+#'       # Similar logic for sell orders
+#'       # ...
+#'     }
+#'   }
+#'   ```
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get orderbook with 20 levels for BTC-USDT
 #'   orderbook_20 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 20))
-#'   print(orderbook_20)
+#'   
+#'   # Print the first 5 bids and asks
+#'   print("First 5 Bids:")
+#'   print(orderbook_20[side == "bid"][1:5])
+#'   
+#'   print("First 5 Asks:")
+#'   print(orderbook_20[side == "ask"][1:5])
+#'   
+#'   # Calculate the bid-ask spread
+#'   top_bid <- orderbook_20[side == "bid", max(price)]
+#'   top_ask <- orderbook_20[side == "ask", min(price)]
+#'   spread <- top_ask - top_bid
+#'   spread_pct <- spread / top_bid * 100
+#'   
+#'   cat("Current Spread:", spread, "(", sprintf("%.4f%%", spread_pct), ")\n")
+#'   
+#'   # Get a deeper orderbook with 100 levels
 #'   orderbook_100 <- await(get_part_orderbook_impl(symbol = "BTC-USDT", size = 100))
-#'   print(orderbook_100)
+#'   cat("Total number of price levels in 100-level orderbook:", nrow(orderbook_100), "\n")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
@@ -2633,11 +2840,22 @@ get_part_orderbook_impl <- coro::async(function(
         # Append global snapshot fields.
         orderbook_dt[, time := as.numeric(data_obj$time)]
         orderbook_dt[, sequence := as.numeric(data_obj$sequence)]
-        orderbook_dt[, time_datetime := time_convert_from_kucoin(global_time, "ms")]
+        orderbook_dt[, time_datetime := time_convert_from_kucoin(data_obj$time, "ms")]
 
         # Reorder columns to move global fields to the front.
         data.table::setcolorder(orderbook_dt, c("time_datetime", "time", "sequence", "side", "price", "size"))
-        data.table::setorder(orderbook_dt, price, size)
+
+        # Sort bids in descending order by price (highest first) and asks in ascending order (lowest first)
+        # orderbook_dt <- orderbook_dt[order(side, data.table::fifelse(side == "bid", -price, price))]
+
+        # First sort all rows by side
+        data.table::setorder(orderbook_dt, side)
+
+        # Then sort bids in descending order 
+        orderbook_dt[side == "bid", data.table::setorder(.SD, -price)]
+
+        # And sort asks in ascending order
+        orderbook_dt[side == "ask", data.table::setorder(.SD, price)]
 
         return(orderbook_dt[])
     }, error = function(e) {
