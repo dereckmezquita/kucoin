@@ -3168,9 +3168,12 @@ get_full_orderbook_impl <- coro::async(function(
         # Send the API request
         url <- paste0(base_url, full_endpoint)
         response <- httr::GET(url, headers, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_full_orderbook_impl.ignore.Rds")
 
         # Parse the response
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_full_orderbook_impl.Rds")
+
         data_obj <- parsed_response$data
 
         # Extract snapshot metadata
