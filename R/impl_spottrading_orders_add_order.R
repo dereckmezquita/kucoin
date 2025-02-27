@@ -1,15 +1,15 @@
 # File: ./R/impl_spottrading_orders_add_order.R
 
-# box::use(
-#     ./helpers_api[process_kucoin_response, build_headers],
-#     ./utils[build_query, get_base_url, verify_symbol],
-#     ./utils_time_convert_kucoin[time_convert_to_kucoin],
-#     coro[async, await],
-#     data.table[as.data.table],
-#     httr[POST, timeout, content_type_json],
-#     jsonlite[toJSON],
-#     rlang[abort, arg_match0]
-# )
+box::use(
+    ./helpers_api[process_kucoin_response, build_headers],
+    ./utils[build_query, get_base_url, verify_symbol],
+    ./utils_time_convert_kucoin[time_convert_to_kucoin],
+    coro[async, await],
+    data.table[as.data.table],
+    httr[POST, timeout, content_type_json],
+    jsonlite[toJSON],
+    rlang[abort, arg_match0]
+)
 
 #' Place Order (Shared Implementation Helper)
 #'
@@ -208,9 +208,15 @@ place_order_helper <- coro::async(function(
             httr::content_type_json(),
             httr::timeout(3)
         )
+        test_vs_live <- grepl("test", endpoint)
+        # file_name <- paste0("place_order_helper-", ifelse(test_vs_live, "test", "live"), ".json")
+        # saveRDS(response, paste0("../../api-responses/impl_spottrading_market_data/response-", file_name, ".ignore.Rds"))
 
-        # Process response
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, paste0("../../api-responses/impl_spottrading_market_data/parsed_response-get_market_list_impl-", file_name, ".Rds"))
+
+        browser()
+
         if (parsed_response$code != "200000") {
             rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
         }
