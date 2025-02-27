@@ -1984,55 +1984,340 @@ get_ticker_impl <- coro::async(function(
 #'
 #' Retrieves market tickers for all trading pairs from the KuCoin API asynchronously, including 24-hour volume data.
 #'
-#' ### Workflow Overview
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 15
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getAllTickers`
+#'
+#' ## Description
+#' This function requests a comprehensive snapshot of market data for all trading pairs on KuCoin, 
+#' including current prices and 24-hour statistics. KuCoin takes a snapshot of this data every 2 seconds.
+#' The response includes best bid and ask prices and sizes, price changes, high/low values, and volume data
+#' for each trading pair.
+#' 
+#' Note that on rare occasions when KuCoin changes a currency name, you can use the `symbolName` field
+#' instead of the `symbol` field to track symbols that have been renamed.
+#'
+#' ## Workflow Overview
 #' 1. **URL Assembly**: Combines `base_url` with `/api/v1/market/allTickers`.
 #' 2. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
 #' 3. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts `"data"`.
-#' 4. **Data Conversion**: Converts the `"ticker"` array to a `data.table`, adding `globalTime_ms` and `globalTime_datetime` from the `"time"` field.
+#' 4. **Data Cleaning**: Processes each ticker object, replacing empty or NULL items with `NA`.
+#' 5. **Data Conversion**: Converts the `"ticker"` array to a `data.table`, adding `time` and `time_datetime` 
+#'    from the global snapshot time.
 #'
-#' ### API Endpoint
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/market/allTickers`
 #'
-#' ### Usage
+#' ## Usage
 #' Utilised to fetch a snapshot of market data across all KuCoin trading pairs for monitoring or analysis.
+#' This endpoint is particularly useful for market overview dashboards, pair discovery, or batch analysis
+#' of market conditions.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get All Tickers](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-all-tickers)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-26 19h23
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @return Promise resolving to a `data.table` containing:
-#'   - `symbol` (character): Trading symbol.
-#'   - `symbolName` (character): Symbol name.
+#'   - `symbol` (character): Trading symbol unique code.
+#'   - `symbolName` (character): Name of trading pairs, may change after renaming.
 #'   - `buy` (character): Best bid price.
 #'   - `bestBidSize` (character): Best bid size.
 #'   - `sell` (character): Best ask price.
 #'   - `bestAskSize` (character): Best ask size.
 #'   - `changeRate` (character): 24-hour change rate.
 #'   - `changePrice` (character): 24-hour price change.
-#'   - `high` (character): 24-hour high price.
-#'   - `low` (character): 24-hour low price.
-#'   - `vol` (character): 24-hour trading volume.
-#'   - `volValue` (character): 24-hour turnover.
+#'   - `high` (character): Highest price in 24h.
+#'   - `low` (character): Lowest price in 24h.
+#'   - `vol` (character): 24-hour volume, executed based on base currency.
+#'   - `volValue` (character): 24-hour traded amount.
 #'   - `last` (character): Last traded price.
-#'   - `averagePrice` (character): 24-hour average price.
-#'   - `takerFeeRate` (character): Taker fee rate.
-#'   - `makerFeeRate` (character): Maker fee rate.
-#'   - `takerCoefficient` (character): Taker fee coefficient.
-#'   - `makerCoefficient` (character): Maker fee coefficient.
-#'   - `globalTime_ms` (integer): Snapshot timestamp in milliseconds.
-#'   - `globalTime_datetime` (POSIXct): Snapshot timestamp in UTC.
+#'   - `averagePrice` (character): Average trading price in the last 24 hours.
+#'   - `takerFeeRate` (character): Basic taker fee rate.
+#'   - `makerFeeRate` (character): Basic maker fee rate.
+#'   - `takerCoefficient` (character): Taker fee coefficient; actual fee must be multiplied by this value.
+#'   - `makerCoefficient` (character): Maker fee coefficient; actual fee must be multiplied by this value.
+#'   - `time` (integer): Snapshot timestamp in milliseconds.
+#'   - `time_datetime` (POSIXct): Converted snapshot timestamp as a POSIXct datetime object.
+#'
+#' ## Details
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains snapshot time and ticker array:
+#'   - `time` (integer <int64>): Global timestamp of the snapshot in milliseconds.
+#'   - `ticker` (array): Array of ticker objects, each containing:
+#'     - `symbol` (string): Trading symbol unique code.
+#'     - `symbolName` (string): Name of trading pairs, may change after renaming.
+#'     - `buy` (string): Best bid price.
+#'     - `bestBidSize` (string): Best bid size.
+#'     - `sell` (string): Best ask price.
+#'     - `bestAskSize` (string): Best ask size.
+#'     - `changeRate` (string): 24-hour change rate.
+#'     - `changePrice` (string): 24-hour price change.
+#'     - `high` (string): Highest price in 24h.
+#'     - `low` (string): Lowest price in 24h.
+#'     - `vol` (string): 24-hour volume, executed based on base currency.
+#'     - `volValue` (string): 24-hour traded amount.
+#'     - `last` (string): Last traded price.
+#'     - `averagePrice` (string): Average trading price in the last 24 hours.
+#'     - `takerFeeRate` (string): Basic taker fee rate.
+#'     - `makerFeeRate` (string): Basic maker fee rate.
+#'     - `takerCoefficient` (string): Taker fee coefficient (`"1"` or `"0"`).
+#'     - `makerCoefficient` (string): Maker fee coefficient (`"1"` or `"0"`).
+#'
+#' **Example JSON Response** (truncated for brevity):
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": {
+#'     "time": 1729173207043,
+#'     "ticker": [
+#'       {
+#'         "symbol": "BTC-USDT",
+#'         "symbolName": "BTC-USDT",
+#'         "buy": "67192.5",
+#'         "bestBidSize": "0.000025",
+#'         "sell": "67192.6",
+#'         "bestAskSize": "1.24949204",
+#'         "changeRate": "-0.0014",
+#'         "changePrice": "-98.5",
+#'         "high": "68321.4",
+#'         "low": "66683.3",
+#'         "vol": "1836.03034612",
+#'         "volValue": "124068431.06726933",
+#'         "last": "67193",
+#'         "averagePrice": "67281.21437289",
+#'         "takerFeeRate": "0.001",
+#'         "makerFeeRate": "0.001",
+#'         "takerCoefficient": "1",
+#'         "makerCoefficient": "1"
+#'       }
+#'     ]
+#'   }
+#' }
+#' ```
+#'
+#' ### Notes
+#' - **Data Freshness**: KuCoin takes a snapshot of this data every 2 seconds.
+#' - **Fee Calculation**: To calculate the actual fee, multiply the transaction amount by the corresponding fee rate and fee coefficient.
+#' - **Symbol Tracking**: If a currency is renamed, use `symbolName` rather than `symbol` to track it through the change.
+#' - **Numeric Conversion**: All price and size values are returned as strings to preserve precision. You may need to convert them to numeric types for calculations.
+#' - **Rate Limiting**: This endpoint has a weight of 15 in the Public rate limit pool, which is significantly higher than most endpoints due to the volume of data returned.
+#' - **Data Size**: This endpoint returns details for all trading pairs (potentially over 1,000 entries), so consider caching results if polling frequently.
+#'
+#' ### Advice for Automated Traders
+#' - **Efficient Market Scanning**: Use this endpoint for periodic market scans rather than individual ticker requests:
+#'   ```r
+#'   market_scan <- function(criteria) {
+#'     coro::async(function() {
+#'       all_tickers <- await(get_all_tickers_impl())
+#'       
+#'       # Apply filter criteria
+#'       matches <- all_tickers[
+#'         as.numeric(changeRate) > criteria$min_change_rate &
+#'         as.numeric(vol) > criteria$min_volume &
+#'         as.numeric(last) > criteria$min_price
+#'       ]
+#'       
+#'       return(matches)
+#'     })
+#'   }
+#'   ```
+#'
+#' - **Market Breadth Indicators**: Calculate market-wide statistics for trend analysis:
+#'   ```r
+#'   calculate_market_breadth <- function(tickers, base_currency = "USDT") {
+#'     # Filter for pairs with the specified base currency
+#'     base_pairs <- tickers[grepl(paste0("-", base_currency, "$"), symbol)]
+#'     
+#'     # Calculate breadth indicators
+#'     total_pairs <- nrow(base_pairs)
+#'     advancing <- sum(as.numeric(base_pairs$changeRate) > 0)
+#'     declining <- sum(as.numeric(base_pairs$changeRate) < 0)
+#'     unchanged <- total_pairs - advancing - declining
+#'     
+#'     advance_decline_ratio <- advancing / max(declining, 1)
+#'     advance_decline_line <- advancing - declining
+#'     
+#'     return(list(
+#'       total_pairs = total_pairs,
+#'       advancing = advancing,
+#'       declining = declining,
+#'       unchanged = unchanged,
+#'       advance_decline_ratio = advance_decline_ratio,
+#'       advance_decline_line = advance_decline_line
+#'     ))
+#'   }
+#'   ```
+#'
+#' - **Volatility Ranking**: Identify the most volatile markets for potential trading opportunities:
+#'   ```r
+#'   rank_by_volatility <- function(tickers, min_volume = 0) {
+#'     # Calculate volatility as (high - low) / low
+#'     volatility_data <- tickers[as.numeric(vol) >= min_volume, .(
+#'       symbol = symbol,
+#'       volatility = (as.numeric(high) - as.numeric(low)) / as.numeric(low),
+#'       volume = as.numeric(vol),
+#'       price = as.numeric(last)
+#'     )]
+#'     
+#'     # Rank by volatility in descending order
+#'     return(volatility_data[order(-volatility)])
+#'   }
+#'   ```
+#'
+#' - **Correlation Matrix Builder**: Identify correlated and uncorrelated assets:
+#'   ```r
+#'   # Note: This would require historical data collection over time
+#'   build_correlation_matrix <- function(price_history, top_n = 20) {
+#'     # Extract the most active symbols by volume
+#'     top_symbols <- names(sort(colSums(price_history$volume), decreasing = TRUE))[1:min(top_n, ncol(price_history$volume))]
+#'     
+#'     # Calculate returns
+#'     returns <- apply(price_history$close[, top_symbols], 2, function(x) diff(log(x)))
+#'     
+#'     # Calculate correlation matrix
+#'     correlation_matrix <- cor(returns, use = "pairwise.complete.obs")
+#'     
+#'     return(correlation_matrix)
+#'   }
+#'   ```
+#'
+#' - **Fee Optimisation**: Compare fee structures across symbols:
+#'   ```r
+#'   compare_fees <- function(tickers) {
+#'     fee_data <- tickers[, .(
+#'       symbol = symbol,
+#'       maker_fee = as.numeric(makerFeeRate) * as.numeric(makerCoefficient),
+#'       taker_fee = as.numeric(takerFeeRate) * as.numeric(takerCoefficient)
+#'     )]
+#'     
+#'     # Group by fee structure
+#'     fee_groups <- fee_data[, .N, by = .(maker_fee, taker_fee)]
+#'     fee_groups <- fee_groups[order(maker_fee, taker_fee)]
+#'     
+#'     return(fee_groups)
+#'   }
+#'   ```
+#'
+#' - **Market Anomaly Detection**: Identify unusual price or volume conditions:
+#'   ```r
+#'   detect_anomalies <- function(tickers, z_score_threshold = 3) {
+#'     # Convert relevant fields to numeric
+#'     numeric_data <- tickers[, .(
+#'       symbol = symbol,
+#'       price = as.numeric(last),
+#'       volume = as.numeric(vol),
+#'       change_rate = as.numeric(changeRate)
+#'     )]
+#'     
+#'     # Calculate z-scores
+#'     numeric_data[, `:=`(
+#'       price_z = (price - mean(price, na.rm = TRUE)) / sd(price, na.rm = TRUE),
+#'       volume_z = (volume - mean(volume, na.rm = TRUE)) / sd(volume, na.rm = TRUE),
+#'       change_z = (change_rate - mean(change_rate, na.rm = TRUE)) / sd(change_rate, na.rm = TRUE)
+#'     )]
+#'     
+#'     # Identify anomalies
+#'     anomalies <- numeric_data[
+#'       abs(price_z) > z_score_threshold | 
+#'       abs(volume_z) > z_score_threshold | 
+#'       abs(change_z) > z_score_threshold
+#'     ]
+#'     
+#'     return(anomalies[order(-abs(volume_z))])
+#'   }
+#'   ```
+#'
+#' - **Caching Strategy**: Implement efficient caching to respect rate limits:
+#'   ```r
+#'   # Cache data with a 2-minute timeout (KuCoin snapshots every 2 seconds)
+#'   tickers_cache <- NULL
+#'   last_fetch_time <- as.POSIXct(0, origin = "1970-01-01")
+#'   
+#'   get_cached_tickers <- function(max_age_seconds = 120) {
+#'     coro::async(function() {
+#'       current_time <- Sys.time()
+#'       
+#'       # Check if cache needs refresh
+#'       if (is.null(tickers_cache) || 
+#'           difftime(current_time, last_fetch_time, units = "secs") > max_age_seconds) {
+#'         tickers_cache <<- await(get_all_tickers_impl())
+#'         last_fetch_time <<- current_time
+#'       }
+#'       
+#'       return(tickers_cache)
+#'     })
+#'   }
+#'   ```
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get all tickers
 #'   tickers <- await(get_all_tickers_impl())
-#'   print(tickers)
+#'   
+#'   # Print the snapshot time
+#'   cat("Snapshot time:", format(tickers$time_datetime[1], "%Y-%m-%d %H:%M:%S"), "\n")
+#'   
+#'   # Count the total number of trading pairs
+#'   cat("Total trading pairs:", nrow(tickers), "\n")
+#'   
+#'   # Find the top 5 gainers in the last 24 hours
+#'   top_gainers <- tickers[order(-as.numeric(changeRate))][1:5]
+#'   cat("\nTop 5 Gainers:\n")
+#'   print(top_gainers[, .(symbol, changeRate, last, vol)])
+#'   
+#'   # Find the top 5 losers in the last 24 hours
+#'   top_losers <- tickers[order(as.numeric(changeRate))][1:5]
+#'   cat("\nTop 5 Losers:\n")
+#'   print(top_losers[, .(symbol, changeRate, last, vol)])
+#'   
+#'   # Find the most active pairs by volume
+#'   most_active <- tickers[order(-as.numeric(volValue))][1:5]
+#'   cat("\nMost Active Pairs:\n")
+#'   print(most_active[, .(symbol, vol, volValue, last)])
+#'   
+#'   # Calculate average spread for USDT pairs
+#'   usdt_pairs <- tickers[grepl("-USDT$", symbol)]
+#'   usdt_pairs[, spread := as.numeric(sell) - as.numeric(buy)]
+#'   usdt_pairs[, spread_pct := spread / as.numeric(buy) * 100]
+#'   
+#'   avg_spread <- mean(usdt_pairs$spread_pct, na.rm = TRUE)
+#'   cat("\nAverage spread for USDT pairs:", sprintf("%.4f%%", avg_spread), "\n")
+#'   
+#'   # Identify pairs with the tightest spreads (potentially more liquid)
+#'   tight_spreads <- usdt_pairs[order(spread_pct)][1:5]
+#'   cat("\nPairs with Tightest Spreads:\n")
+#'   print(tight_spreads[, .(symbol, spread_pct, buy, sell, vol)])
+#'   
+#'   # Calculate market-wide statistics
+#'   total_pairs <- nrow(tickers)
+#'   gainers <- sum(as.numeric(tickers$changeRate) > 0, na.rm = TRUE)
+#'   losers <- sum(as.numeric(tickers$changeRate) < 0, na.rm = TRUE)
+#'   unchanged <- total_pairs - gainers - losers
+#'   
+#'   cat("\nMarket Breadth:\n")
+#'   cat("Advancing:", gainers, "(", sprintf("%.1f%%", gainers/total_pairs*100), ")\n")
+#'   cat("Declining:", losers, "(", sprintf("%.1f%%", losers/total_pairs*100), ")\n")
+#'   cat("Unchanged:", unchanged, "(", sprintf("%.1f%%", unchanged/total_pairs*100), ")\n")
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
-#' @importFrom data.table as.data.table
+#' @importFrom data.table as.data.table rbindlist
 #' @importFrom rlang abort
 #' @export
 get_all_tickers_impl <- coro::async(function(
