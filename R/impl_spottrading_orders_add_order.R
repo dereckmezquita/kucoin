@@ -64,11 +64,11 @@ place_order_helper <- coro::async(function(
 ) {
     tryCatch({
         # Validate required parameters
-        type <- rlang::arg_match0(type, c("limit", "market"), arg_name = "type")
+        type <- rlang::arg_match0(type, c("limit", "market"))
         if (is.null(symbol) || !verify_symbol(symbol)) {
             rlang::abort("Parameter 'symbol' must be a valid ticker (e.g., 'BTC-USDT').")
         }
-        side <- rlang::arg_match0(side, c("buy", "sell"), arg_name = "side")
+        side <- rlang::arg_match0(side, c("buy", "sell"))
 
         # Convert numeric parameters to character strings as required by the API
         if (!is.null(price)) price <- as.character(price)
@@ -106,7 +106,7 @@ place_order_helper <- coro::async(function(
             }
         }
         if (!is.null(stp)) {
-            stp <- rlang::arg_match0(stp, c("CN", "CO", "CB", "DC"), arg_name = "stp")
+            stp <- rlang::arg_match0(stp, c("CN", "CO", "CB", "DC"))
         }
         if (!is.null(tags)) {
             if (!is.character(tags) || nchar(tags) > 20 || !grepl("^[[:ascii:]]+$", tags)) {
@@ -119,7 +119,7 @@ place_order_helper <- coro::async(function(
             }
         }
         if (!is.null(timeInForce)) {
-            timeInForce <- rlang::arg_match0(timeInForce, c("GTC", "GTT", "IOC", "FOK"), arg_name = "timeInForce")
+            timeInForce <- rlang::arg_match0(timeInForce, c("GTC", "GTT", "IOC", "FOK"))
         } else {
             timeInForce <- "GTC"  # Default as per API documentation
         }
@@ -525,8 +525,8 @@ validate_order <- function(order) {
     }
 
     # Validate core parameters
-    type <- rlang::arg_match0(order$type, c("limit", "market"), arg_name = "type")
-    side <- rlang::arg_match0(order$side, c("buy", "sell"), arg_name = "side")
+    type <- rlang::arg_match0(order$type, c("limit", "market"))
+    side <- rlang::arg_match0(order$side, c("buy", "sell"))
     if (!verify_symbol(order$symbol)) {
         rlang::abort(sprintf("Invalid symbol '%s' in order.", order$symbol))
     }
@@ -591,7 +591,7 @@ validate_order <- function(order) {
         validated_order$clientOid <- order$clientOid
     }
     if (!is.null(order$stp)) {
-        validated_order$stp <- rlang::arg_match0(order$stp, c("CN", "CO", "CB", "DC"), arg_name = "stp")
+        validated_order$stp <- rlang::arg_match0(order$stp, c("CN", "CO", "CB", "DC"))
     }
     if (!is.null(order$tags)) {
         if (!is.character(order$tags) || nchar(order$tags) > 20 || !grepl("^[[:ascii:]]+$", order$tags)) {
@@ -606,7 +606,7 @@ validate_order <- function(order) {
         validated_order$remark <- order$remark
     }
     if (!is.null(order$timeInForce)) {
-        validated_order$timeInForce <- rlang::arg_match0(order$timeInForce, c("GTC", "GTT", "IOC", "FOK"), arg_name = "timeInForce")
+        validated_order$timeInForce <- rlang::arg_match0(order$timeInForce, c("GTC", "GTT", "IOC", "FOK"))
     } else {
         validated_order$timeInForce <- "GTC"  # Default as per API documentation
     }
