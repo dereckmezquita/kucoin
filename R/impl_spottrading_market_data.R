@@ -2385,35 +2385,111 @@ get_all_tickers_impl <- coro::async(function(
 #'
 #' Retrieves the most recent 100 trade records for a specified trading symbol from the KuCoin API asynchronously.
 #'
-#' ### Workflow Overview
-#' 1. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
-#' 2. **URL Assembly**: Combines `base_url`, `/api/v1/market/histories`, and the query string.
-#' 3. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
-#' 4. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
-#' 5. **Data Conversion**: Converts `"data"` to a `data.table`, adding a `timestamp` column via `time_convert_from_kucoin()`.
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Public
+#' - **API Permission**: NULL
+#' - **API Rate Limit Pool**: Public
+#' - **API Rate Limit Weight**: 3
+#' - **SDK Service**: Spot
+#' - **SDK Sub-Service**: Market
+#' - **SDK Method Name**: `getTradeHistory`
 #'
-#' ### API Endpoint
+#' ## Description
+#' This function requests the recent trade history for a specific trading symbol on KuCoin. 
+#' It provides details of the latest 100 executed trades, including price, size, side (buy/sell), 
+#' and execution time. This information is essential for analysing recent market activity and 
+#' price momentum on a particular trading pair.
+#'
+#' ## Workflow Overview
+#' 1. **Input Validation**: Verifies that `symbol` is a non-empty character string.
+#' 2. **Query Construction**: Builds a query string with the `symbol` parameter using `build_query()`.
+#' 3. **URL Assembly**: Combines `base_url`, `/api/v1/market/histories`, and the query string.
+#' 4. **HTTP Request**: Sends a GET request with a 10-second timeout via `httr::GET()`.
+#' 5. **Response Processing**: Validates the response with `process_kucoin_response()` and extracts the `"data"` field.
+#' 6. **Type Conversion**: Converts string values to appropriate R data types and adds a datetime column from the nanosecond timestamp.
+#'
+#' ## API Endpoint
 #' `GET https://api.kucoin.com/api/v1/market/histories`
 #'
-#' ### Usage
-#' Utilised to fetch recent trade history for a trading symbol, useful for tracking market activity.
+#' ## Usage
+#' Utilised to fetch recent trade history for a trading symbol, useful for tracking market activity,
+#' analysing recent price movements, and detecting unusual trading patterns.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Get Trade History](https://www.kucoin.com/docs-new/rest/spot-trading/market-data/get-trade-history)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-26 20h17
 #'
 #' @param base_url Character string; base URL for the KuCoin API. Defaults to `get_base_url()`.
 #' @param symbol Character string; trading symbol (e.g., `"BTC-USDT"`).
 #' @return Promise resolving to a `data.table` containing:
-#'   - `sequence` (character): Trade sequence number.
-#'   - `price` (character): Filled price.
-#'   - `size` (character): Filled amount.
-#'   - `side` (character): Trade side (`"buy"` or `"sell"`).
-#'   - `time` (integer): Trade timestamp in nanoseconds.
-#'   - `timestamp` (POSIXct): Converted trade timestamp in UTC.
+#'   - `sequence` (character): Sequence number for synchronising updates.
+#'   - `price` (numeric): Filled price, converted from string to numeric.
+#'   - `size` (numeric): Filled amount, converted from string to numeric.
+#'   - `side` (character): Filled side; `"buy"` or `"sell"`. The trade side indicates the taker order side.
+#'   - `time` (numeric): Filled timestamp in nanoseconds.
+#'   - `time_datetime` (POSIXct): Converted trade timestamp as a POSIXct datetime object.
+#'
+#' ## Details
+#'
+#' ### Request Parameters
+#' - `symbol` (string, **required**): Trading symbol (e.g., `"BTC-USDT"`).
+#'
+#' ### API Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (array): Array of trade objects, each containing:
+#'   - `sequence` (string): Sequence number for synchronising updates.
+#'   - `price` (string): Filled price (returned as string, converted to numeric).
+#'   - `size` (string): Filled amount (returned as string, converted to numeric).
+#'   - `side` (string): Filled side; either `"buy"` or `"sell"`. The trade side indicates the taker order side.
+#'   - `time` (integer <int64>): Filled timestamp in nanoseconds.
+#'
+#' **Example JSON Response**:
+#' ```json
+#' {
+#'   "code": "200000",
+#'   "data": [
+#'     {
+#'       "sequence": "10976028003549185",
+#'       "price": "67122",
+#'       "size": "0.000025",
+#'       "side": "buy",
+#'       "time": 1729177117877000000
+#'     },
+#'     {
+#'       "sequence": "10976028003549188",
+#'       "price": "67122",
+#'       "size": "0.01792257",
+#'       "side": "buy",
+#'       "time": 1729177117877000000
+#'     },
+#'     {
+#'       "sequence": "10976028003549191",
+#'       "price": "67122.9",
+#'       "size": "0.05654289",
+#'       "side": "buy",
+#'       "time": 1729177117877000000
+#'     }
+#'   ]
+#' }
+#' ```
+#'
+#' ### Notes
+#' - **Limited History**: Only the most recent 100 trades are returned for each symbol.
+#' - **Taker vs. Maker**: The `side` field indicates the taker order side. A taker order is the order that was matched with orders already open on the order book.
+#' - **Nanosecond Precision**: The `time` field is in nanoseconds, providing extremely high-precision timestamps for trade execution time.
+#' - **Sequence Numbers**: The `sequence` field can be used to order trades correctly when multiple trades happen at the same timestamp.
+#' - **Rate Limiting**: This endpoint has a weight of 3 in the Public rate limit pool.
+#'
 #' @examples
 #' \dontrun{
 #' main_async <- coro::async(function() {
+#'   # Get trade history for BTC-USDT
 #'   trades <- await(get_trade_history_impl(symbol = "BTC-USDT"))
+#'
 #'   print(trades)
 #' })
 #' main_async()
@@ -2421,13 +2497,16 @@ get_all_tickers_impl <- coro::async(function(
 #' }
 #' @importFrom coro async await
 #' @importFrom httr GET timeout
-#' @importFrom data.table as.data.table
+#' @importFrom data.table as.data.table rbindlist
 #' @importFrom rlang abort
 #' @export
 get_trade_history_impl <- coro::async(function(
     base_url = get_base_url(),
     symbol
 ) {
+    if (is.null(symbol) || !is.character(symbol)) {
+        rlang::abort("The 'symbol' parameter must be a non-empty character string.")
+    }
     tryCatch({
         qs <- build_query(list(symbol = symbol))
         endpoint <- "/api/v1/market/histories"
@@ -2435,17 +2514,25 @@ get_trade_history_impl <- coro::async(function(
 
         # Send a GET request to the endpoint with a 10-second timeout.
         response <- httr::GET(url, httr::timeout(10))
+        # saveRDS(response, "../../api-responses/impl_spottrading_market_data/response-get_trade_history_impl.ignore.Rds")
 
         # Process and validate the response.
         parsed_response <- process_kucoin_response(response, url)
+        # saveRDS(parsed_response, "../../api-responses/impl_spottrading_market_data/parsed_response-get_trade_history_impl.Rds")
 
         # Convert the 'data' field (an array of trade history objects) into a data.table.
-        trade_history_dt <- data.table::as.data.table(parsed_response$data)
+        result_dt <- data.table::rbindlist(parsed_response$data)
 
-        # Convert the trade timestamp from nanoseconds to a POSIXct datetime.
-        trade_history_dt[, timestamp := time_convert_from_kucoin(time, "ns")]
+        result_dt[, `:=`(
+            sequence = as.character(sequence),
+            price = as.numeric(price),
+            size = as.numeric(size),
+            side = as.character(side),
+            time = as.numeric(time),
+            time_datetime = time_convert_from_kucoin(time, "ns")
+        )]
 
-        return(trade_history_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_trade_history_impl:", conditionMessage(e)))
     })
