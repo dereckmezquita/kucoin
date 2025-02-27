@@ -109,12 +109,12 @@ place_order_helper <- coro::async(function(
             stp <- rlang::arg_match0(stp, c("CN", "CO", "CB", "DC"))
         }
         if (!is.null(tags)) {
-            if (!is.character(tags) || nchar(tags) > 20 || !grepl("^[[:ascii:]]+$", tags)) {
+            if (!is.character(tags) || nchar(tags) > 20 || !all(charToRaw(tags) <= 127)) {
                 rlang::abort("Parameter 'tags' must be ASCII and maximum 20 characters.")
             }
         }
         if (!is.null(remark)) {
-            if (!is.character(remark) || nchar(remark) > 20 || !grepl("^[[:ascii:]]+$", remark)) {
+            if (!is.character(remark) || nchar(remark) > 20 || !all(charToRaw(remark) <= 127)) {
                 rlang::abort("Parameter 'remark' must be ASCII and maximum 20 characters.")
             }
         }
@@ -205,8 +205,6 @@ place_order_helper <- coro::async(function(
 
         parsed_response <- process_kucoin_response(response, url)
         # saveRDS(parsed_response, paste0("../../api-responses/impl_spottrading_market_data/parsed_response-get_market_list_impl-", file_name, ".Rds"))
-
-        browser()
 
         if (parsed_response$code != "200000") {
             rlang::abort(sprintf("API error: %s - %s", parsed_response$code, parsed_response$msg))
@@ -594,13 +592,13 @@ validate_order <- function(order) {
         validated_order$stp <- rlang::arg_match0(order$stp, c("CN", "CO", "CB", "DC"))
     }
     if (!is.null(order$tags)) {
-        if (!is.character(order$tags) || nchar(order$tags) > 20 || !grepl("^[[:ascii:]]+$", order$tags)) {
+        if (!is.character(order$tags) || nchar(order$tags) > 20 || !all(charToRaw(order$tags) <= 127)) {
             rlang::abort("Parameter 'tags' must be ASCII and maximum 20 characters.")
         }
         validated_order$tags <- order$tags
     }
     if (!is.null(order$remark)) {
-        if (!is.character(order$remark) || nchar(order$remark) > 20 || !grepl("^[[:ascii:]]+$", order$remark)) {
+        if (!is.character(order$remark) || nchar(order$remark) > 20 || !all(charToRaw(order$remark) <= 127)) {
             rlang::abort("Parameter 'remark' must be ASCII and maximum 20 characters.")
         }
         validated_order$remark <- order$remark
