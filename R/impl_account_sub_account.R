@@ -1,55 +1,97 @@
 # File: ./R/impl_account_sub_account.R
 
-# box::use(
-#     ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
-#     ./utils[ build_query, get_base_url ],
-#     ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
-# )
+box::use(
+    ./helpers_api[ auto_paginate, build_headers, process_kucoin_response ],
+    ./utils[ build_query, get_base_url ],
+    ./utils_time_convert_kucoin[ time_convert_from_kucoin ]
+)
 
-#' Add Sub-Account (Implementation)
+#' Add Sub-Account
 #'
 #' Creates a new sub-account on KuCoin asynchronously by sending a POST request to the `/api/v2/sub/user/created` endpoint. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
-#' ### Workflow Overview
-#' 1. **URL Construction**: Retrieves the base URL using `get_base_url()` (or the user-supplied `base_url`) and appends the endpoint.
-#' 2. **Request Body Preparation**: Creates a list with required parameters (`password`, `subName`, `access`, and optional `remarks`), converted to JSON format using `jsonlite::toJSON()` with `auto_unbox = TRUE`.
-#' 3. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`, incorporating the signature, timestamp, encrypted passphrase, and API key details.
-#' 4. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
-#' 5. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, raising an error if the HTTP status is not 200 or the API code is not `"200000"`.
-#' 6. **Result Conversion**: Converts the `data` field of the successful response into a `data.table`.
+#' ## API Details
+#' 
+#' - **Domain**: Spot
+#' - **API Channel**: Private
+#' - **API Permission**: General
+#' - **API Rate Limit Pool**: Management
+#' - **API Rate Limit Weight**: 15
+#' - **SDK Service**: Account
+#' - **SDK Sub-Service**: SubAccount
+#' - **SDK Method Name**: `addSubAccount`
 #'
-#' ### API Endpoint
+#' ## Description
+#' This function creates a new sub-account with specified permissions and credentials, facilitating segmented account management within a master KuCoin account structure.
+#'
+#' ## Workflow Overview
+#' 1. **Request Validation**: Validates the `access` parameter against allowed values (`"Spot"`, `"Futures"`, `"Margin"`).
+#' 2. **URL Construction**: Combines the base URL with the endpoint `/api/v2/sub/user/created`.
+#' 3. **Request Body Preparation**: Creates a JSON payload with required parameters (`password`, `subName`, `access`) and optional `remarks`.
+#' 4. **Header Preparation**: Generates authentication headers asynchronously via `build_headers()`, incorporating the signature, timestamp, encrypted passphrase, and API key details.
+#' 5. **API Request**: Sends a POST request using `httr::POST()` with the constructed URL, headers, and JSON body, applying a 3-second timeout.
+#' 6. **Response Handling**: Processes the JSON response with `process_kucoin_response()`, raising an error if the HTTP status is not 200 or the API code is not `"200000"`.
+#' 7. **Result Conversion**: Extracts and converts the `data` field of the successful response into a `data.table` for structured access.
+#'
+#' ## API Endpoint
 #' `POST https://api.kucoin.com/api/v2/sub/user/created`
 #'
-#' ### Usage
-#' Utilised internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem.
+#' ## Usage
+#' This function is used internally to establish sub-accounts for managing separate trading permissions within the KuCoin ecosystem, enabling segregated trading activities under a single master account.
 #'
-#' ### Official Documentation
+#' ## Official Documentation
 #' [KuCoin Add Sub-Account](https://www.kucoin.com/docs-new/rest/account-info/sub-account/add-subaccount)
+#' 
+#' ## Function Validated
+#' - Last validated: 2025-02-25 22h26
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
-#' @param password Character string; sub-account password (7–24 characters, must contain both letters and numbers).
+#' @param password Character string; sub-account password (7–24 characters, must contain both letters and numbers, cannot only contain numbers or include special characters).
 #' @param subName Character string; desired sub-account name (7–32 characters, must include at least one letter and one number, no spaces).
-#' @param access Character string; permission type for the sub-account (allowed values: `"Spot"`, `"Futures"`, `"Margin"`).
+#' @param access Character string; permission type for the sub-account. One of: `"Spot"`, `"Futures"`, `"Margin"`. Defaults to `"Spot"` if not specified.
 #' @param remarks Character string (optional); remarks or notes about the sub-account (1–24 characters if provided).
-#' @return Promise resolving to a `data.table` containing sub-account details, including at least:
-#'   - `uid` (integer): Unique identifier for the sub-account.
+#'
+#' @return Promise resolving to a `data.table` containing sub-account details, including:
+#'   - `uid` (numeric): Unique identifier for the sub-account.
 #'   - `subName` (character): Name of the sub-account.
-#'   - `remarks` (character): Any provided remarks or notes.
+#'   - `remarks` (character): Remarks or notes associated with the sub-account.
 #'   - `access` (character): Permission type granted to the sub-account.
-#' @details
-#' **Raw Response Schema**:  
-#' - `code` (string): Status code, where `"200000"` indicates success.  
-#' - `data` (object): Contains the sub-account details as described above.  
-#' 
-#' Example JSON response:  
+#'
+#' ## Details
+#'
+#' ### Request Body Schema
+#' The request body is a JSON object with the following fields:
+#' - `password` (string, **required**): Password (7–24 characters, must contain letters and numbers, cannot only contain numbers or include special characters).
+#' - `subName` (string, **required**): Sub-account name (must contain 7–32 characters, at least one number and one letter, no spaces).
+#' - `access` (string, **required**): Permission type. One of: `"Spot"`, `"Futures"`, `"Margin"`.
+#' - `remarks` (string, optional): Remarks or notes (1–24 characters).
+#'
+#' **Example Request Body**:
+#' ```json
+#' {
+#'   "password": "1234567",
+#'   "remarks": "TheRemark",
+#'   "subName": "Name1234567",
+#'   "access": "Spot"
+#' }
 #' ```
+#'
+#' ### Response Schema
+#' - `code` (string): Status code, where `"200000"` indicates success.
+#' - `data` (object): Contains pagination metadata and an `items` array with the sub-account details.
+#'   - `uid` (integer): Unique identifier for the sub-account.
+#'   - `subName` (string): Name of the sub-account.
+#'   - `remarks` (string): Remarks or notes associated with the sub-account.
+#'   - `access` (string): Permission type granted to the sub-account.
+#'
+#' **Example JSON Response**:
+#' ```json
 #' {
 #'     "code": "200000",
 #'     "data": {
@@ -67,32 +109,49 @@
 #'                 "access": "All",
 #'                 "createdAt": 1668562696000,
 #'                 "remarks": "remarks",
-#'                 "tradeTypes": ["Spot", "Futures", "Margin"],
-#'                 "openedTradeTypes": ["Spot"],
+#'                 "tradeTypes": [
+#'                     "Spot",
+#'                     "Futures",
+#'                     "Margin"
+#'                 ],
+#'                 "openedTradeTypes": [
+#'                     "Spot"
+#'                 ],
 #'                 "hostedStatus": null
 #'             }
 #'         ]
 #'     }
 #' }
 #' ```
+#'
+#' The function processes this response by extracting the `"data"` field and converting it to a structured `data.table`.
+#'
+#' ## Notes
+#' - **Password Requirements**: The sub-account password must be 7-24 characters long, containing both letters and numbers. It cannot consist solely of numbers or include special characters.
+#' - **Sub-Account Name Requirements**: The name must be 7-32 characters, containing at least one letter and one number, with no spaces.
+#' - **Access Types**: The `access` parameter determines which trading features the sub-account can use (`"Spot"`, `"Futures"`, `"Margin"`).
+#' - **Rate Limit**: This endpoint has a weight of 15 in the API rate limit pool (Management). Plan request frequency accordingly.
+#'
 #' @examples
 #' \dontrun{
+#' # Example: Create a new sub-account with Spot trading permission
 #' keys <- get_api_keys()
 #' base_url <- "https://api.kucoin.com"
 #' main_async <- coro::async(function() {
 #'   result <- await(add_subaccount_impl(
 #'     keys = keys,
 #'     base_url = base_url,
-#'     password = "1234567",
-#'     subName = "Name1234567",
+#'     password = "SecurePass123",
+#'     subName = "TradingBot2025",
 #'     access = "Spot",
-#'     remarks = "Test sub-account"
+#'     remarks = "Automated trading account"
 #'   ))
 #'   print(result)
 #' })
 #' main_async()
 #' while (!later::loop_empty()) later::run_now()
 #' }
+#'
 #' @importFrom coro async await
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST timeout
@@ -107,9 +166,8 @@ add_subaccount_impl <- coro::async(function(
     access = c("Spot", "Futures", "Margin"),
     remarks = NULL
 ) {
-    access <- rlang::arg_match(access)
+    access <- rlang::arg_match0(access, values = c("Spot", "Futures", "Margin"))
     tryCatch({
-
         endpoint <- "/api/v2/sub/user/created"
         method <- "POST"
         body_list <- list(
@@ -124,16 +182,16 @@ add_subaccount_impl <- coro::async(function(
         headers <- await(build_headers(method, endpoint, body, keys))
         url <- paste0(base_url, endpoint)
         response <- httr::POST(url, headers, body = body, encode = "raw", httr::timeout(3))
-        saveRDS(response, "./api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_sub_account/response-add_subaccount_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
-        return(data.table::as.data.table(parsed_response$data))
+        # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-add_subaccount_impl.Rds")
+        return(data.table::as.data.table(parsed_response$data)[])
     }, error = function(e) {
         rlang::abort(paste("Error in add_subaccount_impl:", conditionMessage(e)))
     })
 })
 
-#' Retrieve Sub-Account Summary Information (Implementation)
+#' Retrieve Sub-Account Summary Information
 #'
 #' Retrieves a paginated summary of sub-accounts from KuCoin asynchronously and aggregates the results into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption. It converts millisecond timestamps in the `createdAt` column to human-readable POSIXct datetime objects where present.
 #'
@@ -153,23 +211,23 @@ add_subaccount_impl <- coro::async(function(
 #' [KuCoin Get Sub-Account List Summary Info](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-summary-info)
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param page_size Integer specifying the number of results per page (minimum 1, maximum 100). Defaults to 100.
 #' @param max_pages Numeric specifying the maximum number of pages to fetch (defaults to `Inf`, fetching all available pages).
 #' @return Promise resolving to a `data.table` containing aggregated sub-account summary information, including:
 #'   - `userId` (character): Unique identifier of the master account.
-#'   - `uid` (integer): Unique identifier of the sub-account.
+#'   - `uid` (numeric): Unique identifier of the sub-account.
 #'   - `subName` (character): Sub-account name.
-#'   - `status` (integer): Current status of the sub-account.
-#'   - `type` (integer): Type of sub-account.
+#'   - `status` (numeric): Current status of the sub-account, enum 2:Enable, 3:Frozen.
+#'   - `type` (numeric): Type of sub-account, enum 0, 1, 2, 5.
 #'   - `access` (character): Permission type granted (e.g., `"All"`, `"Spot"`, `"Futures"`, `"Margin"`).
-#'   - `createdAt` (integer): Timestamp of creation in milliseconds.
-#'   - `createdDatetime` (POSIXct): Converted human-readable datetime.
+#'   - `createdAt` (numeric): Timestamp of creation in milliseconds.
+#'   - `createdAt_datetime` (POSIXct): Converted human-readable datetime.
 #'   - `remarks` (character): Remarks or notes associated with the sub-account.
 #'   - `tradeTypes` (character): Separated by `;`, the trade types available to the sub-account (e.g. `"Spot;Futures;Margin"`).
 #'   - `openedTradeTypes` (character): Separated by `;`, the trade types currently open to the sub-account.
@@ -179,6 +237,21 @@ add_subaccount_impl <- coro::async(function(
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
 #' - `data` (object): Contains pagination metadata and an `items` array with sub-account summary details.  
+#'   - `userId` (string) required: Sub-account User ID
+#'   - `uid` (integer) required: Sub-account UID
+#'   - `subName` (string) required: Sub-account name
+#'   - `status` (enum<integer>) required: Sub-account; 2:Enable, 3:Frozen
+#'   - `type` (enum<integer>) required: Sub-account type; 0, 1, 2, 5
+#'       - `0`, NORMAL - Normal sub-account
+#'       - `1`, ROBOT - Robot sub-account
+#'       - `2`, Novice - New financial sub-account
+#'       - `5`, HOSTED - Asset management sub-account
+#'   - `access` (string) required: Sub-account Permission
+#'   - `createdAt` (integer <int64>) required: Time of event
+#'   - `remarks` (string) required: Remarks
+#'   - `tradeTypes` (array[string]) required: Sub-account Permissions
+#'   - `openedTradeTypes` (array[string]) required: Sub-account active permissions: If you do not have the corresponding permissions, you must log in to the sub-account and go to the corresponding web page to activate.
+#'   - `hostedStatus` (string) required
 #' 
 #' Example JSON response:  
 #' ```
@@ -249,18 +322,17 @@ get_subaccount_list_summary_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
-            file_name <- paste0("get_subaccount_list_summary_impl_", query$currentPage)
-            # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_list_summary_impl.ignore.Rds")
+            # file_name <- paste0("get_subaccount_list_summary_impl_", query$currentPage)
+            # saveRDS(response, "../../api-responses/impl_account_sub_account/response-get_subaccount_list_summary_impl.ignore.Rds")
             parsed_response <- process_kucoin_response(response, url)
-            # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_list_summary_impl.Rds")
+            # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-get_subaccount_list_summary_impl.Rds")
             return(parsed_response$data)
         })
 
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # Automatically paginate through all pages using the auto_paginate helper.
-        subaccount_summary_dt <- await(auto_paginate(
+        results <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -269,7 +341,23 @@ get_subaccount_list_summary_impl <- coro::async(function(
                 totalPage = "totalPage"
             ),
             aggregate_fn = function(acc) {
-                els <- lapply(acc, function(el) {
+                if (length(acc) == 0 || all(sapply(acc, length) == 0)) {
+                    return(data.table::data.table(
+                        userId = character(0),
+                        uid = numeric(0),
+                        subName = character(0),
+                        status = numeric(0),
+                        type = numeric(0),
+                        access = character(0),
+                        createdAt = numeric(0),
+                        createdAt_datetime = lubridate::as_datetime(character(0)),
+                        remarks = character(0),
+                        tradeTypes = character(0),
+                        openedTradeTypes = character(0),
+                        hostedStatus = character(0)
+                    ))
+                }
+                acc2 <- lapply(acc, function(el) {
                     # collapse certain fields into a single string
                     el$tradeTypes <- paste(el$tradeTypes, collapse = ";")
                     el$openTradeTypes <- paste(el$openTradeTypes, collapse = ";")
@@ -279,20 +367,54 @@ get_subaccount_list_summary_impl <- coro::async(function(
                     return(el)
                 })
                 # rbindlist can convert list of lists to data.table
-                return(data.table::rbindlist(els))
+                return(data.table::rbindlist(acc2))
             },
             max_pages = max_pages
         ))
 
-        subaccount_summary_dt[, createdDatetime := time_convert_from_kucoin(createdAt, "ms")]
+        agg <- results$aggregate
 
-        return(subaccount_summary_dt)
+        expected_cols <- c(
+            "userId", "uid", "subName", "status", "type",
+            "access", "createdAt", "createdAt_datetime", "remarks",
+            "tradeTypes", "openedTradeTypes", "hostedStatus"
+        )
+        missing_cols <- setdiff(expected_cols, names(agg))
+        for (col in missing_cols) {
+            agg[, (col) := NA_character_]
+        }
+
+        agg[, createdAt_datetime := time_convert_from_kucoin(createdAt, "ms")]
+
+        agg[, `:=`(
+            userId = as.character(userId),
+            uid = as.numeric(uid),
+            subName = as.character(subName),
+            status = as.numeric(status),
+            type = as.numeric(type),
+            access = as.character(access),
+            createdAt = as.numeric(createdAt),
+            createdAt_datetime = as.POSIXct(createdAt_datetime),
+            remarks = as.character(remarks),
+            tradeTypes = as.character(tradeTypes),
+            openedTradeTypes = as.character(openedTradeTypes),
+            hostedStatus = as.character(hostedStatus),
+            # pagination info
+            page_currentPage = as.numeric(results$pagination$currentPage),
+            page_pageSize = as.numeric(results$pagination$pageSize),
+            page_totalNum = as.numeric(results$pagination$totalNum),
+            page_totalPage = as.numeric(results$pagination$totalPage)
+        )]
+
+        data.table::setcolorder(agg, expected_cols)
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_list_summary_impl:", conditionMessage(e)))
     })
 })
 
-#' Retrieve Sub-Account Balance Details (Implementation)
+#' Retrieve Sub-Account Balance Details
 #'
 #' Retrieves balance details for a specific sub-account from KuCoin asynchronously, aggregating account types into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -311,12 +433,15 @@ get_subaccount_list_summary_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Sub-Account Detail Balance](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-detail-balance)
+#' 
+#' ### Function Validated
+#' - Last validated: 2025-02-25 19h24
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param subUserId Character string representing the sub-account user ID for which balance details are retrieved.
@@ -435,9 +560,9 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 
         # Send the GET request.
         response <- httr::GET(url, headers, httr::timeout(3))
-        # saveRDS(response, "./api-responses/impl_account_sub_account/response-get_subaccount_detail_balance_impl.ignore.Rds")
+        # saveRDS(response, "../../api-responses/impl_account_sub_account/response-get_subaccount_detail_balance_impl.ignore.Rds")
         parsed_response <- process_kucoin_response(response, url)
-        # saveRDS(parsed_response, "./api-responses/impl_account_sub_account/parsed_response-get_subaccount_detail_balance_impl.Rds")
+        # saveRDS(parsed_response, "../../api-responses/impl_account_sub_account/parsed_response-get_subaccount_detail_balance_impl.Rds")
 
         data <- parsed_response$data
 
@@ -468,7 +593,6 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 
         # Combine the results; if no data is available, return an empty data.table.
         if (length(result_list) == 0) {
-            # TODO: update default empty data.table
             result_dt <- data.table::data.table(
                 subUserId = character(0),
                 subName = character(0),
@@ -501,13 +625,13 @@ get_subaccount_detail_balance_impl <- coro::async(function(
             baseAmount = as.numeric(baseAmount)
         )]
 
-        return(result_dt)
+        return(result_dt[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_subaccount_detail_balance_impl:", conditionMessage(e)))
     })
 })
 
-#' Retrieve Spot Sub-Account List - Balance Details (V2) (Implementation)
+#' Retrieve Spot Sub-Account List - Balance Details (V2)
 #'
 #' Retrieves paginated Spot sub-account information from KuCoin asynchronously, aggregating balance details into a single `data.table`. This internal function is designed for use within an R6 class and is not intended for direct end-user consumption.
 #'
@@ -525,12 +649,15 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 #'
 #' ### Official Documentation
 #' [KuCoin Get Sub-Account List - Spot Balance (V2)](https://www.kucoin.com/docs-new/rest/account-info/sub-account/get-subaccount-list-spot-balance-v2)
+#' 
+#' ### Function Validated
+#' - Last validated: 2025-02-25 20h19
 #'
 #' @param keys List containing API configuration parameters from `get_api_keys()`, including:
-#'   - `api_key`: Character string; your KuCoin API key.
-#'   - `api_secret`: Character string; your KuCoin API secret.
-#'   - `api_passphrase`: Character string; your KuCoin API passphrase.
-#'   - `key_version`: Character string; API key version (e.g., `"2"`).
+#'   - `api_key` (character): Your KuCoin API key.
+#'   - `api_secret` (character): Your KuCoin API secret.
+#'   - `api_passphrase` (character): Your KuCoin API passphrase.
+#'   - `key_version` (character): API key version (e.g., `"2"`).
 #'   Defaults to `get_api_keys()`.
 #' @param base_url Character string representing the base URL for the API. Defaults to `get_base_url()`.
 #' @param page_size Integer specifying the number of results per page (minimum 10, maximum 100). Defaults to 100.
@@ -547,6 +674,10 @@ get_subaccount_detail_balance_impl <- coro::async(function(
 #'   - `baseCurrencyPrice` (numeric): Price of the base currency.
 #'   - `baseAmount` (numeric): Amount in the base currency.
 #'   - `tag` (character): Tag associated with the account.
+#'   - `page_currentPage` (numeric): Current page number.
+#'   - `page_pageSize` (numeric): Number of results per page.
+#'   - `page_totalNum` (numeric): Total number of sub-accounts.
+#'   - `page_totalPage` (numeric): Total number of pages.
 #' @details
 #' **Raw Response Schema**:  
 #' - `code` (string): Status code, where `"200000"` indicates success.  
@@ -664,15 +795,17 @@ get_subaccount_spot_v2_impl <- coro::async(function(
             headers <- await(build_headers(method, full_endpoint, body, keys))
             url <- paste0(base_url, full_endpoint)
             response <- httr::GET(url, headers, httr::timeout(3))
+            # file_name <- paste0("get_spot_subaccount_list_v2_impl_", query$currentPage)
+            # saveRDS(response, paste0("../../api-responses/impl_account_sub_account/response-", file_name, ".ignore.Rds"))
             parsed_response <- process_kucoin_response(response, url)
+            # saveRDS(parsed_response, paste0("../../api-responses/impl_account_sub_account/parsed_response-", file_name, ".Rds"))
             return(parsed_response$data)
         })
 
         # Initialize the query with the first page.
         initial_query <- list(currentPage = 1, pageSize = page_size)
 
-        # Automatically paginate through all pages using the auto_paginate helper.
-        spot_subaccount_list_dt <- await(auto_paginate(
+        result <- await(auto_paginate(
             fetch_page = fetch_page,
             query = initial_query,
             items_field = "items",
@@ -734,28 +867,34 @@ get_subaccount_spot_v2_impl <- coro::async(function(
                         tag = character(0)
                     )
                 }
-                # Cast numeric columns.
-                if (nrow(final_dt) > 0) {
-                    final_dt[, `:=`(
-                        balance = as.numeric(balance),
-                        available = as.numeric(available),
-                        holds = as.numeric(holds),
-                        baseCurrencyPrice = as.numeric(baseCurrencyPrice),
-                        baseAmount = as.numeric(baseAmount)
-                    )]
-                }
-                # Set column order.
-                data.table::setcolorder(final_dt, c(
-                    "subUserId", "subName", "accountType", "currency",
-                    "balance", "available", "holds", "baseCurrency",
-                    "baseCurrencyPrice", "baseAmount", "tag"
-                ))
                 return(final_dt)
             },
             max_pages = max_pages
         ))
 
-        return(spot_subaccount_list_dt)
+        agg <- result$aggregate
+
+        agg[, `:=`(
+            balance = as.numeric(balance),
+            available = as.numeric(available),
+            holds = as.numeric(holds),
+            baseCurrencyPrice = as.numeric(baseCurrencyPrice),
+            baseAmount = as.numeric(baseAmount),
+            # pagination info
+            page_currentPage = as.numeric(result$pagination$currentPage),
+            page_pageSize = as.numeric(result$pagination$pageSize),
+            page_totalNum = as.numeric(result$pagination$totalNum),
+            page_totalPage = as.numeric(result$pagination$totalPage)
+        )]
+
+        # Set column order.
+        data.table::setcolorder(agg, c(
+            "subUserId", "subName", "accountType", "currency",
+            "balance", "available", "holds", "baseCurrency",
+            "baseCurrencyPrice", "baseAmount", "tag"
+        ))
+
+        return(agg[])
     }, error = function(e) {
         rlang::abort(paste("Error in get_spot_subaccount_list_v2_impl:", conditionMessage(e)))
     })
