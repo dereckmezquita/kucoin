@@ -213,6 +213,10 @@ place_order_helper <- coro::async(function(
         # Convert response data to data.table
         result_dt <- data.table::as.data.table(parsed_response$data)
 
+        if (is.null(result_dt$clientOid)) {
+            result_dt[, clientOid := NA_character_]
+        }
+
         return(result_dt)
     }, error = function(e) {
         rlang::abort(sprintf("Error in place_order_helper: %s", conditionMessage(e)))
